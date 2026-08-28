@@ -1,0 +1,702 @@
+/* =========================
+   GLOBAL
+========================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f4f7f5;
+  color: #082b20;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  background: #f4f7f5;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.header {
+  background: #06372b;
+  color: white;
+  padding: 46px 0 42px;
+}
+
+.header-inner {
+  width: min(1400px, calc(100% - 80px));
+  margin: 0 auto;
+}
+
+.brand-block h1 {
+  margin: 0;
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+}
+
+.brand-block p {
+  margin: 16px 0 0;
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.location {
+  margin-top: 28px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 2.2px;
+  color: #e8e9d7;
+}
+
+.location span {
+  margin: 0 8px;
+}
+
+
+/* =========================
+   MAIN CONTAINER
+========================= */
+
+.container {
+  width: min(1400px, calc(100% - 80px));
+  margin: 0 auto;
+  padding: 42px 0 55px;
+}
+
+
+/* =========================
+   PANCHAYAT SELECTOR
+========================= */
+
+.selector-card {
+  width: 100%;
+  min-height: 135px;
+
+  background: #ffffff;
+  border: 1px solid #d7e2dc;
+  border-radius: 24px;
+
+  padding: 30px 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-shadow: 0 10px 25px rgba(20, 55, 45, 0.045);
+}
+
+.selector-left {
+  display: grid;
+  grid-template-columns: 115px 470px;
+  align-items: center;
+  gap: 22px;
+}
+
+.selector-left label {
+  font-size: 17px;
+  font-weight: 700;
+  color: #082b20;
+}
+
+.selector-left select {
+  width: 100%;
+  height: 70px;
+
+  padding: 0 25px;
+
+  border: 1px solid #8db7a4;
+  border-radius: 16px;
+
+  background: white;
+  color: #082b20;
+
+  font-size: 22px;
+  font-weight: 800;
+
+  outline: none;
+  cursor: pointer;
+}
+
+.selector-left select:focus {
+  border-color: #4c9d70;
+  box-shadow: 0 0 0 4px rgba(76, 157, 112, 0.10);
+}
+
+
+/* =========================
+   MODEL STATUS
+========================= */
+
+.model-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 2px;
+
+  color: #54786b;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #4da36b;
+
+  box-shadow: 0 0 0 9px #edf5ef;
+}
+
+
+/* =========================
+   LOADING
+========================= */
+
+.loading {
+  min-height: 180px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  color: #54786b;
+  font-size: 16px;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+
+  border: 3px solid #d7e5dd;
+  border-top-color: #4da36b;
+
+  border-radius: 50%;
+
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================
+   ERROR
+========================= */
+
+.error {
+  margin-top: 30px;
+  padding: 24px;
+
+  background: #fff4f2;
+  border: 1px solid #ead2cd;
+  border-radius: 18px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.error strong {
+  font-size: 18px;
+}
+
+.error span {
+  color: #735d58;
+}
+
+
+/* =========================
+   DASHBOARD
+========================= */
+
+.dashboard {
+  margin-top: 55px;
+}
+
+
+/* =========================
+   FORECAST HEADING
+========================= */
+
+.forecast-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+
+  margin-bottom: 30px;
+}
+
+.eyebrow {
+  margin: 0 0 14px;
+
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 3px;
+
+  color: #5b7c70;
+}
+
+.forecast-heading h2 {
+  margin: 0;
+
+  font-size: 40px;
+  line-height: 1;
+
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.forecast-date {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+
+  font-size: 16px;
+  color: #5b7c70;
+}
+
+.forecast-date span {
+  font-weight: 500;
+}
+
+.forecast-date strong {
+  font-weight: 800;
+}
+
+
+/* =========================
+   WEATHER METRICS
+========================= */
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.metric-card {
+  min-height: 235px;
+
+  background: white;
+  border: 1px solid #d9e4de;
+  border-radius: 21px;
+
+  padding: 28px 30px;
+
+  box-shadow: 0 9px 24px rgba(20, 55, 45, 0.04);
+}
+
+.metric-top {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.metric-top p {
+  margin: 0;
+
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+
+  color: #5b7c70;
+}
+
+.metric-icon {
+  height: 24px;
+
+  display: flex;
+  align-items: center;
+
+  font-size: 19px;
+  color: #082b20;
+}
+
+.metric-value {
+  display: block;
+
+  margin-top: 22px;
+
+  font-size: 48px;
+  line-height: 1;
+
+  font-weight: 800;
+  letter-spacing: -1.5px;
+}
+
+.metric-value span {
+  margin-left: 4px;
+
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0;
+
+  color: #658479;
+}
+
+.metric-card small {
+  display: block;
+
+  margin-top: 19px;
+
+  font-size: 15px;
+  color: #708c82;
+}
+
+
+/* =========================
+   PROBABILITY BAR
+========================= */
+
+.probability-bar {
+  width: 100%;
+  height: 6px;
+
+  margin-top: 20px;
+
+  overflow: hidden;
+
+  border-radius: 10px;
+  background: #e6eee9;
+}
+
+.probability-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #4da36b;
+
+  transition: width 0.5s ease;
+}
+
+
+/* =========================
+   AGRICULTURAL ADVISORY
+========================= */
+
+.advisory {
+  margin-top: 22px;
+
+  padding: 32px 36px;
+
+  background: #edf6ef;
+  border: 1px solid #cfe0d4;
+  border-radius: 21px;
+}
+
+.advisory-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.advisory .eyebrow {
+  margin-bottom: 13px;
+}
+
+.advisory h3 {
+  margin: 0;
+
+  font-size: 27px;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.priority {
+  padding: 10px 25px;
+
+  border-radius: 30px;
+
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+
+  background: #dceee0;
+  color: #1e5c3a;
+}
+
+.advisory-content {
+  margin-top: 32px;
+}
+
+.advisory-en {
+  margin: 0;
+
+  font-size: 19px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.advisory-bn {
+  margin: 12px 0 0;
+
+  font-size: 20px;
+  line-height: 1.5;
+
+  color: #54766a;
+}
+
+.advisory-note {
+  margin: 12px 0 0;
+
+  font-size: 15px;
+  line-height: 1.5;
+
+  color: #617c72;
+}
+
+
+/* =========================
+   SYSTEM INFORMATION
+========================= */
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+
+  margin-top: 22px;
+}
+
+.info-card {
+  min-height: 95px;
+
+  padding: 23px 27px;
+
+  background: white;
+  border: 1px solid #d9e4de;
+  border-radius: 18px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.info-card span {
+  font-size: 14px;
+  color: #6a8178;
+}
+
+.info-card strong {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+  border-top: 1px solid #dce5e0;
+
+  padding: 28px 20px;
+
+  text-align: center;
+
+  color: #6c8980;
+  font-size: 14px;
+}
+
+footer span {
+  margin: 0 5px;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1100px) {
+
+  .header-inner,
+  .container {
+    width: min(92%, 1400px);
+  }
+
+  .selector-card {
+    padding: 28px;
+  }
+
+  .selector-left {
+    grid-template-columns: 100px minmax(280px, 450px);
+  }
+
+  .selector-left select {
+    height: 65px;
+    font-size: 20px;
+  }
+
+  .forecast-grid,
+  .info-grid {
+    gap: 18px;
+  }
+
+  .metric-card {
+    padding: 25px;
+  }
+
+  .metric-value {
+    font-size: 44px;
+  }
+}
+
+
+@media (max-width: 800px) {
+
+  .header {
+    padding: 40px 0;
+  }
+
+  .brand-block h1 {
+    font-size: 42px;
+  }
+
+  .brand-block p {
+    margin-top: 13px;
+    font-size: 18px;
+  }
+
+  .location {
+    margin-top: 25px;
+    font-size: 14px;
+  }
+
+  .selector-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 25px;
+  }
+
+  .selector-left {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .model-status {
+    justify-content: center;
+  }
+
+  .dashboard {
+    margin-top: 42px;
+  }
+
+  .forecast-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .forecast-heading h2 {
+    font-size: 36px;
+  }
+
+  .forecast-grid,
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .advisory-top {
+    gap: 20px;
+    flex-direction: column;
+  }
+}
+
+
+@media (max-width: 500px) {
+
+  .header-inner,
+  .container {
+    width: calc(100% - 30px);
+  }
+
+  .header {
+    padding: 34px 0;
+  }
+
+  .brand-block h1 {
+    font-size: 36px;
+  }
+
+  .brand-block p {
+    font-size: 16px;
+  }
+
+  .location {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+  }
+
+  .container {
+    padding-top: 28px;
+  }
+
+  .selector-card {
+    padding: 22px;
+    border-radius: 18px;
+  }
+
+  .selector-left select {
+    height: 60px;
+    padding: 0 17px;
+    font-size: 19px;
+  }
+
+  .model-status {
+    font-size: 14px;
+    letter-spacing: 1.5px;
+  }
+
+  .status-dot {
+    width: 19px;
+    height: 19px;
+  }
+
+  .forecast-heading h2 {
+    font-size: 32px;
+  }
+
+  .metric-card {
+    min-height: 220px;
+  }
+
+  .metric-value {
+    font-size: 43px;
+  }
+
+  .advisory {
+    padding: 27px 22px;
+  }
+
+  .advisory h3 {
+    font-size: 25px;
+  }
+
+  .advisory-en,
+  .advisory-bn {
+    font-size: 18px;
+  }
+}

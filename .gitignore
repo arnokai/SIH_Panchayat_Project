@@ -1,0 +1,37 @@
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Vite build
+frontend/dist/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python generated files
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Old V0 models
+models/rain_classifier.pkl
+models/rain_regressor.pkl
+models/tmax_regressor.pkl
+
+# Large external river source dataset
+data/raw/rivers/
