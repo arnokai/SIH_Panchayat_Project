@@ -234,11 +234,11 @@ Recommended environment:
 ## Step 1 — Clone the repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project
 cd SIH_Panchayat_Project
 ```
 
-Replace `<YOUR_GITHUB_REPOSITORY_URL>` with the repository URL shown by GitHub.
+The repository is publicly available at the GitHub link above.
 
 ---
 
