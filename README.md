@@ -1,75 +1,81 @@
 # TerraMind — Panchayat-Level Weather Intelligence & Agricultural Advisory
 
-TerraMind is a prototype decision-support system designed to provide **panchayat-level weather forecasts and agricultural advisories**.
+> **SIH project prototype for localized weather intelligence and agricultural decision support**
 
-The current V1 prototype combines historical weather information with panchayat/terrain features and trained machine-learning models to estimate:
+TerraMind is a prototype decision-support system designed to provide **panchayat-level weather information and agricultural advisories**. The system combines panchayat location, terrain characteristics, historical weather data, multiple gridded rainfall products, machine-learning models, and rule-based agricultural logic.
 
-- 🌧️ Rainfall
-- ☔ Rain probability
-- 🌡️ Maximum temperature
-- 🌱 Rule-based agricultural advisory
-- 🇮🇳 English + Bengali advisory text
-
-> **Project status:** V1 prototype / development stage  
-> **Model version:** `gbt-v1.0`
+The project is currently in **research/prototype development**. The machine-learning work has progressed from an initial V1 baseline to a V1.3 rainfall-calibration architecture.
 
 ---
 
-## 1. What TerraMind Does
+## 1. Project Overview
 
-Instead of giving only a general weather forecast, TerraMind is designed around the needs of a specific panchayat.
+Instead of treating an entire region as having one identical weather condition, TerraMind is designed around the needs of an individual panchayat.
 
-The system follows this basic flow:
+The overall system is:
 
 ```text
 Panchayat
     ↓
-Panchayat + terrain/weather features
+Panchayat geography + terrain + weather information
     ↓
-ML Forecast Engine
+ML / Rainfall Forecasting Layer
     ↓
 Rainfall + Rain Probability + Tmax
     ↓
-Agricultural Advisory Rules
+Agricultural Advisory Engine
     ↓
 Web Dashboard
 ```
 
-The current prototype uses three trained V1 models:
+The current application is intended to provide:
 
-```text
-Rain Classifier      → probability of rain
-Rain Regressor       → predicted rainfall (mm)
-Tmax Regressor       → predicted maximum temperature (°C)
-```
-
-The agricultural advisory layer then converts the forecast into a simple action-oriented recommendation.
+- 🌧️ Rainfall estimation
+- ☔ Rain probability / rain-event information
+- 🌡️ Maximum-temperature estimation
+- 🌱 Rule-based agricultural advisories
+- 🇮🇳 English + Bengali advisory text
+- 📍 Panchayat-specific information
 
 ---
 
-## 2. Main Features
+# 2. Current Project Status
 
-### Weather Forecast
+```text
+Project stage:       Prototype / Research Development
+Current ML version:  V1.3
+Stable Git branch:   main
+Development branch:  v2-development
+Frontend branch:     frontend-development
+```
 
-For a selected panchayat, the dashboard displays:
+The repository is currently maintained as a **private GitHub repository for the development team**.
 
-- Predicted rainfall in mm
-- Probability of rain
-- Maximum temperature
-- Forecast date
-- Model status/version
+V1.3 is the current experimental ML checkpoint. The model is not a production weather service and should not be treated as a replacement for official meteorological or agricultural advisories.
 
-### Agricultural Advisory
+---
 
-The advisory engine uses rule-based logic from `rules.yaml`.
+# 3. What TerraMind Does
 
-It can produce:
+For a selected panchayat, TerraMind is designed to process:
 
-- Priority level
-- Advisory type
-- English recommendation
-- Bengali recommendation
-- Advisory rule ID
+```text
+Panchayat identity
+      +
+Latitude / Longitude
+      +
+Elevation and terrain
+      +
+Historical weather
+      +
+Rainfall products
+      ↓
+Forecasting / estimation
+      ↓
+Agricultural advisory
+```
+
+The advisory layer converts forecast information into simple action-oriented guidance.
 
 Example:
 
@@ -79,21 +85,424 @@ Light rain. Safe to apply light fertilisers.
 হালকা বৃষ্টি। সার প্রয়োগ করা নিরাপদ।
 ```
 
-### Panchayat-Level Data
-
-The data pipeline contains scripts for:
-
-- Panchayat construction
-- Coordinates
-- Weather data
-- Elevation
-- River features
-- Feature merging
-- ML dataset construction
+The advisory logic is configured through `rules.yaml`.
 
 ---
 
-# 3. Project Structure
+# 4. Current Machine-Learning Architecture
+
+The project has been developed incrementally.
+
+## V1 — Initial Forecasting Baseline
+
+The first V1 system established the core ML forecasting pipeline using historical weather and panchayat-level features.
+
+Initial architecture:
+
+```text
+Historical Weather
+        +
+Panchayat Features
+        ↓
+Rain Classifier
+        +
+Rainfall Regressor
+        +
+Tmax Regressor
+        ↓
+Forecast Output
+```
+
+The original V1 model artifacts are:
+
+```text
+models/v1_rain_classifier.pkl
+models/v1_rain_regressor.pkl
+models/v1_tmax_regressor.pkl
+```
+
+V1 served as the baseline for later experiments.
+
+---
+
+# 5. V1.1 — Terrain Feature Experiment
+
+V1.1 investigated whether local physical geography could improve prediction.
+
+DEM-derived features were introduced:
+
+```text
+elevation_dem_m
+slope_deg
+aspect_sin
+aspect_cos
+terrain_roughness_m
+relative_elevation_m
+```
+
+These were combined with existing panchayat geography, weather history, rainfall lags, and seasonal features.
+
+The purpose of V1.1 was to test whether local terrain information could add useful spatial information.
+
+The experiment confirmed that terrain features could be incorporated into the pipeline, but they did not by themselves solve the rainfall downscaling problem.
+
+Intermediate V1.1 artifacts are retained locally for experimentation rather than being treated as the current production/prototype checkpoint.
+
+---
+
+# 6. V1.2 — Higher-Resolution Rainfall Reference Experiment
+
+V1.2 expanded the rainfall-data investigation.
+
+Three rainfall sources were examined:
+
+```text
+IMD       → 0.25° gridded rainfall
+IMERG     → 0.10° precipitation
+CHIRPS v3 → 0.05° rainfall
+```
+
+## IMD
+
+The IMD 0.25° product mapped the eight study panchayats to two effective grid cells.
+
+## IMERG
+
+The IMERG 0.10° subset produced three effective rainfall series in the study area.
+
+## CHIRPS
+
+CHIRPS v3 provided the finest spatial resolution tested in the project:
+
+```text
+0.05° ≈ 5 km
+```
+
+The extracted CHIRPS dataset contained:
+
+```text
+5,112 rows
+8 Panchayats
+639 days
+2024-01-01 → 2025-09-30
+```
+
+The eight panchayat coordinates produced:
+
+```text
+7 unique daily rainfall series out of 8 Panchayats
+```
+
+This was substantially more spatial differentiation than the coarser rainfall products tested earlier.
+
+---
+
+# 7. V1.2 Target Design
+
+The rainfall target was changed so that the model predicts the next day's CHIRPS rainfall:
+
+```text
+Information available on day T
+              ↓
+           ML model
+              ↓
+CHIRPS rainfall on day T+1
+```
+
+The V1.2 feature set included:
+
+```text
+Panchayat geography
+DEM terrain features
+Historical rainfall lags
+Rolling rainfall totals
+Historical temperature lags
+IMERG rainfall
+IMD rainfall
+Seasonal features
+```
+
+The final dataset contained:
+
+```text
+5,048 rows
+35 columns
+8 Panchayats
+```
+
+The first observations were removed where sufficient lag history was unavailable.
+
+---
+
+# 8. V1.2 Results
+
+The V1.2 rainfall model was evaluated with a temporal split.
+
+```text
+Training:
+2024-01-08 → 2024-08-31
+
+Validation:
+2024-09-01 → 2024-12-31
+
+Testing:
+2025-01-01 → 2025-09-29
+```
+
+Final V1.2 rainfall test results:
+
+```text
+Baseline RMSE: 11.44 mm
+Model RMSE:     9.72 mm
+Improvement:   15.0%
+
+Model MAE:      5.39 mm
+
+POD:            0.52
+FAR:            0.23
+CSI:            0.45
+```
+
+Temperature results:
+
+```text
+Tmax RMSE: 1.58 °C
+Tmax MAE:  1.20 °C
+Tmax Bias: -0.12 °C
+```
+
+### V1.2 limitation
+
+Detailed error analysis showed that the model could detect many rainfall events but significantly underestimated heavy rainfall.
+
+For actual CHIRPS rainfall above 25 mm:
+
+```text
+Heavy-rain RMSE ≈ 35 mm
+```
+
+The largest errors were concentrated in the monsoon period, especially June and July.
+
+This led to the next experiment.
+
+---
+
+# 9. V1.3 — Multi-Source Rainfall Calibration + Residual Correction
+
+V1.3 changed the rainfall-amount strategy.
+
+Instead of asking XGBoost to learn the entire rainfall amount from scratch, the system first creates a calibrated rainfall estimate from multiple rainfall products.
+
+The calibration inputs are:
+
+```text
+IMERG rainfall
+IMD rainfall
+Open-Meteo rainfall
+```
+
+The architecture is:
+
+```text
+IMERG ──────┐
+            │
+IMD ────────┼──→ Linear Rainfall Calibration
+            │
+Open-Meteo ─┘
+                    ↓
+             Calibrated Rainfall
+                    ↓
+             Residual Correction
+                    ↑
+       Terrain + season + rainfall history
+                    ↓
+              Final Estimate
+```
+
+The residual is defined as:
+
+```text
+Residual = CHIRPS rainfall - calibrated rainfall
+```
+
+A separate XGBoost model predicts this residual.
+
+However, applying the full residual produced worse overall validation performance. Therefore, a conservative correction factor was tested.
+
+The final V1.3 correction is:
+
+```text
+Final rainfall
+=
+Calibrated rainfall
++
+0.10 × predicted residual
+```
+
+The value `0.10` was selected using the validation period rather than the final test period.
+
+---
+
+# 10. V1.3 Results
+
+Final V1.3 evaluation used the untouched 2025 test period.
+
+## Overall rainfall performance
+
+```text
+Calibration RMSE: 7.94 mm
+V1.3 RMSE:        7.88 mm
+
+Calibration MAE:  4.59 mm
+V1.3 MAE:         4.54 mm
+```
+
+Overall improvement over the calibration baseline:
+
+```text
+0.7%
+```
+
+This is a **modest improvement**, not a major breakthrough.
+
+## Rain-event performance
+
+```text
+Hits:          849
+Misses:         81
+False alarms:  352
+
+POD:           0.91
+FAR:           0.29
+CSI:           0.66
+```
+
+## Heavy rainfall
+
+For rainfall ≥25 mm:
+
+```text
+Calibration RMSE: 28.32 mm
+V1.3 RMSE:        28.05 mm
+
+Calibration MAE:  26.48 mm
+V1.3 MAE:         26.26 mm
+```
+
+V1.3 therefore provides a small improvement while preserving the strong general rainfall calibration.
+
+---
+
+# 11. Current V1.3 Model Artifacts
+
+The current V1.3 model files are:
+
+```text
+models/v1_3_rain_calibration.pkl
+models/v1_3_rain_residual.pkl
+models/v1_3_metadata.pkl
+models/v1_3_residual_feature_importance.csv
+```
+
+The metadata records:
+
+```text
+model_version:
+    v1.3
+
+architecture:
+    linear rainfall calibration + XGBoost residual correction
+
+target:
+    CHIRPS rainfall at T+1
+
+residual_alpha:
+    0.10
+```
+
+The metadata also records the feature list, calibration inputs, temporal split, and evaluation metrics.
+
+---
+
+# 12. Important Data Interpretation
+
+The rainfall datasets used in these experiments are **gridded precipitation products**.
+
+CHIRPS is used as a historical rainfall **reference/target**, not as a direct Panchayat rain-gauge observation.
+
+Therefore:
+
+> TerraMind should not claim true gauge-level Panchayat rainfall accuracy unless suitable local rain-gauge/AWS observations are obtained for independent validation.
+
+This distinction is important when presenting the project scientifically.
+
+---
+
+# 13. Data Pipeline
+
+The project has progressively expanded from a basic weather pipeline into a multi-source environmental-data pipeline.
+
+Current conceptual flow:
+
+```text
+Panchayat information
+        +
+Coordinates
+        +
+Historical weather
+        +
+IMD rainfall
+        +
+IMERG rainfall
+        +
+CHIRPS rainfall reference
+        +
+DEM / terrain
+        +
+River-distance information
+        ↓
+Feature engineering
+        ↓
+ML training dataset
+        ↓
+Model training
+        ↓
+Forecast / estimation engine
+        ↓
+Agricultural advisory
+        ↓
+Dashboard
+```
+
+Important data-generation scripts include:
+
+```text
+data/build_panchayats.py
+data/make_coordinates.py
+data/get_boundaries.py
+data/get_elevation.py
+data/get_river_features.py
+data/merge_river_features.py
+data/build_ml_dataset.py
+
+data/build_terrain_features.py
+data/extract_imd_rainfall.py
+data/build_imerg_dataset.py
+data/download_imerg.py
+data/build_chirps_dataset.py
+data/compare_chirps_spatial.py
+
+data/build_v1_2_dataset.py
+data/evaluate_v1_2.py
+data/evaluate_rainfall_baselines.py
+data/test_v1_3_residual_strength.py
+```
+
+Large external/raw datasets are intentionally excluded from Git where appropriate.
+
+---
+
+# 14. Project Structure
 
 ```text
 SIH_Panchayat_Project/
@@ -115,12 +524,22 @@ SIH_Panchayat_Project/
 │   ├── get_river_features.py
 │   ├── make_coordinates.py
 │   ├── merge_river_features.py
-│   └── panchayats.csv
+│   ├── build_terrain_features.py
+│   ├── extract_imd_rainfall.py
+│   ├── build_imerg_dataset.py
+│   ├── download_imerg.py
+│   ├── build_chirps_dataset.py
+│   ├── build_v1_2_dataset.py
+│   └── ...
 │
 ├── models/
 │   ├── v1_rain_classifier.pkl
 │   ├── v1_rain_regressor.pkl
-│   └── v1_tmax_regressor.pkl
+│   ├── v1_tmax_regressor.pkl
+│   ├── v1_3_rain_calibration.pkl
+│   ├── v1_3_rain_residual.pkl
+│   ├── v1_3_metadata.pkl
+│   └── ...
 │
 ├── frontend/
 │   ├── src/
@@ -136,6 +555,8 @@ SIH_Panchayat_Project/
 │
 ├── train_pipeline.py
 ├── train_pipeline_v1.py
+├── train_pipeline_v1_2.py
+├── train_pipeline_v1_3.py
 │
 ├── requirements.txt
 ├── .gitignore
@@ -144,105 +565,71 @@ SIH_Panchayat_Project/
 
 ---
 
-# 4. Backend Components
+# 15. Backend Components
 
-### `api.py`
+## `api.py`
 
-Main backend API.
+Main backend API. It connects the frontend with the forecasting and advisory system.
 
-It connects the frontend with the forecasting/advisory system.
+## `forecast_engine.py`
 
-### `forecast_engine.py`
+Responsible for loading trained models and generating forecast/estimation values.
 
-Responsible for loading the trained ML models and generating forecast values.
+## `advisor.py`
 
-### `advisor.py`
+Converts forecast information into agricultural recommendations.
 
-Responsible for converting forecast information into agricultural advice.
+## `rules.yaml`
 
-### `rules.yaml`
+Contains configurable advisory rules.
 
-Contains the rule configuration used by the advisory engine.
-
-### `train_pipeline_v1.py`
-
-Training pipeline for the current V1 models.
-
-### `train_pipeline.py`
-
-Older/general training pipeline retained for development/reference.
-
----
-
-# 5. Machine Learning Models
-
-The current V1 prototype contains:
-
-| Model | Purpose | Output |
-|---|---|---|
-| `v1_rain_classifier.pkl` | Rain classification | Rain probability |
-| `v1_rain_regressor.pkl` | Rainfall regression | Rainfall in mm |
-| `v1_tmax_regressor.pkl` | Temperature regression | Tmax in °C |
-
-The models are currently stored directly in the repository so that teammates can clone the project and test the prototype without retraining everything first.
-
----
-
-# 6. Data Pipeline
-
-The data preparation process is organized inside `data/`.
-
-Conceptually:
+## Training pipelines
 
 ```text
-Panchayat information
-        +
-Coordinates
-        +
-Historical weather
-        +
-Elevation
-        +
-River/terrain features
-        ↓
-Feature dataset
-        ↓
-ML training dataset
-        ↓
-V1 models
+train_pipeline.py
+    ↓
+older/general training reference
+
+train_pipeline_v1.py
+    ↓
+original V1 baseline
+
+train_pipeline_v1_2.py
+    ↓
+CHIRPS-target V1.2 experiment
+
+train_pipeline_v1_3.py
+    ↓
+V1.3 calibration + residual experiment
 ```
-
-The repository currently contains prepared datasets required by the prototype.
-
-The external river source dataset is intentionally excluded from Git because it is a large external source dataset and can be obtained separately if needed.
 
 ---
 
-# 7. Running the Project Locally
+# 16. Running the Project Locally
 
 ## Requirements
 
-Recommended environment:
+Recommended:
 
-- Windows / Linux / macOS
 - Python 3.x
 - Node.js + npm
 - Git
+- Windows / Linux / macOS
 
 ---
 
 ## Step 1 — Clone the repository
 
-```bash
-git clone https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project
+```powershell
+git clone https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project.git
 cd SIH_Panchayat_Project
 ```
 
-The repository is publicly available at the GitHub link above.
+The repository is currently private, so the user must have access through the GitHub team/repository permissions.
 
 ---
 
-## Step 2 — Create the Python virtual environment
+## Step 2 — Create a Python environment
 
 ### Windows PowerShell
 
@@ -251,7 +638,7 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-If PowerShell blocks activation, the Python environment can also be used without activating it by calling its executables directly.
+If activation is blocked, use the virtual environment's Python executable directly.
 
 ---
 
@@ -265,51 +652,31 @@ pip install -r requirements.txt
 
 ## Step 4 — Start the backend
 
-The backend is implemented in `api.py`.
-
-If the project is using the FastAPI/Uvicorn setup configured in the current prototype:
-
 ```powershell
 uvicorn api:app --reload
 ```
 
-The API should then be available locally through the address printed by Uvicorn.
-
-> If the backend configuration changes during development, update this section together with the API entry point.
+The backend URL will be printed by Uvicorn.
 
 ---
 
-# 8. Running the Frontend
+## Step 5 — Start the frontend
 
-Open a **second terminal**.
-
-Go to the frontend:
+Open a second terminal:
 
 ```powershell
 cd frontend
-```
-
-Install JavaScript dependencies:
-
-```powershell
 npm install
-```
-
-Start the Vite development server:
-
-```powershell
 npm run dev
 ```
 
-Vite will print the local dashboard URL in the terminal.
-
-Open that URL in a browser.
+Vite will print the dashboard URL.
 
 ---
 
-# 9. Running Backend + Frontend Together
+# 17. Backend + Frontend Together
 
-You normally need two terminals.
+Normally use two terminals.
 
 ### Terminal 1 — Backend
 
@@ -326,23 +693,21 @@ cd SIH_Panchayat_Project\frontend
 npm run dev
 ```
 
-Then open the frontend URL shown by Vite.
+Open the Vite URL shown in the terminal.
 
 ---
 
-# 10. Testing a Panchayat
+# 18. Example Forecast Response
 
-The dashboard allows a panchayat to be selected.
-
-The backend returns forecast information similar to:
+The application is designed around a panchayat-specific response similar to:
 
 ```json
 {
   "panchayat_id": "A1",
   "panchayat_name": "ADHATA",
-  "model_version": "gbt-v1.0",
+  "model_version": "V1.3",
   "forecast": {
-    "date": "2026-01-01",
+    "date": "YYYY-MM-DD",
     "rain_mm": 5.4,
     "rain_probability": 0.64,
     "tmax_c": 22.4
@@ -350,165 +715,395 @@ The backend returns forecast information similar to:
 }
 ```
 
-The frontend then presents these values through the dashboard and displays an agricultural advisory when the rule engine produces one.
+The frontend presents these values and the advisory engine can generate an agricultural recommendation.
+
+The exact API response may change as V2 development progresses.
 
 ---
 
-# 11. Important Development Note
+# 19. Git / Team Development Workflow
 
-The current project is a **prototype**, not yet a production weather service.
+The project uses separate development branches.
 
-In particular:
-
-- Forecast quality still needs proper validation.
-- Model performance needs to be evaluated with suitable train/test methodology.
-- Rainfall, rain probability, and temperature predictions should be validated against appropriate historical observations.
-- Advisory rules need domain validation before real agricultural deployment.
-- Data freshness and forecast-date handling need further development.
-- The system should not be treated as a replacement for official weather or agricultural advisories.
-
----
-
-# 12. Current V1 Scope
-
-The current V1 focuses on establishing the core pipeline:
+Current structure:
 
 ```text
-Data
- ↓
-Features
- ↓
-ML Models
- ↓
-Forecast API
- ↓
-Advisory Engine
- ↓
-Web Dashboard
+main
+│
+├── v2-development
+│       └── Akash / ML + backend
+│
+└── frontend-development
+        └── Frontend teammate
 ```
 
-The goal at this stage is to make this pipeline reliable and understandable before adding more advanced features.
+The basic rule is:
 
----
+> **Do not develop directly on `main`.**
 
-# 13. Planned Development
+A normal workflow is:
 
-The next development stages are expected to focus on:
-
-### Phase 1 — Stabilize V1
-
-- Verify API responses
-- Verify frontend/API integration
-- Validate model outputs
-- Fix inconsistent forecast behaviour
-- Test multiple panchayats
-- Clean unused/backup code where appropriate
-
-### Phase 2 — Improve Forecasting
-
-- Better feature engineering
-- Better temporal/weather features
-- Proper validation metrics
-- Model comparison
-- Forecast confidence handling
-- Improved rainfall prediction
-
-### Phase 3 — Improve Agricultural Intelligence
-
-- Expand `rules.yaml`
-- Add crop-specific recommendations
-- Add rainfall thresholds
-- Add farming-action recommendations
-- Improve Bengali advisory content
-
-### Phase 4 — Improve Dashboard
-
-- Better visualizations
-- Forecast history
-- Trend information
-- Panchayat comparison
-- Clearer warnings/priorities
-- Mobile-friendly UI
-
-### Phase 5 — Deployment
-
-- Deploy backend
-- Deploy frontend
-- Configure production environment
-- Add secure environment variables where required
-- Add monitoring/logging
-- Make the application accessible to users outside the development machine
-
----
-
-# 14. Collaboration
-
-This repository is intended to be shared with the TerraMind development team.
-
-Typical workflow:
-
-```bash
-git pull
-```
-
-Create/update code, then:
-
-```bash
+```text
+Create / switch to your branch
+        ↓
+Pull latest branch changes
+        ↓
+Code
+        ↓
+Test
+        ↓
 git status
-git add .
-git commit -m "Describe your change"
+        ↓
+git add <specific-files>
+        ↓
+git commit
+        ↓
+git push
+        ↓
+Pull Request
+        ↓
+Owner review
+        ↓
+Merge into main
+```
+
+### Start working
+
+```powershell
+git switch <your-branch>
+git pull origin <your-branch>
+```
+
+### Save work
+
+```powershell
+git status
+git add <specific-files>
+git commit -m "Describe the change"
 git push
 ```
 
-Before starting major work, pull the latest changes:
+### Create a Pull Request
 
-```bash
-git pull
+On GitHub:
+
+```text
+Pull requests
+    ↓
+New pull request
+
+base: main
+compare: your-branch
 ```
 
-For larger features, use a separate Git branch rather than directly changing `main`.
+Describe what changed and what was tested.
 
-Example:
+### Owner merge
 
-```bash
-git checkout -b feature/new-advisory
+The repository owner reviews:
+
+```text
+Files changed
+     ↓
+Code correctness
+     ↓
+Accidental files/secrets
+     ↓
+Testing
+     ↓
+Merge Pull Request
 ```
 
-After completing the feature, push the branch:
+After a feature is merged, teammates can update their branch:
 
-```bash
-git push -u origin feature/new-advisory
+```powershell
+git switch main
+git pull origin main
+
+git switch <your-branch>
+git merge main
+git push
 ```
 
-Then create a Pull Request on GitHub.
+Because the current private personal repository does not enforce the branch-protection rule under the current GitHub setup, this workflow is currently a **team rule**. No one should directly push to `main`.
 
 ---
 
-# 15. Repository Safety
+# 20. Repository Safety
 
-The repository intentionally ignores:
+The repository intentionally ignores local/generated files such as:
 
 ```text
 .venv/
+__pycache__/
 node_modules/
+frontend/dist/
 .env
 *.log
-frontend/dist/
 ```
 
-It also excludes the older V0 model files and the large external river source dataset.
+Large external/gridded files are also kept outside Git where appropriate, including downloaded satellite/raster data.
 
-**Never commit API keys, passwords, private tokens, or other secrets.**
+### Never commit:
 
-If a secret is accidentally committed, removing it from the working directory is not enough; the Git history may still contain it and it should be rotated/revoked.
+```text
+API keys
+Passwords
+Earthdata credentials
+.netrc files
+Private tokens
+.env secrets
+```
+
+If a secret has accidentally been committed, removing the local file is not sufficient. The credential should be revoked/rotated and the Git history should be treated as compromised.
 
 ---
 
-# 16. TerraMind
+# 21. Current Development History
 
-**TerraMind** is a panchayat-level weather intelligence and agricultural advisory prototype developed for the SIH project.
+The ML work so far can be summarized as:
 
-The long-term objective is to turn localized environmental and weather data into **simple, actionable information for agricultural decision-making**.
+```text
+V1
+│
+├── Initial rainfall classifier
+├── Initial rainfall regressor
+└── Tmax regressor
+        ↓
+V1.1
+│
+├── Added DEM terrain features
+├── Added slope/aspect/roughness
+└── Tested terrain contribution
+        ↓
+V1.2
+│
+├── Investigated IMD rainfall
+├── Investigated IMERG rainfall
+├── Added CHIRPS 0.05° reference
+├── Changed rainfall target to CHIRPS T+1
+└── Used temporal train/validation/test splits
+        ↓
+V1.3
+│
+├── Multi-source rainfall calibration
+├── IMERG + IMD + Open-Meteo
+├── XGBoost residual correction
+└── Conservative residual factor α = 0.10
+```
+
+---
+
+# 22. What We Learned
+
+The experiments have produced several useful conclusions.
+
+### 1. Resolution matters
+
+The rainfall products did not provide equal spatial differentiation.
+
+Approximate effective spatial series in the study area:
+
+```text
+IMD       → 2
+IMERG     → 3
+CHIRPS    → 7
+```
+
+CHIRPS therefore provided the strongest spatial differentiation among the tested rainfall products.
+
+### 2. Multiple rainfall products contain complementary information
+
+In the V1.2 dataset, the strongest simple rainfall correlations with the CHIRPS target were:
+
+```text
+IMERG rainfall       ≈ 0.464
+Open-Meteo rainfall  ≈ 0.453
+IMD rainfall         ≈ 0.249
+```
+
+This supported the decision to experiment with multi-source calibration.
+
+### 3. A simple calibrated model was stronger than the first XGBoost amount model
+
+The multi-source linear calibration achieved:
+
+```text
+Test RMSE: 7.94 mm
+Test MAE:  4.59 mm
+```
+
+which was better than the V1.2 XGBoost rainfall model.
+
+### 4. Extreme rainfall remains difficult
+
+Even after calibration, heavy rainfall remains the largest error source.
+
+This is an important current limitation of the prototype and the main target for future research.
+
+---
+
+# 23. Current Limitations
+
+TerraMind is still a prototype.
+
+Current limitations include:
+
+- Rainfall products are gridded references rather than direct Panchayat rain-gauge measurements.
+- Heavy rainfall amounts remain difficult to estimate accurately.
+- The study area contains only eight Panchayats.
+- Historical training coverage is relatively limited.
+- Forecast quality requires further independent validation.
+- Agricultural advisory rules need domain validation.
+- Production data freshness and operational forecast handling still need further development.
+- The current models should not be treated as replacements for official weather services or agricultural advisories.
+
+---
+
+# 24. Planned V2 Development
+
+The next development phase should focus on turning the research prototype into a more complete decision-support application.
+
+## Forecasting
+
+Potential directions:
+
+```text
+Better extreme-rainfall handling
+Better temporal/weather features
+More robust spatial modeling
+Independent station validation
+Prediction uncertainty / confidence
+```
+
+## Agricultural intelligence
+
+Potential directions:
+
+```text
+Crop-specific advisories
+Rainfall threshold actions
+Sowing / irrigation / spraying guidance
+Flood and waterlogging alerts
+Improved Bengali advisory content
+```
+
+## Dashboard
+
+Potential directions:
+
+```text
+Forecast history
+Rainfall trend charts
+Panchayat comparison
+Risk/warning indicators
+Map-based visualization
+Mobile-friendly design
+```
+
+## Deployment
+
+Potential directions:
+
+```text
+Backend deployment
+Frontend deployment
+Secure environment variables
+Monitoring / logging
+Production data refresh
+```
+
+---
+
+# 25. Research Integrity / Evaluation Philosophy
+
+TerraMind's ML experiments use **time-based evaluation** rather than random splitting when future prediction is being simulated.
+
+The principle is:
+
+```text
+Past
+ ↓
+Training
+
+Later historical period
+ ↓
+Validation
+
+Future / held-out period
+ ↓
+Testing
+```
+
+This avoids using future observations as training information.
+
+Model improvements should be accepted only when they improve validation performance and then remain useful on an untouched test period.
+
+The project also keeps earlier model versions as baselines so that improvements can be measured rather than assumed.
+
+---
+
+# 26. Current V1.3 Summary
+
+```text
+Current rainfall architecture:
+
+IMERG
+   +
+IMD
+   +
+Open-Meteo
+      ↓
+Linear Calibration
+      ↓
+Calibrated Rainfall
+      +
+10% XGBoost Residual Correction
+      ↓
+CHIRPS-referenced rainfall estimate
+```
+
+Current reported test performance:
+
+```text
+RMSE: 7.88 mm
+MAE:  4.54 mm
+
+POD:  0.91
+FAR:  0.29
+CSI:  0.66
+```
+
+Maximum-temperature model:
+
+```text
+Tmax RMSE: 1.58 °C
+Tmax MAE:  1.20 °C
+Bias:     -0.12 °C
+```
+
+These figures are research/prototype evaluation results and should not be interpreted as guaranteed operational forecast accuracy.
+
+---
+
+# 27. TerraMind
+
+**TerraMind** is a panchayat-level weather intelligence and agricultural advisory prototype developed for the Smart India Hackathon project.
+
+The long-term objective is:
+
+```text
+Localized environmental data
+        +
+Weather information
+        +
+Machine learning
+        +
+Agricultural rules
+        ↓
+Simple, actionable information
+for local agricultural decision-making
+```
 
 ---
 
