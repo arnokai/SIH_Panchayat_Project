@@ -35,3 +35,39 @@ models/tmax_regressor.pkl
 
 # Large external river source dataset
 data/raw/rivers/
+
+# ==========================================
+# Generated ML / external datasets
+# ==========================================
+
+# NetCDF / satellite / gridded source files
+*.nc
+*.nc4
+*.h5
+*.hdf5
+*.tif
+*.tiff
+
+# Local downloaded/generated raster directories
+data/raw/dem/
+data/raw/imd/
+data/raw/imerg/
+
+# Generated rainfall/reference datasets
+data/raw/chirps_panchayat_rainfall.csv
+data/raw/chirps_spatial_test.csv
+data/raw/imd_panchayat_rainfall.csv
+data/raw/imerg_panchayat_rainfall.csv
+
+# Generated ML datasets/results
+data/raw/v1_2_training_dataset.csv
+data/raw/v1_2_evaluation_predictions.csv
+data/raw/v1_3_predictions.csv
+data/raw/v1_3_residual_strength_results.csv
+
+# Temporary test/download files
+test_imerg_subset.nc4
+test_20240102_response.bin
+
+# Python-generated feature tables
+data/raw/panchayat_terrain_features.csv
