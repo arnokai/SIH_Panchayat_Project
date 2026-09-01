@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import ComparisonMap from "./ComparisonMap";
+
 
 const PANCHAYATS = [
   { id: "A1", name: "ADHATA" },
@@ -12,11 +14,51 @@ const PANCHAYATS = [
   { id: "A8", name: "TARABERIA" },
 ];
 
+
+const CROPS = [
+  { id: "paddy", name: "Paddy" },
+  { id: "vegetables", name: "Vegetables" },
+];
+
+
+function formatDate(dateString) {
+  const date = new Date(`${dateString}T00:00:00`);
+
+  return date.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
+
+function getAdvisoryClass(priority) {
+  const value = priority?.toLowerCase();
+
+  if (value === "high") return "high";
+  if (value === "medium") return "medium";
+
+  return "low";
+}
+
+
 function App() {
   const [selectedId, setSelectedId] = useState("A2");
+
+  const [selectedCrop, setSelectedCrop] = useState("paddy");
+
   const [data, setData] = useState(null);
+
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
+
+  const [mapDate, setMapDate] = useState("");
+
+
+  // ==========================================================
+  // FETCH FORECAST
+  // ==========================================================
 
   useEffect(() => {
     async function fetchForecast() {
@@ -24,319 +66,831 @@ function App() {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `http://127.0.0.1:8000/v1/forecast?panchayat_id=${selectedId}`
-        );
+        const url =
+          `http://127.0.0.1:8000/v1/forecast` +
+          `?panchayat_id=${selectedId}` +
+          `&days=5` +
+          `&lang=bn` +
+          `&crop=${encodeURIComponent(selectedCrop)}`;
+
+
+        const response = await fetch(url);
+
 
         if (!response.ok) {
-          throw new Error("Failed to fetch forecast");
+          throw new Error(
+            "Failed to fetch forecast"
+          );
         }
 
+
         const result = await response.json();
+
+
+        setMapDate(
+          result.forecast?.[0]?.date || ""
+        );
+
+
         setData(result);
+
       } catch (err) {
-        setError("Unable to connect to the forecast server.");
+        console.error(err);
+
+        setError(
+          "Unable to connect to the forecast server."
+        );
+
       } finally {
         setLoading(false);
       }
     }
 
+
     fetchForecast();
-  }, [selectedId]);
 
-  const rainProbability = data
-    ? Math.round(data.forecast.rain_probability * 100)
-    : 0;
+  }, [selectedId, selectedCrop]);
 
-  const priority = data?.advisory?.priority?.toLowerCase() || "low";
+
+  // ==========================================================
+  // DERIVED DATA
+  // ==========================================================
+
+  const forecastDays =
+    data?.forecast || [];
+
+
+  const activeAdvisories =
+    data?.advisories?.filter(
+      (item) =>
+        item?.priority?.toLowerCase() === "high"
+    ) || [];
+
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
 
   return (
     <div className="app">
 
-      {/* =========================
+      {/* ======================================================
           HEADER
-      ========================= */}
+      ====================================================== */}
+
       <header className="header">
+
         <div className="header-inner">
 
           <div className="brand-block">
-            <h1>TerraMind</h1>
-            <p>Panchayat-Level Weather Intelligence</p>
+
+            <h1>
+              TerraMind
+            </h1>
+
+            <p>
+              Panchayat-Level Weather Intelligence
+            </p>
+
           </div>
 
+
           <div className="location">
-            AMDANGA BLOCK <span>•</span> NORTH 24 PARGANAS
+
+            AMDANGA BLOCK
+            <span>•</span>
+            NORTH 24 PARGANAS
+
           </div>
 
         </div>
+
       </header>
 
 
       <main className="container">
 
-        {/* =========================
-            PANCHAYAT SELECTOR
-        ========================= */}
+
+        {/* ====================================================
+            PANCHAYAT + CROP SELECTOR
+        ==================================================== */}
+
         <section className="selector-card">
+
+
+          {/* Panchayat */}
 
           <div className="selector-left">
 
-            <label htmlFor="panchayat-select">
+            <label
+              htmlFor="panchayat-select"
+            >
               PANCHAYAT
             </label>
+
 
             <select
               id="panchayat-select"
               value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
+              onChange={(e) =>
+                setSelectedId(
+                  e.target.value
+                )
+              }
             >
-              {PANCHAYATS.map((panchayat) => (
-                <option
-                  key={panchayat.id}
-                  value={panchayat.id}
-                >
-                  {panchayat.name}
-                </option>
-              ))}
+
+              {PANCHAYATS.map(
+                (panchayat) => (
+
+                  <option
+                    key={panchayat.id}
+                    value={panchayat.id}
+                  >
+                    {panchayat.name}
+                  </option>
+
+                )
+              )}
+
             </select>
 
           </div>
 
+
+          {/* Crop */}
+
+          <div className="selector-left">
+
+            <label
+              htmlFor="crop-select"
+            >
+              CROP
+            </label>
+
+
+            <select
+              id="crop-select"
+              value={selectedCrop}
+              onChange={(e) =>
+                setSelectedCrop(
+                  e.target.value
+                )
+              }
+            >
+
+              {CROPS.map(
+                (crop) => (
+
+                  <option
+                    key={crop.id}
+                    value={crop.id}
+                  >
+                    {crop.name}
+                  </option>
+
+                )
+              )}
+
+            </select>
+
+          </div>
+
+
+          {/* Model status */}
+
           <div className="model-status">
+
             <span className="status-dot"></span>
-            <span>V1 MODEL ACTIVE</span>
+
+
+            <div className="model-status-text">
+
+              <span>
+                {data?.degraded
+                  ? "V2 FALLBACK ACTIVE"
+                  : "V2 MODEL ACTIVE"}
+              </span>
+
+
+              {data?.degraded && (
+                <small>
+                  Coarse 5-day forecast
+                </small>
+              )}
+
+            </div>
+
           </div>
 
         </section>
 
 
-        {/* =========================
+        {/* ====================================================
             LOADING
-        ========================= */}
+        ==================================================== */}
+
         {loading && (
+
           <div className="loading">
+
             <div className="loading-spinner"></div>
-            <span>Loading forecast...</span>
+
+            <span>
+              Loading 5-day forecast...
+            </span>
+
           </div>
+
         )}
 
 
-        {/* =========================
+        {/* ====================================================
             ERROR
-        ========================= */}
+        ==================================================== */}
+
         {error && (
+
           <div className="error">
-            <strong>Forecast unavailable</strong>
-            <span>{error}</span>
+
+            <strong>
+              Forecast unavailable
+            </strong>
+
+            <span>
+              {error}
+            </span>
+
           </div>
+
         )}
 
 
-        {/* =========================
+        {/* ====================================================
             DASHBOARD
-        ========================= */}
-        {!loading && !error && data && (
-          <div className="dashboard">
+        ==================================================== */}
 
-            {/* =========================
-                FORECAST HEADER
-            ========================= */}
-            <section className="forecast-heading">
+        {!loading &&
+          !error &&
+          data && (
 
-              <div>
-                <p className="eyebrow">
-                  TODAY'S FORECAST
-                </p>
-
-                <h2>
-                  {data.panchayat_name}
-                </h2>
-              </div>
-
-              <div className="forecast-date">
-                <span>FORECAST DATE</span>
-                <strong>{data.forecast.date}</strong>
-              </div>
-
-            </section>
+            <div className="dashboard">
 
 
-            {/* =========================
-                WEATHER METRICS
-            ========================= */}
-            <section className="forecast-grid">
+              {/* ==============================================
+                  FORECAST HEADER
+              ============================================== */}
 
-              {/* RAINFALL */}
-              <div className="metric-card">
-
-                <div className="metric-top">
-                  <p>RAINFALL</p>
-                  <div className="metric-icon rain-icon">↘</div>
-                </div>
-
-                <strong className="metric-value">
-                  {data.forecast.rain_mm}
-                  <span> mm</span>
-                </strong>
-
-                <small>
-                  Expected rainfall
-                </small>
-
-              </div>
-
-
-              {/* RAIN PROBABILITY */}
-              <div className="metric-card">
-
-                <div className="metric-top">
-                  <p>RAIN PROBABILITY</p>
-                  <div className="metric-icon probability-icon">%</div>
-                </div>
-
-                <strong className="metric-value">
-                  {rainProbability}
-                  <span>%</span>
-                </strong>
-
-                <small>
-                  Probability of rain
-                </small>
-
-                <div className="probability-bar">
-                  <div
-                    className="probability-fill"
-                    style={{
-                      width: `${rainProbability}%`,
-                    }}
-                  ></div>
-                </div>
-
-              </div>
-
-
-              {/* TEMPERATURE */}
-              <div className="metric-card">
-
-                <div className="metric-top">
-                  <p>MAX TEMPERATURE</p>
-                  <div className="metric-icon temp-icon">°</div>
-                </div>
-
-                <strong className="metric-value">
-                  {data.forecast.tmax_c}
-                  <span>°C</span>
-                </strong>
-
-                <small>
-                  Expected maximum temperature
-                </small>
-
-              </div>
-
-            </section>
-
-
-            {/* =========================
-                AGRICULTURAL ADVISORY
-            ========================= */}
-            <section className={`advisory advisory-${priority}`}>
-
-              <div className="advisory-top">
+              <section className="forecast-heading">
 
                 <div>
+
                   <p className="eyebrow">
-                    AGRICULTURAL ADVISORY
+                    NEXT 5 DAYS
                   </p>
 
-                  <h3>
-                    Action Recommendation
-                  </h3>
+
+                  <h2>
+                    {data.panchayat_name}
+                  </h2>
+
                 </div>
 
-                <span className={`priority priority-${priority}`}>
-                  {priority.toUpperCase()}
+
+                <div className="forecast-meta">
+
+                  <span>
+                    ISSUED
+                  </span>
+
+
+                  <strong>
+
+                    {data.issued_at
+                      ? new Date(
+                          data.issued_at
+                        ).toLocaleString(
+                          "en-IN",
+                          {
+                            dateStyle:
+                              "medium",
+
+                            timeStyle:
+                              "short",
+                          }
+                        )
+                      : "—"}
+
+                  </strong>
+
+                </div>
+
+              </section>
+
+
+              {/* ==============================================
+                  CROP INFORMATION
+              ============================================== */}
+
+              <section className="degraded-banner">
+
+                <strong>
+                  Selected crop:{" "}
+                  {CROPS.find(
+                    (crop) =>
+                      crop.id === selectedCrop
+                  )?.name ||
+                    selectedCrop}
+                </strong>
+
+                <span>
+                  Crop-aware advisory rules are being
+                  evaluated for the selected crop.
                 </span>
 
-              </div>
+              </section>
 
 
-              {data.advisory.text_en ? (
-                <div className="advisory-content">
+              {/* ==============================================
+                  DEGRADED NOTICE
+              ============================================== */}
 
-                  <p className="advisory-en">
-                    {data.advisory.text_en}
-                  </p>
+              {data.degraded && (
 
-                  {data.advisory.text_bn && (
-                    <p className="advisory-bn">
-                      {data.advisory.text_bn}
-                    </p>
-                  )}
+                <section className="degraded-banner">
 
-                </div>
-              ) : (
-                <div className="advisory-content">
+                  <strong>
+                    Prototype forecast mode
+                  </strong>
 
-                  <p className="advisory-en">
-                    No special agricultural advisory for today.
-                  </p>
 
-                  <p className="advisory-note">
-                    Continue normal agricultural operations
-                    while monitoring local weather conditions.
-                  </p>
+                  <span>
+                    {data.degraded_reason}
+                  </span>
 
-                </div>
+                </section>
+
               )}
 
-            </section>
+
+              {/* ==============================================
+                  5-DAY FORECAST
+              ============================================== */}
+
+              <section className="five-day-grid">
+
+                {forecastDays.map(
+                  (day) => {
+
+                    const priority =
+                      getAdvisoryClass(
+                        day.advisory?.priority
+                      );
 
 
-            {/* =========================
-                SYSTEM INFORMATION
-            ========================= */}
-            <section className="info-grid">
+                    const probability =
+                      Math.round(
+                        (day.rain_probability || 0) *
+                        100
+                      );
 
-              <div className="info-card">
-                <span>MODEL VERSION</span>
-                <strong>
-                  {data.model_version}
-                </strong>
-              </div>
 
-              <div className="info-card">
-                <span>DATA SOURCE</span>
-                <strong>
-                  Historical Weather + Terrain
-                </strong>
-              </div>
+                    return (
 
-              <div className="info-card">
-                <span>PANCHAYAT ID</span>
-                <strong>
-                  {data.panchayat_id}
-                </strong>
-              </div>
+                      <article
+                        className="day-card"
+                        key={day.date}
+                      >
 
-            </section>
 
-          </div>
-        )}
+                        {/* Day header */}
+
+                        <div className="day-card-header">
+
+                          <div>
+
+                            <p className="day-name">
+                              {formatDate(
+                                day.date
+                              )}
+                            </p>
+
+
+                            <span className="day-date">
+                              {day.date}
+                            </span>
+
+                          </div>
+
+
+                          <div className="day-rain-symbol">
+
+                            {day.rain_mm?.p50 > 0
+                              ? "↘"
+                              : "—"}
+
+                          </div>
+
+                        </div>
+
+
+                        {/* Rain */}
+
+                        <div className="day-main-weather">
+
+                          <div className="rain-value">
+
+                            <strong>
+                              {day.rain_mm?.p50 ??
+                                "—"}
+                            </strong>
+
+                            <span>
+                              mm
+                            </span>
+
+                          </div>
+
+
+                          <p>
+                            Expected rainfall
+                          </p>
+
+                        </div>
+
+
+                        {/* Statistics */}
+
+                        <div className="day-stats">
+
+
+                          <div>
+
+                            <span>
+                              RAIN PROB.
+                            </span>
+
+                            <strong>
+                              {probability}%
+                            </strong>
+
+                          </div>
+
+
+                          <div>
+
+                            <span>
+                              TEMP.
+                            </span>
+
+                            <strong>
+                              {day.tmax_c?.p50 ??
+                                "—"}°C
+                            </strong>
+
+                          </div>
+
+
+                          <div>
+
+                            <span>
+                              MIN.
+                            </span>
+
+                            <strong>
+                              {day.tmin_c ??
+                                "—"}°C
+                            </strong>
+
+                          </div>
+
+                        </div>
+
+
+                        {/* Probability */}
+
+                        <div className="probability-bar">
+
+                          <div
+                            className="probability-fill"
+                            style={{
+                              width:
+                                `${probability}%`,
+                            }}
+                          ></div>
+
+                        </div>
+
+
+                        {/* Advisory */}
+
+                        <div
+                          className={
+                            `day-advisory ` +
+                            `day-advisory-${priority}`
+                          }
+                        >
+
+                          <span className="day-advisory-label">
+                            ADVISORY
+                          </span>
+
+
+                          {day.advisory?.text_bn ? (
+
+                            <p>
+                              {day.advisory.text_bn}
+                            </p>
+
+                          ) : day.advisory?.text_en ? (
+
+                            <p>
+                              {day.advisory.text_en}
+                            </p>
+
+                          ) : (
+
+                            <p>
+                              No special advisory.
+                            </p>
+
+                          )}
+
+                        </div>
+
+                      </article>
+
+                    );
+
+                  }
+                )}
+
+              </section>
+
+
+              {/* ==============================================
+                  MAP
+              ============================================== */}
+
+              <ComparisonMap
+                forecastDays={
+                  forecastDays
+                }
+
+                selectedId={
+                  selectedId
+                }
+
+                selectedDate={
+                  mapDate
+                }
+
+                onDateChange={
+                  setMapDate
+                }
+              />
+
+
+              {/* ==============================================
+                  AGRICULTURAL ADVISORY
+              ============================================== */}
+
+              <section className="advisory">
+
+
+                <div className="advisory-top">
+
+                  <div>
+
+                    <p className="eyebrow">
+                      AGRICULTURAL ADVISORY
+                    </p>
+
+
+                    <h3>
+                      Action Recommendation
+                    </h3>
+
+                  </div>
+
+
+                  <span
+                    className={
+                      `priority priority-${
+                        activeAdvisories.length > 0
+                          ? "high"
+                          : "low"
+                      }`
+                    }
+                  >
+
+                    {activeAdvisories.length > 0
+                      ? "ATTENTION"
+                      : "LOW"}
+
+                  </span>
+
+                </div>
+
+
+                {data.advisories?.length > 0 ? (
+
+                  <div className="advisory-list">
+
+                    {data.advisories.map(
+                      (item) => (
+
+                        <div
+                          className={
+                            `advisory-item ` +
+                            `advisory-item-${getAdvisoryClass(
+                              item.priority
+                            )}`
+                          }
+
+                          key={
+                            `${item.date}-${item.rule_id}`
+                          }
+                        >
+
+                          <div className="advisory-item-date">
+
+                            {formatDate(
+                              item.date
+                            )}
+
+                          </div>
+
+
+                          <div className="advisory-item-body">
+
+                            <strong>
+
+                              {item.text_bn ||
+                                item.text_en}
+
+                            </strong>
+
+
+                            <small>
+                              {item.text_en}
+                            </small>
+
+                          </div>
+
+                        </div>
+
+                      )
+                    )}
+
+                  </div>
+
+                ) : (
+
+                  <div className="advisory-content">
+
+                    <p className="advisory-en">
+                      No special agricultural advisory
+                      for the next five days.
+                    </p>
+
+
+                    <p className="advisory-note">
+                      Continue normal agricultural
+                      operations while monitoring local
+                      weather conditions.
+                    </p>
+
+                  </div>
+
+                )}
+
+              </section>
+
+
+              {/* ==============================================
+                  SYSTEM INFORMATION
+              ============================================== */}
+
+              <section className="info-grid">
+
+
+                <div className="info-card">
+
+                  <span>
+                    MODEL VERSION
+                  </span>
+
+                  <strong>
+                    {data.model_version}
+                  </strong>
+
+                </div>
+
+
+                <div className="info-card">
+
+                  <span>
+                    RAINFALL MODEL
+                  </span>
+
+                  <strong>
+                    {data.rainfall_model}
+                  </strong>
+
+                </div>
+
+
+                <div className="info-card">
+
+                  <span>
+                    DATA SOURCE
+                  </span>
+
+                  <strong>
+                    {data.source}
+                  </strong>
+
+                </div>
+
+
+                <div className="info-card">
+
+                  <span>
+                    PANCHAYAT ID
+                  </span>
+
+                  <strong>
+                    {data.panchayat_id}
+                  </strong>
+
+                </div>
+
+
+                <div className="info-card">
+
+                  <span>
+                    CROP
+                  </span>
+
+                  <strong>
+                    {data.crop}
+                  </strong>
+
+                </div>
+
+
+                <div className="info-card">
+
+                  <span>
+                    BLOCK LATITUDE
+                  </span>
+
+                  <strong>
+                    {data.coarse_coordinate?.latitude}
+                  </strong>
+
+                </div>
+
+
+                <div className="info-card">
+
+                  <span>
+                    BLOCK LONGITUDE
+                  </span>
+
+                  <strong>
+                    {data.coarse_coordinate?.longitude}
+                  </strong>
+
+                </div>
+
+
+              </section>
+
+            </div>
+
+          )}
 
       </main>
 
 
-      {/* =========================
+      {/* ======================================================
           FOOTER
-      ========================= */}
+      ====================================================== */}
+
       <footer>
-        TerraMind <span>•</span> Panchayat Weather Intelligence
-        <span>•</span> V1 Prototype
+
+        TerraMind
+        <span>•</span>
+        Panchayat Weather Intelligence
+        <span>•</span>
+        V2 Prototype
+
       </footer>
 
     </div>
   );
 }
+
 
 export default App;
