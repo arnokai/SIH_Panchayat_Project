@@ -1,6 +1,6 @@
-/* =========================
-   GLOBAL
-========================= */
+/* =========================================================
+   TERRAMIND V2 — GLOBAL
+========================================================= */
 
 * {
   box-sizing: border-box;
@@ -28,14 +28,14 @@ select {
 }
 
 
-/* =========================
+/* =========================================================
    HEADER
-========================= */
+========================================================= */
 
 .header {
   background: #06372b;
   color: white;
-  padding: 46px 0 42px;
+  padding: 48px 0 44px;
 }
 
 .header-inner {
@@ -45,73 +45,77 @@ select {
 
 .brand-block h1 {
   margin: 0;
-  font-size: 48px;
+  font-size: 54px;
   line-height: 1;
   font-weight: 800;
-  letter-spacing: -1.5px;
+  letter-spacing: -2px;
 }
 
 .brand-block p {
-  margin: 16px 0 0;
-  font-size: 19px;
+  margin: 17px 0 0;
+  font-size: 20px;
   font-weight: 400;
 }
 
 .location {
-  margin-top: 28px;
+  margin-top: 29px;
   font-size: 15px;
   font-weight: 800;
-  letter-spacing: 2.2px;
-  color: #e8e9d7;
+  letter-spacing: 2.5px;
+  color: #e9eadb;
 }
 
 .location span {
-  margin: 0 8px;
+  margin: 0 9px;
 }
 
 
-/* =========================
-   MAIN CONTAINER
-========================= */
+/* =========================================================
+   MAIN
+========================================================= */
 
 .container {
   width: min(1400px, calc(100% - 80px));
   margin: 0 auto;
-  padding: 42px 0 55px;
+  padding: 48px 0 70px;
 }
 
 
-/* =========================
+/* =========================================================
    PANCHAYAT SELECTOR
-========================= */
+========================================================= */
 
 .selector-card {
   width: 100%;
-  min-height: 135px;
+  min-height: 140px;
 
-  background: #ffffff;
-  border: 1px solid #d7e2dc;
-  border-radius: 24px;
-
-  padding: 30px 40px;
+  padding: 31px 40px;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 35px;
 
-  box-shadow: 0 10px 25px rgba(20, 55, 45, 0.045);
+  background: #ffffff;
+  border: 1px solid #d7e2dc;
+  border-radius: 25px;
+
+  box-shadow:
+    0 12px 30px rgba(20, 55, 45, 0.05);
 }
 
 .selector-left {
+  flex: 1;
+
   display: grid;
-  grid-template-columns: 115px 470px;
+  grid-template-columns: 130px minmax(300px, 610px);
   align-items: center;
-  gap: 22px;
+  gap: 24px;
 }
 
 .selector-left label {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   color: #082b20;
 }
 
@@ -119,10 +123,10 @@ select {
   width: 100%;
   height: 70px;
 
-  padding: 0 25px;
+  padding: 0 27px;
 
   border: 1px solid #8db7a4;
-  border-radius: 16px;
+  border-radius: 17px;
 
   background: white;
   color: #082b20;
@@ -132,62 +136,88 @@ select {
 
   outline: none;
   cursor: pointer;
+
+  appearance: auto;
 }
 
 .selector-left select:focus {
-  border-color: #4c9d70;
-  box-shadow: 0 0 0 4px rgba(76, 157, 112, 0.10);
+  border-color: #4da36b;
+
+  box-shadow:
+    0 0 0 5px rgba(77, 163, 107, 0.10);
 }
 
 
-/* =========================
+/* =========================================================
    MODEL STATUS
-========================= */
+========================================================= */
 
 .model-status {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 17px;
 
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 2px;
+  min-width: 270px;
 
   color: #54786b;
+
   white-space: nowrap;
 }
 
 .status-dot {
   width: 22px;
   height: 22px;
+
+  flex: 0 0 auto;
+
   border-radius: 50%;
+
   background: #4da36b;
 
-  box-shadow: 0 0 0 9px #edf5ef;
+  box-shadow:
+    0 0 0 9px #edf5ef;
+}
+
+.model-status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.model-status-text > span {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.model-status-text small {
+  font-size: 13px;
+  font-weight: 600;
+  color: #789188;
 }
 
 
-/* =========================
+/* =========================================================
    LOADING
-========================= */
+========================================================= */
 
 .loading {
-  min-height: 180px;
+  min-height: 200px;
 
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 13px;
 
   color: #54786b;
   font-size: 16px;
 }
 
 .loading-spinner {
-  width: 20px;
-  height: 20px;
+  width: 21px;
+  height: 21px;
 
-  border: 3px solid #d7e5dd;
+  border: 3px solid #d8e6de;
   border-top-color: #4da36b;
 
   border-radius: 50%;
@@ -202,21 +232,22 @@ select {
 }
 
 
-/* =========================
+/* =========================================================
    ERROR
-========================= */
+========================================================= */
 
 .error {
-  margin-top: 30px;
-  padding: 24px;
+  margin-top: 35px;
 
-  background: #fff4f2;
-  border: 1px solid #ead2cd;
-  border-radius: 18px;
+  padding: 26px 28px;
 
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
+
+  background: #fff5f3;
+  border: 1px solid #ead2cd;
+  border-radius: 18px;
 }
 
 .error strong {
@@ -228,23 +259,25 @@ select {
 }
 
 
-/* =========================
+/* =========================================================
    DASHBOARD
-========================= */
+========================================================= */
 
 .dashboard {
   margin-top: 55px;
 }
 
 
-/* =========================
+/* =========================================================
    FORECAST HEADING
-========================= */
+========================================================= */
 
 .forecast-heading {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+
+  gap: 30px;
 
   margin-bottom: 30px;
 }
@@ -262,114 +295,228 @@ select {
 .forecast-heading h2 {
   margin: 0;
 
-  font-size: 40px;
-  line-height: 1;
-
-  font-weight: 800;
-  letter-spacing: -1px;
-}
-
-.forecast-date {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-
-  font-size: 16px;
-  color: #5b7c70;
-}
-
-.forecast-date span {
-  font-weight: 500;
-}
-
-.forecast-date strong {
-  font-weight: 800;
-}
-
-
-/* =========================
-   WEATHER METRICS
-========================= */
-
-.forecast-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
-}
-
-.metric-card {
-  min-height: 235px;
-
-  background: white;
-  border: 1px solid #d9e4de;
-  border-radius: 21px;
-
-  padding: 28px 30px;
-
-  box-shadow: 0 9px 24px rgba(20, 55, 45, 0.04);
-}
-
-.metric-top {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.metric-top p {
-  margin: 0;
-
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 2.5px;
-
-  color: #5b7c70;
-}
-
-.metric-icon {
-  height: 24px;
-
-  display: flex;
-  align-items: center;
-
-  font-size: 19px;
-  color: #082b20;
-}
-
-.metric-value {
-  display: block;
-
-  margin-top: 22px;
-
-  font-size: 48px;
+  font-size: 45px;
   line-height: 1;
 
   font-weight: 800;
   letter-spacing: -1.5px;
 }
 
-.metric-value span {
-  margin-left: 4px;
+.forecast-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+
+  color: #5b7c70;
+
+  font-size: 16px;
+}
+
+.forecast-meta span {
+  font-weight: 500;
+}
+
+.forecast-meta strong {
+  color: #082b20;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   DEGRADED / FALLBACK NOTICE
+========================================================= */
+
+.degraded-banner {
+  margin-bottom: 24px;
+
+  padding: 19px 23px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  border: 1px solid #e2d8ad;
+  border-radius: 16px;
+
+  background: #fffbea;
+
+  color: #655b30;
+}
+
+.degraded-banner strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.degraded-banner span {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   FIVE DAY GRID
+========================================================= */
+
+.five-day-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  gap: 16px;
+
+  align-items: stretch;
+}
+
+
+/* =========================================================
+   DAY CARD
+========================================================= */
+
+.day-card {
+  min-width: 0;
+
+  padding: 22px 20px 20px;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #ffffff;
+
+  border: 1px solid #d9e4de;
+  border-radius: 21px;
+
+  box-shadow:
+    0 9px 24px rgba(20, 55, 45, 0.04);
+}
+
+
+/* =========================================================
+   DAY CARD HEADER
+========================================================= */
+
+.day-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding-bottom: 16px;
+
+  border-bottom: 1px solid #e7efeb;
+}
+
+.day-name {
+  margin: 0;
+
+  font-size: 16px;
+  font-weight: 800;
+
+  color: #082b20;
+}
+
+.day-date {
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 12px;
+
+  color: #789188;
+}
+
+.day-rain-symbol {
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   font-size: 22px;
-  font-weight: 500;
-  letter-spacing: 0;
+  color: #082b20;
+}
 
+
+/* =========================================================
+   MAIN RAINFALL
+========================================================= */
+
+.day-main-weather {
+  margin-top: 22px;
+}
+
+.rain-value {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.rain-value strong {
+  font-size: 39px;
+  line-height: 1;
+
+  font-weight: 800;
+  letter-spacing: -1.5px;
+}
+
+.rain-value span {
+  font-size: 18px;
   color: #658479;
 }
 
-.metric-card small {
-  display: block;
+.day-main-weather p {
+  margin: 8px 0 0;
 
-  margin-top: 19px;
+  font-size: 13px;
 
-  font-size: 15px;
   color: #708c82;
 }
 
 
-/* =========================
-   PROBABILITY BAR
-========================= */
+/* =========================================================
+   DAY STATS
+========================================================= */
+
+.day-stats {
+  display: grid;
+
+  grid-template-columns: 1fr;
+
+  gap: 12px;
+
+  margin-top: 21px;
+}
+
+.day-stats div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 8px;
+}
+
+.day-stats span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+
+  color: #789188;
+}
+
+.day-stats strong {
+  font-size: 15px;
+  font-weight: 800;
+
+  color: #082b20;
+}
+
+
+/* =========================================================
+   PROBABILITY
+========================================================= */
 
 .probability-bar {
   width: 100%;
@@ -380,36 +527,89 @@ select {
   overflow: hidden;
 
   border-radius: 10px;
+
   background: #e6eee9;
 }
 
 .probability-fill {
   height: 100%;
+
   border-radius: inherit;
+
   background: #4da36b;
 
-  transition: width 0.5s ease;
+  transition: width 0.4s ease;
 }
 
 
-/* =========================
+/* =========================================================
+   DAY ADVISORY
+========================================================= */
+
+.day-advisory {
+  margin-top: 21px;
+
+  padding-top: 16px;
+
+  border-top: 1px solid #e7efeb;
+}
+
+.day-advisory-label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+
+  color: #6e887d;
+}
+
+.day-advisory p {
+  margin: 0;
+
+  font-size: 14px;
+  line-height: 1.55;
+
+  color: #36594c;
+}
+
+.day-advisory-high {
+  border-top-color: #e4cfca;
+}
+
+.day-advisory-high p {
+  color: #7a3329;
+}
+
+.day-advisory-medium p {
+  color: #6a5721;
+}
+
+
+/* =========================================================
    AGRICULTURAL ADVISORY
-========================= */
+========================================================= */
 
 .advisory {
-  margin-top: 22px;
+  margin-top: 25px;
 
-  padding: 32px 36px;
+  padding: 34px 38px;
 
   background: #edf6ef;
+
   border: 1px solid #cfe0d4;
   border-radius: 21px;
 }
 
 .advisory-top {
   display: flex;
+
   align-items: flex-start;
   justify-content: space-between;
+
+  gap: 30px;
 }
 
 .advisory .eyebrow {
@@ -419,13 +619,23 @@ select {
 .advisory h3 {
   margin: 0;
 
-  font-size: 27px;
+  font-size: 29px;
   line-height: 1.15;
+
   font-weight: 800;
 }
 
+
+/* =========================================================
+   PRIORITY
+========================================================= */
+
 .priority {
-  padding: 10px 25px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 11px 25px;
 
   border-radius: 30px;
 
@@ -437,8 +647,89 @@ select {
   color: #1e5c3a;
 }
 
+.priority-high {
+  background: #f2d8d4;
+  color: #8a3128;
+}
+
+.priority-medium {
+  background: #eee4c8;
+  color: #725c1e;
+}
+
+
+/* =========================================================
+   ADVISORY LIST
+========================================================= */
+
+.advisory-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 13px;
+
+  margin-top: 30px;
+}
+
+.advisory-item {
+  display: grid;
+
+  grid-template-columns: 130px 1fr;
+
+  gap: 20px;
+
+  padding: 17px 19px;
+
+  border: 1px solid #d5e5da;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.advisory-item-date {
+  padding-top: 2px;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  color: #557468;
+}
+
+.advisory-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.advisory-item-body strong {
+  font-family:
+    "Nirmala UI",
+    "Noto Sans Bengali",
+    Arial,
+    sans-serif;
+
+  font-size: 18px;
+  line-height: 1.55;
+
+  font-weight: 700;
+
+  color: #082b20;
+}
+
+.advisory-item-body small {
+  font-size: 13px;
+  line-height: 1.45;
+
+  color: #6c867b;
+}
+
+
+/* =========================================================
+   EMPTY ADVISORY
+========================================================= */
+
 .advisory-content {
-  margin-top: 32px;
+  margin-top: 28px;
 }
 
 .advisory-en {
@@ -446,20 +737,12 @@ select {
 
   font-size: 19px;
   line-height: 1.5;
+
   font-weight: 700;
 }
 
-.advisory-bn {
-  margin: 12px 0 0;
-
-  font-size: 20px;
-  line-height: 1.5;
-
-  color: #54766a;
-}
-
 .advisory-note {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
 
   font-size: 15px;
   line-height: 1.5;
@@ -468,56 +751,68 @@ select {
 }
 
 
-/* =========================
+/* =========================================================
    SYSTEM INFORMATION
-========================= */
+========================================================= */
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
 
-  margin-top: 22px;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 20px;
+
+  margin-top: 24px;
 }
 
 .info-card {
-  min-height: 95px;
+  min-height: 110px;
 
   padding: 23px 27px;
-
-  background: white;
-  border: 1px solid #d9e4de;
-  border-radius: 18px;
 
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 6px;
+
+  gap: 8px;
+
+  background: white;
+
+  border: 1px solid #d9e4de;
+  border-radius: 18px;
 }
 
 .info-card span {
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
+
   color: #6a8178;
 }
 
 .info-card strong {
   font-size: 17px;
+  line-height: 1.4;
+
   font-weight: 800;
+
+  color: #082b20;
 }
 
 
-/* =========================
+/* =========================================================
    FOOTER
-========================= */
+========================================================= */
 
 footer {
   border-top: 1px solid #dce5e0;
 
-  padding: 28px 20px;
+  padding: 29px 20px;
 
   text-align: center;
 
   color: #6c8980;
+
   font-size: 14px;
 }
 
@@ -526,15 +821,15 @@ footer span {
 }
 
 
-/* =========================
-   RESPONSIVE
-========================= */
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
 
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
 
   .header-inner,
   .container {
-    width: min(92%, 1400px);
+    width: min(94%, 1400px);
   }
 
   .selector-card {
@@ -542,28 +837,25 @@ footer span {
   }
 
   .selector-left {
-    grid-template-columns: 100px minmax(280px, 450px);
+    grid-template-columns: 110px minmax(260px, 1fr);
   }
 
-  .selector-left select {
-    height: 65px;
-    font-size: 20px;
+  .five-day-grid {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
   }
 
-  .forecast-grid,
   .info-grid {
-    gap: 18px;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
   }
 
-  .metric-card {
-    padding: 25px;
-  }
-
-  .metric-value {
-    font-size: 44px;
-  }
 }
 
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
 
 @media (max-width: 800px) {
 
@@ -572,23 +864,24 @@ footer span {
   }
 
   .brand-block h1 {
-    font-size: 42px;
+    font-size: 44px;
   }
 
   .brand-block p {
-    margin-top: 13px;
+    margin-top: 14px;
     font-size: 18px;
   }
 
   .location {
-    margin-top: 25px;
-    font-size: 14px;
+    margin-top: 24px;
+    font-size: 12px;
+    letter-spacing: 1.7px;
   }
+
 
   .selector-card {
     flex-direction: column;
     align-items: stretch;
-    gap: 25px;
   }
 
   .selector-left {
@@ -596,35 +889,80 @@ footer span {
     gap: 10px;
   }
 
+  .selector-left select {
+    height: 62px;
+    font-size: 20px;
+  }
+
   .model-status {
+    min-width: 0;
     justify-content: center;
   }
 
+
   .dashboard {
-    margin-top: 42px;
+    margin-top: 43px;
   }
 
   .forecast-heading {
     flex-direction: column;
     align-items: flex-start;
-    gap: 18px;
+
+    gap: 17px;
   }
 
   .forecast-heading h2 {
-    font-size: 36px;
+    font-size: 38px;
   }
 
-  .forecast-grid,
+  .forecast-meta {
+    font-size: 14px;
+  }
+
+
+  .five-day-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .day-card {
+    padding: 24px;
+  }
+
+  .day-stats {
+    grid-template-columns:
+      repeat(3, 1fr);
+  }
+
+  .day-stats div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+
+  .advisory {
+    padding: 28px 22px;
+  }
+
+  .advisory-top {
+    flex-direction: column;
+  }
+
+  .advisory-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+
   .info-grid {
     grid-template-columns: 1fr;
   }
 
-  .advisory-top {
-    gap: 20px;
-    flex-direction: column;
-  }
 }
 
+
+/* =========================================================
+   RESPONSIVE — SMALL MOBILE
+========================================================= */
 
 @media (max-width: 500px) {
 
@@ -638,7 +976,7 @@ footer span {
   }
 
   .brand-block h1 {
-    font-size: 36px;
+    font-size: 37px;
   }
 
   .brand-block p {
@@ -646,8 +984,8 @@ footer span {
   }
 
   .location {
-    font-size: 11px;
-    letter-spacing: 1.5px;
+    font-size: 10px;
+    letter-spacing: 1.4px;
   }
 
   .container {
@@ -656,47 +994,566 @@ footer span {
 
   .selector-card {
     padding: 22px;
-    border-radius: 18px;
+    border-radius: 19px;
   }
 
   .selector-left select {
-    height: 60px;
+    height: 58px;
     padding: 0 17px;
-    font-size: 19px;
+    font-size: 18px;
   }
 
-  .model-status {
-    font-size: 14px;
-    letter-spacing: 1.5px;
+  .model-status-text > span {
+    font-size: 13px;
+    letter-spacing: 1.3px;
   }
 
-  .status-dot {
-    width: 19px;
-    height: 19px;
+  .model-status-text small {
+    font-size: 12px;
   }
 
   .forecast-heading h2 {
     font-size: 32px;
   }
 
-  .metric-card {
-    min-height: 220px;
+  .forecast-meta {
+    flex-direction: column;
+    gap: 4px;
   }
 
-  .metric-value {
-    font-size: 43px;
+  .degraded-banner {
+    padding: 16px;
   }
 
-  .advisory {
-    padding: 27px 22px;
+  .day-card {
+    padding: 21px;
+  }
+
+  .rain-value strong {
+    font-size: 36px;
+  }
+
+  .day-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .day-stats div {
+    flex-direction: row;
+    align-items: center;
   }
 
   .advisory h3 {
     font-size: 25px;
   }
 
-  .advisory-en,
-  .advisory-bn {
-    font-size: 18px;
+  .advisory-item-body strong {
+    font-size: 17px;
   }
+
+}
+
+/* =========================================================
+   COMPARISON MAP
+========================================================= */
+
+.comparison-section {
+  margin-top: 25px;
+  padding: 34px 38px;
+
+  background: #ffffff;
+
+  border: 1px solid #d9e4de;
+  border-radius: 21px;
+
+  box-shadow: 0 9px 24px rgba(20, 55, 45, 0.04);
+}
+
+.comparison-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 25px;
+
+  margin-bottom: 25px;
+}
+
+.comparison-heading h3 {
+  margin: 0;
+
+  font-size: 29px;
+  line-height: 1.15;
+
+  font-weight: 800;
+}
+
+.comparison-date {
+  font-size: 14px;
+  font-weight: 800;
+
+  color: #5b7c70;
+}
+
+.comparison-layout {
+  display: grid;
+
+  grid-template-columns: 0.72fr 1.8fr;
+
+  gap: 20px;
+}
+
+.block-comparison-card {
+  padding: 28px;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+
+  background: #edf6ef;
+
+  border: 1px solid #cfe0d4;
+  border-radius: 18px;
+}
+
+.comparison-kicker {
+  font-size: 12px;
+  font-weight: 800;
+
+  letter-spacing: 2px;
+
+  color: #5b7c70;
+}
+
+.block-rain-value {
+  margin-top: 20px;
+
+  font-size: 48px;
+  line-height: 1;
+
+  font-weight: 800;
+  letter-spacing: -1.5px;
+}
+
+.block-rain-value span {
+  font-size: 20px;
+  font-weight: 500;
+
+  color: #658479;
+}
+
+.block-comparison-card p {
+  margin: 13px 0 0;
+
+  font-size: 14px;
+  line-height: 1.5;
+
+  color: #617c72;
+}
+
+.block-location {
+  margin-top: 28px;
+
+  padding-top: 17px;
+
+  border-top: 1px solid #d5e5da;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.block-location span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+
+  color: #789188;
+}
+
+.block-location strong {
+  font-size: 14px;
+}
+
+.map-card {
+  padding: 20px;
+
+  border: 1px solid #d9e4de;
+  border-radius: 18px;
+
+  background: #f8faf9;
+}
+
+.map-title {
+  display: flex;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 2px 2px 14px;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  letter-spacing: 1.6px;
+
+  color: #5b7c70;
+}
+
+.map-status {
+  color: #8b6e2b;
+}
+
+.map-canvas {
+  position: relative;
+
+  width: 100%;
+  min-height: 390px;
+
+  overflow: hidden;
+
+  border: 1px solid #d8e5df;
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(225, 237, 231, 0.55),
+      rgba(246, 249, 247, 0.9)
+    );
+}
+
+.map-grid {
+  position: absolute;
+
+  pointer-events: none;
+
+  opacity: 0.75;
+}
+
+.map-grid-horizontal {
+  left: 0;
+  right: 0;
+
+  height: 1px;
+
+  background: #dfe9e4;
+
+  top: 20%;
+}
+
+.map-grid-2 {
+  top: 40%;
+}
+
+.map-grid-3 {
+  top: 60%;
+}
+
+.map-grid-4 {
+  top: 80%;
+}
+
+.map-grid-vertical {
+  top: 0;
+  bottom: 0;
+
+  width: 1px;
+
+  background: #dfe9e4;
+
+  left: 20%;
+}
+
+.map-grid-v2 {
+  left: 40%;
+}
+
+.map-grid-v3 {
+  left: 60%;
+}
+
+.map-grid-v4 {
+  left: 80%;
+}
+
+.panchayat-marker,
+.block-marker {
+  position: absolute;
+
+  transform: translate(-50%, -50%);
+}
+
+.panchayat-marker {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+}
+
+.marker-dot {
+  width: 15px;
+  height: 15px;
+
+  border-radius: 50%;
+
+  background: #4da36b;
+
+  border: 3px solid white;
+
+  box-shadow:
+    0 1px 5px rgba(20, 55, 45, 0.25);
+}
+
+.marker-label {
+  padding: 3px 6px;
+
+  border-radius: 5px;
+
+  background: rgba(255, 255, 255, 0.92);
+
+  border: 1px solid #d8e5df;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  color: #23483b;
+}
+
+.block-marker {
+  z-index: 5;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+}
+
+.block-marker span {
+  width: 17px;
+  height: 17px;
+
+  border-radius: 50%;
+
+  background: #082b20;
+
+  border: 4px solid white;
+
+  box-shadow:
+    0 1px 7px rgba(20, 55, 45, 0.35);
+}
+
+.block-marker small {
+  margin-top: 4px;
+
+  padding: 3px 6px;
+
+  background: #082b20;
+
+  color: white;
+
+  border-radius: 4px;
+
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.map-legend {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 20px;
+
+  margin-top: 13px;
+
+  font-size: 12px;
+
+  color: #6c867b;
+}
+
+.map-legend span {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+}
+
+.map-legend i {
+  display: inline-block;
+
+  width: 10px;
+  height: 10px;
+
+  border-radius: 50%;
+}
+
+.legend-block {
+  background: #082b20;
+}
+
+.legend-panchayat {
+  background: #4da36b;
+}
+
+.comparison-note {
+  margin-top: 16px;
+
+  padding: 13px 15px;
+
+  border-radius: 10px;
+
+  background: #fffbea;
+
+  border: 1px solid #eadcad;
+
+  color: #6b5d2d;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
+
+.leaflet-map-wrapper {
+  width: 100%;
+  height: 470px;
+  overflow: hidden;
+  border-radius: 15px;
+}
+
+.leaflet-map {
+  width: 100%;
+  height: 100%;
+}
+
+.leaflet-container {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.leaflet-popup-content {
+  line-height: 1.55;
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 13px;
+  font-size: 12px;
+  color: #6c867b;
+}
+
+.map-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.map-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-block {
+  background: #06372b;
+}
+
+.legend-panchayat {
+  background: #4da36b;
+}
+
+.legend-selected {
+  background: #082b20;
+  box-shadow: 0 0 0 2px #d9e9df;
+}
+
+@media (max-width: 800px) {
+  .leaflet-map-wrapper {
+    height: 390px;
+  }
+}
+
+@media (max-width: 500px) {
+  .leaflet-map-wrapper {
+    height: 320px;
+  }
+}
+
+/* =========================================================
+   COMPARISON DAY SELECTOR
+========================================================= */
+
+.comparison-day-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+
+  margin-bottom: 20px;
+}
+
+.comparison-day-button {
+  padding: 10px 15px;
+
+  border: 1px solid #d6e4dc;
+  border-radius: 10px;
+
+  background: #f6f9f7;
+  color: #557468;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.comparison-day-button:hover {
+  border-color: #8db7a4;
+}
+
+.comparison-day-button.active {
+  background: #06372b;
+  border-color: #06372b;
+  color: white;
+}
+
+
+/* =========================================================
+   BLOCK MINI STATS
+========================================================= */
+
+.block-mini-stats {
+  margin-top: 24px;
+
+  display: grid;
+  grid-template-columns: 1fr;
+
+  gap: 12px;
+}
+
+.block-mini-stats div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+}
+
+.block-mini-stats span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+
+  color: #789188;
+}
+
+.block-mini-stats strong {
+  font-size: 15px;
+  font-weight: 800;
+
+  color: #082b20;
 }
