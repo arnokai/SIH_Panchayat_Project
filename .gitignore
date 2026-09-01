@@ -71,3 +71,28 @@ test_20240102_response.bin
 
 # Python-generated feature tables
 data/raw/panchayat_terrain_features.csv
+
+# Intermediate model experiments
+models/v1.1_*
+models/v1_1_*
+models/v1_2_*
+
+# V2 experiment models not used in operational delivery
+models/m3_clean_*
+models/m3_clean_tuned_*
+
+# Temporary API test output
+api_test_output.txt
+
+# Generated V2 / advisory datasets and evaluation outputs
+data/raw/advisory_context_history.csv
+data/raw/advisory_weather_history.csv
+data/raw/coarse_block_forecast.csv
+data/raw/coarse_block_history.csv
+data/raw/coarse_forecast.csv
+data/raw/m3_clean_*
+data/raw/m3_spatial_verification.csv
+data/raw/m3_tuned_spatial_verification.csv
+data/raw/v2_downscaling_*
+data/raw/panchayat_soil_context.csv
+data/raw/panchayat_soil_features.csv
