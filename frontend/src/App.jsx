@@ -66,8 +66,12 @@ function App() {
         setLoading(true);
         setError("");
 
+        const apiBase =
+          import.meta.env.VITE_API_BASE_URL ||
+          "http://127.0.0.1:8000";
+
         const url =
-          `http://127.0.0.1:8000/v1/forecast` +
+          `${apiBase}/v1/forecast` +
           `?panchayat_id=${selectedId}` +
           `&days=5` +
           `&lang=bn` +
