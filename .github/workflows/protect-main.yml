@@ -1,0 +1,34 @@
+name: Guard Main Branch
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify-pusher:
+    name: Verify Authorized Pusher
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Pusher Identity
+        run: |
+          echo "Commit: ${{ github.sha }}"
+          echo "Pushed by: ${{ github.actor }}"
+
+          # Allowed maintainers who can push or merge into main
+          if [ "${{ github.actor }}" = "arnokai" ] || [ "${{ github.actor }}" = "github-actions[bot]" ]; then
+            echo "✅ Authorization verified: @${{ github.actor }} is allowed to update 'main'."
+            exit 0
+          fi
+
+          echo "::error title=Unauthorized Push to Main::Direct push to 'main' by @${{ github.actor }} is forbidden."
+          echo "=================================================================="
+          echo "❌ ACCESS DENIED!"
+          echo "Direct pushes to the 'main' branch are restricted to @arnokai."
+          echo ""
+          echo "Please follow the team workflow:"
+          echo "1. Create your own feature branch:  git checkout -b feature/<name>"
+          echo "2. Push to your branch:             git push origin feature/<name>"
+          echo "3. Open a Pull Request on GitHub for @arnokai to review and merge."
+          echo "=================================================================="
+          exit 1
