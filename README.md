@@ -1,10 +1,17 @@
 # TerraMind V2 — Panchayat-Level Weather Intelligence & Agricultural Advisory
 
-> **V2 development branch:** `v2-development`
-> **Repository:** `https://github.com/arnokai/SIH_Panchayat_Project`
-> **Current role:** Research/prototype decision-support system for the Amdanga study area, North 24 Parganas.
+[![Frontend](https://img.shields.io/badge/Frontend-Vercel%20Live-black?style=flat&logo=vercel)](https://sih-panchayat-project.vercel.app)
+[![Backend](https://img.shields.io/badge/Backend-Render%20Live-46E3B7?style=flat&logo=render)](https://sih-panchayat-project.onrender.com)
+[![API Docs](https://img.shields.io/badge/API%20Docs-Swagger-85EA2D?style=flat&logo=swagger)](https://sih-panchayat-project.onrender.com/docs)
+[![CI Guard](https://img.shields.io/badge/CI%20Guard-Active-brightgreen?style=flat&logo=githubactions)](https://github.com/arnokai/SIH_Panchayat_Project/actions)
 
-TerraMind V2 extends the earlier V0/V1/V1.3 work into a more complete **forecast + agricultural-advisory application**.
+> 🌐 **Live Web Application:** [https://sih-panchayat-project.vercel.app](https://sih-panchayat-project.vercel.app)  
+> ⚡ **Live Cloud API:** [https://sih-panchayat-project.onrender.com](https://sih-panchayat-project.onrender.com)  
+> 📚 **Interactive Swagger Docs:** [https://sih-panchayat-project.onrender.com/docs](https://sih-panchayat-project.onrender.com/docs)  
+> **Repository:** `https://github.com/arnokai/SIH_Panchayat_Project`  
+> **Target Region:** Amdanga Block, North 24 Parganas, West Bengal  
+
+TerraMind V2 extends the earlier V0/V1/V1.3 work into a complete, cloud-deployed **forecast + agricultural-advisory decision-support system**.
 
 ---
 
@@ -63,6 +70,10 @@ API docs at: **http://127.0.0.1:8000/docs**
 ```bash
 cd frontend
 npm install
+
+# Optional: To connect your local frontend to the live Render cloud backend:
+# echo "VITE_API_BASE_URL=https://sih-panchayat-project.onrender.com" > .env
+
 npm run dev
 ```
 
@@ -641,11 +652,61 @@ data/download_coarse_forecast.py
 data/download_coarse_history.py
 
 frontend/src/ComparisonMap.jsx
+frontend/vercel.json                # SPA rewrites for Vercel deployment
+Dockerfile                          # Containerized backend for Render deployment
+.dockerignore                       # Docker build optimization
+.github/workflows/protect-main.yml  # GitHub Actions branch guard for main
 
 tests/test_advisory_context.py
 tests/test_advisory_rules.py
 tests/test_forecast_advisories.py
 ```
+
+---
+
+# 14.1 Cloud Deployment Architecture
+
+TerraMind V2 is deployed to production using a decoupled, zero-cost cloud architecture:
+
+```text
+                        ┌─────────────────────────────────────────────────────────┐
+                        │                     USER BROWSER                        │
+                        └──────────────────────────┬──────────────────────────────┘
+                                                   │
+                                    HTTPS Requests │
+                                                   ▼
+┌──────────────────────────────────────────────────┴──────────────────────────────────────────────────┐
+│                                 Vercel Global Edge Network (Frontend)                               │
+│  - React 19 + Vite Dashboard                                                                        │
+│  - Interactive Leaflet Panchayat Map                                                                │
+│  - Bengali / English Agricultural Advisories                                                        │
+│  - URL: https://sih-panchayat-project.vercel.app                                                    │
+└──────────────────────────────────────────────────┬──────────────────────────────────────────────────┘
+                                                   │
+                            API Requests           │  (VITE_API_BASE_URL)
+                            [CORS Allowed]         ▼
+┌──────────────────────────────────────────────────┴──────────────────────────────────────────────────┐
+│                                   Render Web Service (Backend)                                      │
+│  - Containerized FastAPI + Uvicorn server (Docker on port 7860)                                     │
+│  - Pre-packaged Scikit-learn & XGBoost machine learning models in models/                           │
+│  - Live weather forecast extraction (Open-Meteo) & Soil context evaluation (SoilGrids)              │
+│  - URL: https://sih-panchayat-project.onrender.com                                                  │
+│  - Swagger Docs: https://sih-panchayat-project.onrender.com/docs                                    │
+└──────────────────────────────────────────────────┬──────────────────────────────────────────────────┘
+                                                   │
+                                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               GitHub Actions CI Guard (Repository Security)                          │
+│  - .github/workflows/protect-main.yml intercepts direct pushes to the `main` branch                │
+│  - Rejects unauthorized direct pushes, enforcing team feature branch + PR review workflows          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Live URLs
+- **Web Dashboard:** [https://sih-panchayat-project.vercel.app](https://sih-panchayat-project.vercel.app)
+- **API Base:** [https://sih-panchayat-project.onrender.com](https://sih-panchayat-project.onrender.com)
+- **Interactive Swagger Documentation:** [https://sih-panchayat-project.onrender.com/docs](https://sih-panchayat-project.onrender.com/docs)
+- **Backend Health Check:** [https://sih-panchayat-project.onrender.com/health](https://sih-panchayat-project.onrender.com/health)
 
 ---
 
