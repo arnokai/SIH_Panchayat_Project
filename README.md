@@ -1,1112 +1,807 @@
-# TerraMind — Panchayat-Level Weather Intelligence & Agricultural Advisory
+# TerraMind V2 — Panchayat-Level Weather Intelligence & Agricultural Advisory
 
-> **SIH project prototype for localized weather intelligence and agricultural decision support**
+> **V2 development branch:** `v2-development`
+> **Repository:** `https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project`
+> **Current role:** Research/prototype decision-support system for the Amdanga study area, North 24 Parganas.
 
-TerraMind is a prototype decision-support system designed to provide **panchayat-level weather information and agricultural advisories**. The system combines panchayat location, terrain characteristics, historical weather data, multiple gridded rainfall products, machine-learning models, and rule-based agricultural logic.
-
-The project is currently in **research/prototype development**. The machine-learning work has progressed from an initial V1 baseline to a V1.3 rainfall-calibration architecture.
-
----
-
-## 1. Project Overview
-
-Instead of treating an entire region as having one identical weather condition, TerraMind is designed around the needs of an individual panchayat.
-
-The overall system is:
-
-```text
-Panchayat
-    ↓
-Panchayat geography + terrain + weather information
-    ↓
-ML / Rainfall Forecasting Layer
-    ↓
-Rainfall + Rain Probability + Tmax
-    ↓
-Agricultural Advisory Engine
-    ↓
-Web Dashboard
-```
-
-The current application is intended to provide:
-
-- 🌧️ Rainfall estimation
-- ☔ Rain probability / rain-event information
-- 🌡️ Maximum-temperature estimation
-- 🌱 Rule-based agricultural advisories
-- 🇮🇳 English + Bengali advisory text
-- 📍 Panchayat-specific information
+TerraMind V2 extends the earlier V0/V1/V1.3 work into a more complete **forecast + agricultural-advisory application**.
 
 ---
 
-# 2. Current Project Status
+## 🚀 Quick Start
 
-```text
-Project stage:       Prototype / Research Development
-Current ML version:  V1.3
-Stable Git branch:   main
-Development branch:  v2-development
-Frontend branch:     frontend-development
-```
-
-The repository is currently maintained as a **private GitHub repository for the development team**.
-
-V1.3 is the current experimental ML checkpoint. The model is not a production weather service and should not be treated as a replacement for official meteorological or agricultural advisories.
-
----
-
-# 3. What TerraMind Does
-
-For a selected panchayat, TerraMind is designed to process:
-
-```text
-Panchayat identity
-      +
-Latitude / Longitude
-      +
-Elevation and terrain
-      +
-Historical weather
-      +
-Rainfall products
-      ↓
-Forecasting / estimation
-      ↓
-Agricultural advisory
-```
-
-The advisory layer converts forecast information into simple action-oriented guidance.
-
-Example:
-
-```text
-Light rain. Safe to apply light fertilisers.
-
-হালকা বৃষ্টি। সার প্রয়োগ করা নিরাপদ।
-```
-
-The advisory logic is configured through `rules.yaml`.
-
----
-
-# 4. Current Machine-Learning Architecture
-
-The project has been developed incrementally.
-
-## V1 — Initial Forecasting Baseline
-
-The first V1 system established the core ML forecasting pipeline using historical weather and panchayat-level features.
-
-Initial architecture:
-
-```text
-Historical Weather
-        +
-Panchayat Features
-        ↓
-Rain Classifier
-        +
-Rainfall Regressor
-        +
-Tmax Regressor
-        ↓
-Forecast Output
-```
-
-The original V1 model artifacts are:
-
-```text
-models/v1_rain_classifier.pkl
-models/v1_rain_regressor.pkl
-models/v1_tmax_regressor.pkl
-```
-
-V1 served as the baseline for later experiments.
-
----
-
-# 5. V1.1 — Terrain Feature Experiment
-
-V1.1 investigated whether local physical geography could improve prediction.
-
-DEM-derived features were introduced:
-
-```text
-elevation_dem_m
-slope_deg
-aspect_sin
-aspect_cos
-terrain_roughness_m
-relative_elevation_m
-```
-
-These were combined with existing panchayat geography, weather history, rainfall lags, and seasonal features.
-
-The purpose of V1.1 was to test whether local terrain information could add useful spatial information.
-
-The experiment confirmed that terrain features could be incorporated into the pipeline, but they did not by themselves solve the rainfall downscaling problem.
-
-Intermediate V1.1 artifacts are retained locally for experimentation rather than being treated as the current production/prototype checkpoint.
-
----
-
-# 6. V1.2 — Higher-Resolution Rainfall Reference Experiment
-
-V1.2 expanded the rainfall-data investigation.
-
-Three rainfall sources were examined:
-
-```text
-IMD       → 0.25° gridded rainfall
-IMERG     → 0.10° precipitation
-CHIRPS v3 → 0.05° rainfall
-```
-
-## IMD
-
-The IMD 0.25° product mapped the eight study panchayats to two effective grid cells.
-
-## IMERG
-
-The IMERG 0.10° subset produced three effective rainfall series in the study area.
-
-## CHIRPS
-
-CHIRPS v3 provided the finest spatial resolution tested in the project:
-
-```text
-0.05° ≈ 5 km
-```
-
-The extracted CHIRPS dataset contained:
-
-```text
-5,112 rows
-8 Panchayats
-639 days
-2024-01-01 → 2025-09-30
-```
-
-The eight panchayat coordinates produced:
-
-```text
-7 unique daily rainfall series out of 8 Panchayats
-```
-
-This was substantially more spatial differentiation than the coarser rainfall products tested earlier.
-
----
-
-# 7. V1.2 Target Design
-
-The rainfall target was changed so that the model predicts the next day's CHIRPS rainfall:
-
-```text
-Information available on day T
-              ↓
-           ML model
-              ↓
-CHIRPS rainfall on day T+1
-```
-
-The V1.2 feature set included:
-
-```text
-Panchayat geography
-DEM terrain features
-Historical rainfall lags
-Rolling rainfall totals
-Historical temperature lags
-IMERG rainfall
-IMD rainfall
-Seasonal features
-```
-
-The final dataset contained:
-
-```text
-5,048 rows
-35 columns
-8 Panchayats
-```
-
-The first observations were removed where sufficient lag history was unavailable.
-
----
-
-# 8. V1.2 Results
-
-The V1.2 rainfall model was evaluated with a temporal split.
-
-```text
-Training:
-2024-01-08 → 2024-08-31
-
-Validation:
-2024-09-01 → 2024-12-31
-
-Testing:
-2025-01-01 → 2025-09-29
-```
-
-Final V1.2 rainfall test results:
-
-```text
-Baseline RMSE: 11.44 mm
-Model RMSE:     9.72 mm
-Improvement:   15.0%
-
-Model MAE:      5.39 mm
-
-POD:            0.52
-FAR:            0.23
-CSI:            0.45
-```
-
-Temperature results:
-
-```text
-Tmax RMSE: 1.58 °C
-Tmax MAE:  1.20 °C
-Tmax Bias: -0.12 °C
-```
-
-### V1.2 limitation
-
-Detailed error analysis showed that the model could detect many rainfall events but significantly underestimated heavy rainfall.
-
-For actual CHIRPS rainfall above 25 mm:
-
-```text
-Heavy-rain RMSE ≈ 35 mm
-```
-
-The largest errors were concentrated in the monsoon period, especially June and July.
-
-This led to the next experiment.
-
----
-
-# 9. V1.3 — Multi-Source Rainfall Calibration + Residual Correction
-
-V1.3 changed the rainfall-amount strategy.
-
-Instead of asking XGBoost to learn the entire rainfall amount from scratch, the system first creates a calibrated rainfall estimate from multiple rainfall products.
-
-The calibration inputs are:
-
-```text
-IMERG rainfall
-IMD rainfall
-Open-Meteo rainfall
-```
-
-The architecture is:
-
-```text
-IMERG ──────┐
-            │
-IMD ────────┼──→ Linear Rainfall Calibration
-            │
-Open-Meteo ─┘
-                    ↓
-             Calibrated Rainfall
-                    ↓
-             Residual Correction
-                    ↑
-       Terrain + season + rainfall history
-                    ↓
-              Final Estimate
-```
-
-The residual is defined as:
-
-```text
-Residual = CHIRPS rainfall - calibrated rainfall
-```
-
-A separate XGBoost model predicts this residual.
-
-However, applying the full residual produced worse overall validation performance. Therefore, a conservative correction factor was tested.
-
-The final V1.3 correction is:
-
-```text
-Final rainfall
-=
-Calibrated rainfall
-+
-0.10 × predicted residual
-```
-
-The value `0.10` was selected using the validation period rather than the final test period.
-
----
-
-# 10. V1.3 Results
-
-Final V1.3 evaluation used the untouched 2025 test period.
-
-## Overall rainfall performance
-
-```text
-Calibration RMSE: 7.94 mm
-V1.3 RMSE:        7.88 mm
-
-Calibration MAE:  4.59 mm
-V1.3 MAE:         4.54 mm
-```
-
-Overall improvement over the calibration baseline:
-
-```text
-0.7%
-```
-
-This is a **modest improvement**, not a major breakthrough.
-
-## Rain-event performance
-
-```text
-Hits:          849
-Misses:         81
-False alarms:  352
-
-POD:           0.91
-FAR:           0.29
-CSI:           0.66
-```
-
-## Heavy rainfall
-
-For rainfall ≥25 mm:
-
-```text
-Calibration RMSE: 28.32 mm
-V1.3 RMSE:        28.05 mm
-
-Calibration MAE:  26.48 mm
-V1.3 MAE:         26.26 mm
-```
-
-V1.3 therefore provides a small improvement while preserving the strong general rainfall calibration.
-
----
-
-# 11. Current V1.3 Model Artifacts
-
-The current V1.3 model files are:
-
-```text
-models/v1_3_rain_calibration.pkl
-models/v1_3_rain_residual.pkl
-models/v1_3_metadata.pkl
-models/v1_3_residual_feature_importance.csv
-```
-
-The metadata records:
-
-```text
-model_version:
-    v1.3
-
-architecture:
-    linear rainfall calibration + XGBoost residual correction
-
-target:
-    CHIRPS rainfall at T+1
-
-residual_alpha:
-    0.10
-```
-
-The metadata also records the feature list, calibration inputs, temporal split, and evaluation metrics.
-
----
-
-# 12. Important Data Interpretation
-
-The rainfall datasets used in these experiments are **gridded precipitation products**.
-
-CHIRPS is used as a historical rainfall **reference/target**, not as a direct Panchayat rain-gauge observation.
-
-Therefore:
-
-> TerraMind should not claim true gauge-level Panchayat rainfall accuracy unless suitable local rain-gauge/AWS observations are obtained for independent validation.
-
-This distinction is important when presenting the project scientifically.
-
----
-
-# 13. Data Pipeline
-
-The project has progressively expanded from a basic weather pipeline into a multi-source environmental-data pipeline.
-
-Current conceptual flow:
-
-```text
-Panchayat information
-        +
-Coordinates
-        +
-Historical weather
-        +
-IMD rainfall
-        +
-IMERG rainfall
-        +
-CHIRPS rainfall reference
-        +
-DEM / terrain
-        +
-River-distance information
-        ↓
-Feature engineering
-        ↓
-ML training dataset
-        ↓
-Model training
-        ↓
-Forecast / estimation engine
-        ↓
-Agricultural advisory
-        ↓
-Dashboard
-```
-
-Important data-generation scripts include:
-
-```text
-data/build_panchayats.py
-data/make_coordinates.py
-data/get_boundaries.py
-data/get_elevation.py
-data/get_river_features.py
-data/merge_river_features.py
-data/build_ml_dataset.py
-
-data/build_terrain_features.py
-data/extract_imd_rainfall.py
-data/build_imerg_dataset.py
-data/download_imerg.py
-data/build_chirps_dataset.py
-data/compare_chirps_spatial.py
-
-data/build_v1_2_dataset.py
-data/evaluate_v1_2.py
-data/evaluate_rainfall_baselines.py
-data/test_v1_3_residual_strength.py
-```
-
-Large external/raw datasets are intentionally excluded from Git where appropriate.
-
----
-
-# 14. Project Structure
-
-```text
-SIH_Panchayat_Project/
-│
-├── data/
-│   ├── raw/
-│   │   ├── historical_weather.csv
-│   │   ├── ml_training_dataset.csv
-│   │   ├── panchayat_coordinates.csv
-│   │   ├── panchayat_features.csv
-│   │   ├── panchayat_river_features.csv
-│   │   └── ...
-│   │
-│   ├── build_ml_dataset.py
-│   ├── build_panchayats.py
-│   ├── download_weather.py
-│   ├── get_boundaries.py
-│   ├── get_elevation.py
-│   ├── get_river_features.py
-│   ├── make_coordinates.py
-│   ├── merge_river_features.py
-│   ├── build_terrain_features.py
-│   ├── extract_imd_rainfall.py
-│   ├── build_imerg_dataset.py
-│   ├── download_imerg.py
-│   ├── build_chirps_dataset.py
-│   ├── build_v1_2_dataset.py
-│   └── ...
-│
-├── models/
-│   ├── v1_rain_classifier.pkl
-│   ├── v1_rain_regressor.pkl
-│   ├── v1_tmax_regressor.pkl
-│   ├── v1_3_rain_calibration.pkl
-│   ├── v1_3_rain_residual.pkl
-│   ├── v1_3_metadata.pkl
-│   └── ...
-│
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   ├── package-lock.json
-│   └── vite.config.js
-│
-├── advisor.py
-├── api.py
-├── forecast_engine.py
-├── rules.yaml
-│
-├── train_pipeline.py
-├── train_pipeline_v1.py
-├── train_pipeline_v1_2.py
-├── train_pipeline_v1_3.py
-│
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
-
----
-
-# 15. Backend Components
-
-## `api.py`
-
-Main backend API. It connects the frontend with the forecasting and advisory system.
-
-## `forecast_engine.py`
-
-Responsible for loading trained models and generating forecast/estimation values.
-
-## `advisor.py`
-
-Converts forecast information into agricultural recommendations.
-
-## `rules.yaml`
-
-Contains configurable advisory rules.
-
-## Training pipelines
-
-```text
-train_pipeline.py
-    ↓
-older/general training reference
-
-train_pipeline_v1.py
-    ↓
-original V1 baseline
-
-train_pipeline_v1_2.py
-    ↓
-CHIRPS-target V1.2 experiment
-
-train_pipeline_v1_3.py
-    ↓
-V1.3 calibration + residual experiment
-```
-
----
-
-# 16. Running the Project Locally
-
-## Requirements
-
-Recommended:
-
-- Python 3.x
+### Requirements
+- Python 3.9+ (tested on Python 3.14)
 - Node.js + npm
 - Git
-- Windows / Linux / macOS
 
----
+### Step 1 — Clone the repo
 
-## Step 1 — Clone the repository
-
-```powershell
-git clone https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project.git
+```bash
+git clone -b v2-development https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project.git
 cd SIH_Panchayat_Project
 ```
 
-The repository is currently private, so the user must have access through the GitHub team/repository permissions.
+### Step 2 — Set up Python environment
 
----
-
-## Step 2 — Create a Python environment
-
-### Windows PowerShell
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-
-If activation is blocked, use the virtual environment's Python executable directly.
-
----
-
-## Step 3 — Install Python dependencies
-
-```powershell
+```bash
+# Linux / macOS (Bash / Zsh)
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
----
-
-## Step 4 — Start the backend
-
-```powershell
-uvicorn api:app --reload
+```fish
+# Linux / macOS (Fish shell)
+python3 -m venv .venv
+source .venv/bin/activate.fish
+pip install -r requirements.txt
 ```
 
-The backend URL will be printed by Uvicorn.
-
----
-
-## Step 5 — Start the frontend
-
-Open a second terminal:
-
 ```powershell
+# Windows PowerShell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### Step 3 — Start the backend
+
+```bash
+# With venv activated:
+uvicorn api:app --reload
+
+# Or directly without activating (works in any shell):
+.venv/bin/uvicorn api:app --reload
+```
+
+Backend runs at: **http://127.0.0.1:8000**
+API docs at: **http://127.0.0.1:8000/docs**
+
+### Step 4 — Start the frontend (new terminal)
+
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Vite will print the dashboard URL.
+Dashboard runs at: **http://localhost:5173**
 
 ---
 
-# 17. Backend + Frontend Together
+## 1. What Changed in V2?
 
-Normally use two terminals.
+The main V2 change is a move from a primarily model-centric prototype toward a **decision-support pipeline**:
 
-### Terminal 1 — Backend
+```text
+Panchayat
+   ↓
+Forecast input
+   ↓
+5-day forecast delivery
+   ↓
+Forecast context builder
+   ↓
+Crop calendar + soil context
+   ↓
+Rule engine
+   ↓
+English + Bengali advisory
+   ↓
+FastAPI
+   ↓
+React dashboard + Panchayat comparison map
+```
+
+### V2 adds
+
+| Area | V1 / V1.3 | V2 |
+|---|---|---|
+| Forecast delivery | Earlier model experiments | 5-day forecast API |
+| Panchayat selection | Basic | Panchayat-specific V2 API + dashboard |
+| Agricultural logic | Basic rules | Context-aware advisory engine |
+| Crop context | Limited | Crop + crop-stage lookup |
+| Soil context | Earlier feature experiments | SoilGrids-derived soil classification |
+| Dry spell logic | Not operationalized | Forecast-aware dry-day context |
+| Humidity context | Earlier weather data | Consecutive high-humidity context available for advisory rules |
+| Advisory language | English/Bengali | English + Bengali API output |
+| Crop selection | Limited | `paddy` / `vegetables` in dashboard |
+| Map | Earlier dashboard concept | Panchayat comparison map |
+| API status | Prototype API | V2 `/v1/...` endpoints |
+| Model safety | Multiple experimental models | Conservative fallback for operational delivery |
+
+---
+
+# 2. Important V2 Forecasting Decision
+
+V2 contains downscaling experiments, but the experimental Panchayat ML downscaling model is **not promoted to the operational five-day forecast**.
+
+The V2 delivery layer therefore uses a **coarse block forecast fallback** rather than presenting an insufficiently validated Panchayat ML forecast as if it were reliable.
+
+The API explicitly reports this state:
+
+```json
+{
+  "degraded": true,
+  "degraded_reason": "Operational five-day Panchayat ML downscaling is not yet validated."
+}
+```
+
+This is intentional.
+
+### Why?
+
+The M3 downscaling experiments showed useful overall error reduction on a clean test split, but spatial verification showed that the model did not reproduce the observed Panchayat-to-Panchayat rainfall variability strongly enough for operational multi-day use.
+
+Therefore:
+
+> **V2 prioritizes honest forecast delivery over claiming unsupported Panchayat-level ML accuracy.**
+
+The experimental model artifacts are retained for research and future improvement.
+
+---
+
+# 3. V2 Forecast Delivery
+
+The V2 forecast engine is:
+
+```text
+forecast_engine_v2.py
+        ↓
+coarse block forecast
+        ↓
+Panchayat-specific context
+        ↓
+advisory engine
+        ↓
+API response
+```
+
+The forecast currently supports:
+
+- Panchayat ID
+- 1–5 forecast days
+- Crop selection
+- Rainfall amount
+- Rain probability
+- Maximum temperature
+- Minimum temperature
+- Advisory information
+- Degraded/fallback status
+- Source information
+- Issue time in IST
+
+Example Panchayat IDs:
+
+```text
+A1 → ADHATA
+A2 → AMDANGA
+A3 → BERABERIA
+A4 → BODAI
+A5 → CHANDIGARH
+A6 → MARICHA
+A7 → SADHANPUR
+A8 → TARABERIA
+```
+
+---
+
+# 4. V2 Agricultural Advisory Engine
+
+V2 separates advisory logic from the forecast engine.
+
+Main files:
+
+```text
+advisory_context.py
+advisory_engine.py
+forecast_advisory_context.py
+rules.yaml
+data/crop_calendar.py
+data/crop_calendar.yaml
+```
+
+### Advisory flow
+
+```text
+Forecast
+   +
+Panchayat context
+   +
+Crop
+   +
+Crop stage
+   +
+Soil type
+   +
+Dry/humidity context
+        ↓
+   Rule evaluation
+        ↓
+   Highest-priority matching rule
+        ↓
+English + Bengali advisory
+```
+
+This makes the advisory system easier to modify than hard-coding every recommendation inside the API.
+
+---
+
+# 5. V2 Rule Categories
+
+The current `rules.yaml` contains the following prototype rules.
+
+### Rainfall
+
+```text
+rain_mm > 20
+→ Do not spray, do not apply urea, open field drains.
+```
+
+```text
+rain_mm > 5 and rain_mm <= 20
+→ Moderate-rain advisory.
+```
+
+```text
+rain_mm > 0 and rain_mm <= 5
+→ Light-rain advisory.
+```
+
+```text
+rain_mm == 0
+→ Dry-day information.
+```
+
+### Heat stress
+
+```text
+crop = paddy
+stage = flowering
+tmax_c > 38
+→ Paddy heat-stress advisory.
+```
+
+### High humidity / disease risk
+
+```text
+humidity > 85
+and humidity_days >= 3
+→ Paddy blast-disease risk advisory.
+```
+
+### Dry spell
+
+```text
+soil = sandy
+and dry_days >= 7
+→ Irrigation advisory.
+```
+
+### Harvest rain
+
+```text
+stage = harvest
+and rain_mm > 0
+→ Advance harvest / covered-storage advisory.
+```
+
+> These are **prototype rules**. Thresholds and agricultural actions should be reviewed with an agriculture faculty member / KVK scientist before being described as validated recommendations.
+
+---
+
+# 6. Crop Calendar
+
+V2 introduces a small crop-calendar layer:
+
+```text
+data/crop_calendar.yaml
+data/crop_calendar.py
+```
+
+Current prototype calendar:
+
+```text
+Crop: paddy
+Variety group: aman
+Region: Amdanga block
+
+Flowering:
+approximately 15 Sep → 05 Oct
+
+Harvest:
+approximately 01 Nov → 15 Dec
+```
+
+The flowering window reflects the representative late-September Aman scenario used in the project design.
+
+The calendar is a **prototype context layer**, not a fully validated local crop calendar for every Panchayat.
+
+---
+
+# 7. Soil Context
+
+V2 adds soil context using SoilGrids-derived surface soil properties.
+
+Main files:
+
+```text
+data/download_soil_context.py
+data/classify_soil_context.py
+data/raw/panchayat_soil_features.csv
+data/raw/panchayat_soil_context.csv
+```
+
+The prototype currently classifies the eight study Panchayats conservatively.
+
+Current result:
+
+```text
+A1 → non_sandy
+A2 → non_sandy
+A3 → non_sandy
+A4 → non_sandy
+A5 → non_sandy
+A6 → non_sandy
+A7 → non_sandy
+A8 → non_sandy
+```
+
+Therefore the sandy-soil dry-spell rule currently does not trigger for these Panchayats.
+
+---
+
+# 8. Historical Advisory Context
+
+V2 also builds historical context used by the advisory layer.
+
+### High-humidity streaks
+
+```text
+data/build_humidity_context.py
+data/raw/advisory_weather_history.csv
+```
+
+Tracks consecutive days where:
+
+```text
+humidity_pct > 85%
+```
+
+### Dry spells
+
+```text
+data/build_dry_spell_context.py
+data/raw/advisory_context_history.csv
+```
+
+Tracks consecutive days with:
+
+```text
+rain_mm == 0
+```
+
+The forecast-aware context builder then combines the latest observed streak with future forecast rainfall instead of blindly copying the historical streak into every forecast day.
+
+---
+
+# 9. V2 API
+
+Main backend:
+
+```text
+api.py
+```
+
+Main forecast engine:
+
+```text
+forecast_engine_v2.py
+```
+
+## Endpoints
+
+### Health
+
+```text
+GET /health
+```
+
+Browser:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+### List Panchayats
+
+```text
+GET /v1/panchayats
+```
+
+Browser:
+
+```text
+http://127.0.0.1:8000/v1/panchayats
+```
+
+### Forecast
+
+```text
+GET /v1/forecast?panchayat_id=A2&days=5&lang=bn&crop=paddy
+```
+
+Example:
+
+```text
+http://127.0.0.1:8000/v1/forecast?panchayat_id=A2&days=5&lang=bn&crop=paddy
+```
+
+### FastAPI documentation
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+# 10. Example V2 Forecast Response
+
+A simplified response looks like:
+
+```json
+{
+  "panchayat_id": "A2",
+  "panchayat_name": "AMDANGA",
+  "crop": "paddy",
+  "model_version": "V2",
+  "rainfall_model": "Coarse forecast fallback",
+  "degraded": true,
+  "forecast": [
+    {
+      "date": "2026-09-01",
+      "rain_mm": 8.7,
+      "tmax_c": 29.1,
+      "rain_probability": 1.0,
+      "advisory": {
+        "rule_id": "moderate_rain"
+      }
+    }
+  ]
+}
+```
+
+The exact response structure may evolve during V2 development.
+
+---
+
+# 11. V2 Frontend
+
+The frontend is built with:
+
+```text
+React
+Vite
+React Leaflet
+Leaflet
+```
+
+Main files:
+
+```text
+frontend/src/App.jsx
+frontend/src/App.css
+frontend/src/ComparisonMap.jsx
+```
+
+### Current dashboard capabilities
+
+- Panchayat selector
+- Crop selector
+- Five-day forecast cards
+- Rainfall information
+- Temperature information
+- Bengali advisory
+- Advisory priority/type
+- Panchayat comparison map
+- System/degraded status
+- API-driven forecast data
+
+The comparison map is an important V2 feature because the project is intended to work at **Panchayat level rather than only block level**.
+
+---
+
+# 12. Running V2 Locally
+
+## Backend terminal
+
+From the repository root:
+
+```bash
+# Linux / macOS (Bash / Zsh)
+source .venv/bin/activate
+uvicorn api:app --reload
+```
+
+```fish
+# Linux / macOS (Fish shell)
+source .venv/bin/activate.fish
+uvicorn api:app --reload
+```
+
+```bash
+# Direct execution (Works in any shell without activating):
+.venv/bin/uvicorn api:app --reload
+```
 
 ```powershell
-cd SIH_Panchayat_Project
+# Windows PowerShell
 .venv\Scripts\Activate.ps1
 uvicorn api:app --reload
 ```
 
-### Terminal 2 — Frontend
+Backend:
 
-```powershell
-cd SIH_Panchayat_Project\frontend
+```text
+http://127.0.0.1:8000
+```
+
+Docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## Frontend terminal
+
+Open a second terminal window:
+
+```bash
+cd frontend
+npm install
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal.
+Vite normally prints the local dashboard URL.
+
+Typical address:
+
+```text
+http://localhost:5173
+```
 
 ---
 
-# 18. Example Forecast Response
+# 13. Fresh Laptop Setup
 
-The application is designed around a panchayat-specific response similar to:
+### Linux / macOS (Bash / Zsh)
 
-```json
-{
-  "panchayat_id": "A1",
-  "panchayat_name": "ADHATA",
-  "model_version": "V1.3",
-  "forecast": {
-    "date": "YYYY-MM-DD",
-    "rain_mm": 5.4,
-    "rain_probability": 0.64,
-    "tmax_c": 22.4
-  }
-}
+```bash
+git clone -b v2-development https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project.git
+cd SIH_Panchayat_Project
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn api:app --reload
 ```
 
-The frontend presents these values and the advisory engine can generate an agricultural recommendation.
+### Linux / macOS (Fish shell)
 
-The exact API response may change as V2 development progresses.
-
----
-
-# 19. Git / Team Development Workflow
-
-The project uses separate development branches.
-
-Current structure:
-
-```text
-main
-│
-├── v2-development
-│       └── Akash / ML + backend
-│
-└── frontend-development
-        └── Frontend teammate
+```fish
+git clone -b v2-development https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project.git
+cd SIH_Panchayat_Project
+python3 -m venv .venv
+source .venv/bin/activate.fish
+pip install -r requirements.txt
+uvicorn api:app --reload
 ```
 
-The basic rule is:
-
-> **Do not develop directly on `main`.**
-
-A normal workflow is:
-
-```text
-Create / switch to your branch
-        ↓
-Pull latest branch changes
-        ↓
-Code
-        ↓
-Test
-        ↓
-git status
-        ↓
-git add <specific-files>
-        ↓
-git commit
-        ↓
-git push
-        ↓
-Pull Request
-        ↓
-Owner review
-        ↓
-Merge into main
-```
-
-### Start working
+### Windows PowerShell
 
 ```powershell
-git switch <your-branch>
-git pull origin <your-branch>
+git clone -b v2-development https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project.git
+cd SIH_Panchayat_Project
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn api:app --reload
 ```
 
-### Save work
+Then in a second terminal (any OS):
 
-```powershell
-git status
-git add <specific-files>
-git commit -m "Describe the change"
-git push
+```bash
+cd SIH_Panchayat_Project/frontend
+npm install
+npm run dev
 ```
 
-### Create a Pull Request
-
-On GitHub:
-
-```text
-Pull requests
-    ↓
-New pull request
-
-base: main
-compare: your-branch
-```
-
-Describe what changed and what was tested.
-
-### Owner merge
-
-The repository owner reviews:
-
-```text
-Files changed
-     ↓
-Code correctness
-     ↓
-Accidental files/secrets
-     ↓
-Testing
-     ↓
-Merge Pull Request
-```
-
-After a feature is merged, teammates can update their branch:
-
-```powershell
-git switch main
-git pull origin main
-
-git switch <your-branch>
-git merge main
-git push
-```
-
-Because the current private personal repository does not enforce the branch-protection rule under the current GitHub setup, this workflow is currently a **team rule**. No one should directly push to `main`.
+> **Important:** clone `v2-development`, not `main`, when you want the current V2 system.
 
 ---
 
-# 20. Repository Safety
+# 14. V2 Files Added
 
-The repository intentionally ignores local/generated files such as:
-
-```text
-.venv/
-__pycache__/
-node_modules/
-frontend/dist/
-.env
-*.log
-```
-
-Large external/gridded files are also kept outside Git where appropriate, including downloaded satellite/raster data.
-
-### Never commit:
+The main V2 additions are:
 
 ```text
-API keys
-Passwords
-Earthdata credentials
-.netrc files
-Private tokens
-.env secrets
+advisory_context.py
+advisory_engine.py
+forecast_advisory_context.py
+forecast_engine_v2.py
+
+data/__init__.py
+data/crop_calendar.py
+data/crop_calendar.yaml
+data/build_dry_spell_context.py
+data/build_humidity_context.py
+data/download_soil_context.py
+data/classify_soil_context.py
+data/download_coarse_forecast.py
+data/download_coarse_history.py
+
+frontend/src/ComparisonMap.jsx
+
+tests/test_advisory_context.py
+tests/test_advisory_rules.py
+tests/test_forecast_advisories.py
 ```
 
-If a secret has accidentally been committed, removing the local file is not sufficient. The credential should be revoked/rotated and the Git history should be treated as compromised.
+V2 also includes new forecasting/downscaling experiment and training scripts under `data/` and the project root.
 
 ---
 
-# 21. Current Development History
+# 15. V2 Model Artifacts
 
-The ML work so far can be summarized as:
+Research/downscaling artifacts are kept separately from the operational delivery decision.
+
+Current V2 model files:
+
+```text
+models/v2_downscaling_metadata.pkl        (excluded from git — research only)
+models/v2_downscaling_rain_classifier.pkl (excluded from git — research only)
+models/v2_downscaling_rain_regressor.pkl  (excluded from git — research only)
+```
+
+> These model artifacts are intentionally excluded from the repository. Regenerate by running `train_pipeline_v2_downscaling.py`.
+
+These are retained for development/research.
+
+The current five-day delivery layer does **not** present the experimental ML downscaler as a validated operational Panchayat forecast.
+
+---
+
+# 16. V2 Data Sources / Context
+
+The V2 pipeline uses or prepares context from:
+
+```text
+Historical weather
+Open-Meteo forecast
+Panchayat coordinates
+SoilGrids soil properties
+Crop calendar
+Humidity history
+Dry-spell history
+Earlier rainfall/model experiments
+```
+
+The project continues to keep large external source/raster datasets outside Git where appropriate.
+
+---
+
+# 17. Testing
+
+V2 includes focused advisory and context integration tests in the `tests/` directory:
+
+```bash
+# Run all tests
+python tests/test_advisory_context.py
+python tests/test_advisory_rules.py
+python tests/test_forecast_advisories.py
+
+# Or with pytest
+pytest tests/
+```
+
+The intended checks include:
+
+```text
+Panchayat → soil context
+Panchayat + date → crop stage
+Forecast → advisory context
+Rule threshold → correct advisory
+Bengali advisory → valid API output
+```
+
+The handbook also emphasizes API tests, data validation, model tests, and end-to-end integration tests as the project matures.
+
+---
+
+# 18. Current V2 Limitations
+
+V2 is still a **research/prototype system**.
+
+Important limitations:
+
+- The operational five-day Panchayat ML downscaling model is not yet validated.
+- The current delivery layer therefore uses a coarse forecast fallback.
+- Rainfall references are gridded products rather than direct Panchayat rain-gauge observations.
+- The study area currently contains eight Panchayats.
+- Crop-calendar timings are prototype context and need local validation.
+- Advisory thresholds/actions need agriculture-domain review before real deployment.
+- The system should not replace official weather or agricultural advisories.
+
+---
+
+# 19. V1.3 → V2 in One View
 
 ```text
 V1
 │
-├── Initial rainfall classifier
-├── Initial rainfall regressor
-└── Tmax regressor
-        ↓
+├── Basic ML rainfall / rain probability / Tmax
+│
+↓
 V1.1
 │
-├── Added DEM terrain features
-├── Added slope/aspect/roughness
-└── Tested terrain contribution
-        ↓
+├── Terrain features
+│
+↓
 V1.2
 │
-├── Investigated IMD rainfall
-├── Investigated IMERG rainfall
-├── Added CHIRPS 0.05° reference
-├── Changed rainfall target to CHIRPS T+1
-└── Used temporal train/validation/test splits
-        ↓
+├── IMD + IMERG + CHIRPS experiments
+├── CHIRPS T+1 rainfall target
+│
+↓
 V1.3
 │
 ├── Multi-source rainfall calibration
-├── IMERG + IMD + Open-Meteo
-├── XGBoost residual correction
-└── Conservative residual factor α = 0.10
+├── Residual correction
+│
+↓
+V2
+│
+├── 5-day forecast delivery
+├── Conservative forecast fallback
+├── Forecast-aware context
+├── Crop calendar
+├── Soil context
+├── Humidity / dry-spell context
+├── Rule-based advisory engine
+├── English + Bengali advisory API
+├── Crop selector
+├── Panchayat comparison map
+├── Improved FastAPI layer
+└── Focused advisory tests
 ```
 
 ---
 
-# 22. What We Learned
+# 20. Development Philosophy
 
-The experiments have produced several useful conclusions.
+V2 follows one important principle:
 
-### 1. Resolution matters
+> **Do not claim more forecast accuracy than the validation evidence supports.**
 
-The rainfall products did not provide equal spatial differentiation.
+The system should provide useful localized decision support while making the current limitations visible.
 
-Approximate effective spatial series in the study area:
-
-```text
-IMD       → 2
-IMERG     → 3
-CHIRPS    → 7
-```
-
-CHIRPS therefore provided the strongest spatial differentiation among the tested rainfall products.
-
-### 2. Multiple rainfall products contain complementary information
-
-In the V1.2 dataset, the strongest simple rainfall correlations with the CHIRPS target were:
+Future V2.x work can focus on:
 
 ```text
-IMERG rainfall       ≈ 0.464
-Open-Meteo rainfall  ≈ 0.453
-IMD rainfall         ≈ 0.249
-```
-
-This supported the decision to experiment with multi-source calibration.
-
-### 3. A simple calibrated model was stronger than the first XGBoost amount model
-
-The multi-source linear calibration achieved:
-
-```text
-Test RMSE: 7.94 mm
-Test MAE:  4.59 mm
-```
-
-which was better than the V1.2 XGBoost rainfall model.
-
-### 4. Extreme rainfall remains difficult
-
-Even after calibration, heavy rainfall remains the largest error source.
-
-This is an important current limitation of the prototype and the main target for future research.
-
----
-
-# 23. Current Limitations
-
-TerraMind is still a prototype.
-
-Current limitations include:
-
-- Rainfall products are gridded references rather than direct Panchayat rain-gauge measurements.
-- Heavy rainfall amounts remain difficult to estimate accurately.
-- The study area contains only eight Panchayats.
-- Historical training coverage is relatively limited.
-- Forecast quality requires further independent validation.
-- Agricultural advisory rules need domain validation.
-- Production data freshness and operational forecast handling still need further development.
-- The current models should not be treated as replacements for official weather services or agricultural advisories.
-
----
-
-# 24. Planned V2 Development
-
-The next development phase should focus on turning the research prototype into a more complete decision-support application.
-
-## Forecasting
-
-Potential directions:
-
-```text
-Better extreme-rainfall handling
-Better temporal/weather features
-More robust spatial modeling
-Independent station validation
-Prediction uncertainty / confidence
-```
-
-## Agricultural intelligence
-
-Potential directions:
-
-```text
-Crop-specific advisories
-Rainfall threshold actions
-Sowing / irrigation / spraying guidance
-Flood and waterlogging alerts
-Improved Bengali advisory content
-```
-
-## Dashboard
-
-Potential directions:
-
-```text
-Forecast history
-Rainfall trend charts
-Panchayat comparison
-Risk/warning indicators
-Map-based visualization
-Mobile-friendly design
-```
-
-## Deployment
-
-Potential directions:
-
-```text
-Backend deployment
-Frontend deployment
-Secure environment variables
-Monitoring / logging
-Production data refresh
+better spatial downscaling
+independent station/AWS validation
+stronger heavy-rainfall handling
+forecast uncertainty
+better local crop calendars
+agriculture-domain validation
 ```
 
 ---
 
-# 25. Research Integrity / Evaluation Philosophy
+## TerraMind
 
-TerraMind's ML experiments use **time-based evaluation** rather than random splitting when future prediction is being simulated.
+**TerraMind — Understand Earth. Empower Futures.**
 
-The principle is:
-
-```text
-Past
- ↓
-Training
-
-Later historical period
- ↓
-Validation
-
-Future / held-out period
- ↓
-Testing
-```
-
-This avoids using future observations as training information.
-
-Model improvements should be accepted only when they improve validation performance and then remain useful on an untouched test period.
-
-The project also keeps earlier model versions as baselines so that improvements can be measured rather than assumed.
-
----
-
-# 26. Current V1.3 Summary
-
-```text
-Current rainfall architecture:
-
-IMERG
-   +
-IMD
-   +
-Open-Meteo
-      ↓
-Linear Calibration
-      ↓
-Calibrated Rainfall
-      +
-10% XGBoost Residual Correction
-      ↓
-CHIRPS-referenced rainfall estimate
-```
-
-Current reported test performance:
-
-```text
-RMSE: 7.88 mm
-MAE:  4.54 mm
-
-POD:  0.91
-FAR:  0.29
-CSI:  0.66
-```
-
-Maximum-temperature model:
-
-```text
-Tmax RMSE: 1.58 °C
-Tmax MAE:  1.20 °C
-Bias:     -0.12 °C
-```
-
-These figures are research/prototype evaluation results and should not be interpreted as guaranteed operational forecast accuracy.
-
----
-
-# 27. TerraMind
-
-**TerraMind** is a panchayat-level weather intelligence and agricultural advisory prototype developed for the Smart India Hackathon project.
-
-The long-term objective is:
-
-```text
-Localized environmental data
-        +
-Weather information
-        +
-Machine learning
-        +
-Agricultural rules
-        ↓
-Simple, actionable information
-for local agricultural decision-making
-```
-
----
-
-## License
-
-License information can be added when the team decides how the project will be distributed.
+Panchayat-level environmental intelligence for agricultural decision support.

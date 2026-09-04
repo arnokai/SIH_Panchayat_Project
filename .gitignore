@@ -4,13 +4,15 @@
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
 
 # Node
 node_modules/
 frontend/node_modules/
 
-# Vite build
+# Vite build output
 frontend/dist/
+dist/
 
 # Environment / secrets
 .env
@@ -23,18 +25,28 @@ frontend/dist/
 # OS files
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDE
 .vscode/
 .idea/
 
-# Old V0 models
+# ==========================================
+# ML Models (all .pkl files — large binaries)
+# Only keep: v1_3 operational models
+# ==========================================
 models/rain_classifier.pkl
 models/rain_regressor.pkl
 models/tmax_regressor.pkl
-
-# Large external river source dataset
-data/raw/rivers/
+models/v1.1_*
+models/v1_1_*
+# v1_rain_regressor not needed at runtime — exclude it (large file)
+models/v1_rain_regressor.pkl
+# v1_rain_classifier.pkl and v1_tmax_regressor.pkl are loaded by forecast_engine.py — keep tracked
+models/v1_2_*
+models/m3_clean_*
+models/m3_clean_tuned_*
+models/v2_downscaling_*
 
 # ==========================================
 # Generated ML / external datasets
@@ -48,10 +60,14 @@ data/raw/rivers/
 *.tif
 *.tiff
 
+# Binary test/download files
+*.bin
+
 # Local downloaded/generated raster directories
 data/raw/dem/
 data/raw/imd/
 data/raw/imerg/
+data/raw/rivers/
 
 # Generated rainfall/reference datasets
 data/raw/chirps_panchayat_rainfall.csv
@@ -65,24 +81,8 @@ data/raw/v1_2_evaluation_predictions.csv
 data/raw/v1_3_predictions.csv
 data/raw/v1_3_residual_strength_results.csv
 
-# Temporary test/download files
-test_imerg_subset.nc4
-test_20240102_response.bin
-
 # Python-generated feature tables
 data/raw/panchayat_terrain_features.csv
-
-# Intermediate model experiments
-models/v1.1_*
-models/v1_1_*
-models/v1_2_*
-
-# V2 experiment models not used in operational delivery
-models/m3_clean_*
-models/m3_clean_tuned_*
-
-# Temporary API test output
-api_test_output.txt
 
 # Generated V2 / advisory datasets and evaluation outputs
 data/raw/advisory_context_history.csv
@@ -95,3 +95,10 @@ data/raw/m3_tuned_spatial_verification.csv
 data/raw/v2_downscaling_*
 data/raw/panchayat_soil_context.csv
 data/raw/panchayat_soil_features.csv
+
+# Temporary test/download files
+test_imerg_subset.nc4
+test_20240102_response.bin
+
+# Temporary API test output
+api_test_output.txt
