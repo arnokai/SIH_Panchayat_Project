@@ -1,7 +1,7 @@
 # TerraMind V2 — Panchayat-Level Weather Intelligence & Agricultural Advisory
 
 > **V2 development branch:** `v2-development`
-> **Repository:** `https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project`
+> **Repository:** `https://github.com/arnokai/SIH_Panchayat_Project`
 > **Current role:** Research/prototype decision-support system for the Amdanga study area, North 24 Parganas.
 
 TerraMind V2 extends the earlier V0/V1/V1.3 work into a more complete **forecast + agricultural-advisory application**.
@@ -18,7 +18,7 @@ TerraMind V2 extends the earlier V0/V1/V1.3 work into a more complete **forecast
 ### Step 1 — Clone the repo
 
 ```bash
-git clone -b v2-development https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project.git
+git clone -b v2-development https://github.com/arnokai/SIH_Panchayat_Project.git
 cd SIH_Panchayat_Project
 ```
 
@@ -580,7 +580,7 @@ http://localhost:5173
 ### Linux / macOS (Bash / Zsh)
 
 ```bash
-git clone -b v2-development https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project.git
+git clone -b v2-development https://github.com/arnokai/SIH_Panchayat_Project.git
 cd SIH_Panchayat_Project
 python3 -m venv .venv
 source .venv/bin/activate
@@ -591,7 +591,7 @@ uvicorn api:app --reload
 ### Linux / macOS (Fish shell)
 
 ```fish
-git clone -b v2-development https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project.git
+git clone -b v2-development https://github.com/arnokai/SIH_Panchayat_Project.git
 cd SIH_Panchayat_Project
 python3 -m venv .venv
 source .venv/bin/activate.fish
@@ -602,7 +602,7 @@ uvicorn api:app --reload
 ### Windows PowerShell
 
 ```powershell
-git clone -b v2-development https://github.com/AKASH-GHOSHT/SIH_Panchayat_Project.git
+git clone -b v2-development https://github.com/arnokai/SIH_Panchayat_Project.git
 cd SIH_Panchayat_Project
 python -m venv .venv
 .venv\Scripts\Activate.ps1
