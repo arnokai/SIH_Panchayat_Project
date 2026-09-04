@@ -18,7 +18,7 @@ TerraMind V2 extends the earlier V0/V1/V1.3 work into a more complete **forecast
 ### Step 1 — Clone the repo
 
 ```bash
-git clone -b v2-development https://github.com/arnokai/SIH_Panchayat_Project.git
+git clone https://github.com/arnokai/SIH_Panchayat_Project.git
 cd SIH_Panchayat_Project
 ```
 
@@ -580,7 +580,7 @@ http://localhost:5173
 ### Linux / macOS (Bash / Zsh)
 
 ```bash
-git clone -b v2-development https://github.com/arnokai/SIH_Panchayat_Project.git
+git clone https://github.com/arnokai/SIH_Panchayat_Project.git
 cd SIH_Panchayat_Project
 python3 -m venv .venv
 source .venv/bin/activate
@@ -591,7 +591,7 @@ uvicorn api:app --reload
 ### Linux / macOS (Fish shell)
 
 ```fish
-git clone -b v2-development https://github.com/arnokai/SIH_Panchayat_Project.git
+git clone https://github.com/arnokai/SIH_Panchayat_Project.git
 cd SIH_Panchayat_Project
 python3 -m venv .venv
 source .venv/bin/activate.fish
@@ -602,7 +602,7 @@ uvicorn api:app --reload
 ### Windows PowerShell
 
 ```powershell
-git clone -b v2-development https://github.com/arnokai/SIH_Panchayat_Project.git
+git clone https://github.com/arnokai/SIH_Panchayat_Project.git
 cd SIH_Panchayat_Project
 python -m venv .venv
 .venv\Scripts\Activate.ps1
@@ -617,8 +617,6 @@ cd SIH_Panchayat_Project/frontend
 npm install
 npm run dev
 ```
-
-> **Important:** clone `v2-development`, not `main`, when you want the current V2 system.
 
 ---
 
@@ -649,27 +647,21 @@ tests/test_advisory_rules.py
 tests/test_forecast_advisories.py
 ```
 
-V2 also includes new forecasting/downscaling experiment and training scripts under `data/` and the project root.
-
 ---
 
-# 15. V2 Model Artifacts
+# 15. Operational Machine Learning Models
 
-Research/downscaling artifacts are kept separately from the operational delivery decision.
-
-Current V2 model files:
+The repository comes pre-bundled with all trained operational model artifacts in `models/`:
 
 ```text
-models/v2_downscaling_metadata.pkl        (excluded from git — research only)
-models/v2_downscaling_rain_classifier.pkl (excluded from git — research only)
-models/v2_downscaling_rain_regressor.pkl  (excluded from git — research only)
+models/v1_rain_classifier.pkl       # Rain probability classifier
+models/v1_tmax_regressor.pkl        # Maximum temperature regressor
+models/v1_3_rain_calibration.pkl    # Multi-source linear rainfall calibration
+models/v1_3_rain_residual.pkl       # XGBoost residual correction model
+models/v1_3_metadata.pkl            # Features list, validation scores & metadata
 ```
 
-> These model artifacts are intentionally excluded from the repository. Regenerate by running `train_pipeline_v2_downscaling.py`.
-
-These are retained for development/research.
-
-The current five-day delivery layer does **not** present the experimental ML downscaler as a validated operational Panchayat forecast.
+> **Pre-packaged:** All 5 model artifacts are included directly in the Git repository (~1.1 MB total). Anyone who clones the project can run predictions out of the box without retraining.
 
 ---
 
