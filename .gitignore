@@ -85,7 +85,7 @@ data/raw/v1_3_residual_strength_results.csv
 data/raw/panchayat_terrain_features.csv
 
 # Generated V2 / advisory datasets and evaluation outputs
-data/raw/advisory_context_history.csv
+# (Note: advisory_context_history.csv and panchayat_soil_context.csv are tracked because the runtime code loads them)
 data/raw/advisory_weather_history.csv
 data/raw/coarse_block_history.csv
 data/raw/coarse_forecast.csv
@@ -93,7 +93,6 @@ data/raw/m3_clean_*
 data/raw/m3_spatial_verification.csv
 data/raw/m3_tuned_spatial_verification.csv
 data/raw/v2_downscaling_*
-data/raw/panchayat_soil_context.csv
 data/raw/panchayat_soil_features.csv
 
 # Temporary test/download files
