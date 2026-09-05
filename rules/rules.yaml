@@ -1,0 +1,187 @@
+# ============================================================
+# TerraMind Advisory Rule Engine
+# Prototype rules based on the SIH handbook.
+#
+# IMPORTANT:
+# Thresholds/actions are prototype values and require review
+# by an agriculture faculty member / KVK scientist before
+# being described as agriculturally validated.
+# ============================================================
+
+rules:
+
+  # ----------------------------------------------------------
+  # 1. HEAVY RAIN
+  # Handbook scenario:
+  # Rain > 20 mm expected in next 48 h
+  # ----------------------------------------------------------
+
+  - id: no_spray_rain
+
+    crop:
+      - paddy
+      - vegetables
+
+    condition: "rain_mm > 20"
+
+    priority: high
+    type: warning
+
+    text_en: "Do not spray. Do not apply urea. Open field drains."
+
+    text_bn: "স্প্রে করবেন না। ইউরিয়া দেবেন না। জমির নালা খুলে দিন."
+
+
+  # ----------------------------------------------------------
+  # 2. HEAT STRESS DURING FLOWERING
+  # Handbook scenario:
+  # Max temperature > 38 °C during flowering
+  # ----------------------------------------------------------
+
+  - id: heat_stress
+
+    crop:
+      - paddy
+
+    stage:
+      - flowering
+
+    condition: "tmax_c > 38"
+
+    priority: high
+    type: warning
+
+    text_en: "Heat stress risk. Irrigate in the early morning."
+
+    text_bn: "তাপপ্রবাহের ঝুঁকি। ভোরবেলা জলসেচ দিন."
+
+
+  # ----------------------------------------------------------
+  # 3. HIGH HUMIDITY / BLAST RISK
+  # Handbook scenario:
+  # Humidity > 85% for 3 days on paddy
+  # ----------------------------------------------------------
+
+  - id: blast_disease_risk
+
+    crop:
+      - paddy
+
+    condition: "humidity > 85 and humidity_days >= 3"
+
+    priority: high
+    type: warning
+
+    text_en: "Blast disease risk. Inspect leaves today."
+
+    text_bn: "ব্লাস্ট রোগের ঝুঁকি। আজ পাতাগুলি পরীক্ষা করুন."
+
+
+  # ----------------------------------------------------------
+  # 4. DRY SPELL ON SANDY SOIL
+  # Handbook scenario:
+  # No rain for 7 days on sandy soil
+  # ----------------------------------------------------------
+
+  - id: sandy_soil_dry_spell
+
+    crop:
+      - all
+
+    soil:
+      - sandy
+
+    condition: "dry_days >= 7"
+
+    priority: medium
+    type: warning
+
+    text_en: "Dry spell detected. Irrigate within two days."
+
+    text_bn: "দীর্ঘ শুষ্ক সময় চলছে। দুই দিনের মধ্যে জলসেচ দিন."
+
+
+  # ----------------------------------------------------------
+  # 5. RAIN DURING HARVEST
+  # Handbook scenario:
+  # Rain expected during harvest window
+  # ----------------------------------------------------------
+
+  - id: harvest_rain
+
+    crop:
+      - all
+
+    stage:
+      - harvest
+
+    condition: "rain_mm > 0"
+
+    priority: high
+    type: warning
+
+    text_en: "Rain expected during harvest window. Advance harvest. Arrange covered storage."
+
+    text_bn: "ফসল কাটার সময় বৃষ্টির সম্ভাবনা রয়েছে। আগেভাগে ফসল কাটুন এবং আচ্ছাদিত স্থানে রাখুন."
+
+
+  # ----------------------------------------------------------
+  # 6. PROJECT EXTENSION — MODERATE RAIN
+  #
+  # Added because the current forecast range 5–20 mm otherwise
+  # has no matching rainfall rule.
+  # ----------------------------------------------------------
+
+  - id: moderate_rain
+
+    crop:
+      - all
+
+    condition: "rain_mm > 5 and rain_mm <= 20"
+
+    priority: medium
+    type: warning
+
+    text_en: "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations."
+
+    text_bn: "মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। জমির জলনিকাশি লক্ষ্য রাখুন এবং অপ্রয়োজনীয় কাজ এড়িয়ে চলুন."
+
+
+  # ----------------------------------------------------------
+  # 7. LIGHT RAIN
+  # Existing TerraMind prototype rule
+  # ----------------------------------------------------------
+
+  - id: light_rain
+
+    crop:
+      - all
+
+    condition: "rain_mm > 0 and rain_mm <= 5"
+
+    priority: low
+    type: success
+
+    text_en: "Light rain. Safe to apply light fertilisers."
+
+    text_bn: "হালকা বৃষ্টি। সার প্রয়োগ করা নিরাপদ."
+
+
+  # ----------------------------------------------------------
+  # 8. NO RAIN
+  # Existing TerraMind prototype rule
+  # ----------------------------------------------------------
+
+  - id: dry_day
+
+    crop:
+      - all
+
+    condition: "rain_mm == 0"
+
+    priority: low
+    type: info
+
+    text_en: "No rain expected. Maintain normal irrigation schedule."
+
+    text_bn: "বৃষ্টির সম্ভাবনা নেই। স্বাভাবিক জলসেচ বজায় রাখুন."

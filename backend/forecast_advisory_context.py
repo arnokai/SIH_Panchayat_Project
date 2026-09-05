@@ -3,40 +3,38 @@ from pathlib import Path
 import pandas as pd
 
 from advisory_context import AdvisoryContext
-from data.crop_calendar import get_crop_context
+try:
+    from data_pipeline.metadata.crop_calendar import get_crop_context
+except ImportError:
+    from data.crop_calendar import get_crop_context
 
 
 # ============================================================
 # TERRAMIND — FORECAST ADVISORY CONTEXT
 # ============================================================
 
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_RAW_DIR = BASE_DIR / "data_pipeline" / "raw"
+if not DATA_RAW_DIR.exists():
+    DATA_RAW_DIR = BASE_DIR / "data" / "raw"
 
 COARSE_FORECAST_FILE = (
-    BASE_DIR
-    / "data"
-    / "raw"
+    DATA_RAW_DIR
     / "coarse_block_forecast.csv"
 )
 
 HISTORY_FILE = (
-    BASE_DIR
-    / "data"
-    / "raw"
+    DATA_RAW_DIR
     / "advisory_context_history.csv"
 )
 
 SOIL_FILE = (
-    BASE_DIR
-    / "data"
-    / "raw"
+    DATA_RAW_DIR
     / "panchayat_soil_context.csv"
 )
 
 COORDINATE_FILE = (
-    BASE_DIR
-    / "data"
-    / "raw"
+    DATA_RAW_DIR
     / "panchayat_coordinates.csv"
 )
 

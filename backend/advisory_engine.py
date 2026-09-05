@@ -10,10 +10,14 @@ from advisory_context import AdvisoryContext
 # TERRAMIND — ADVISORY RULE ENGINE
 # ============================================================
 
-RULES_FILE = (
-    Path(__file__).parent
-    / "rules.yaml"
-)
+BACKEND_DIR = Path(__file__).resolve().parent
+ROOT_DIR = BACKEND_DIR.parent
+
+RULES_FILE = ROOT_DIR / "rules" / "rules.yaml"
+if not RULES_FILE.exists():
+    RULES_FILE = ROOT_DIR / "rules.yaml"
+if not RULES_FILE.exists():
+    RULES_FILE = BACKEND_DIR / "rules.yaml"
 
 
 # ============================================================

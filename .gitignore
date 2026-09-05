@@ -48,6 +48,17 @@ models/m3_clean_*
 models/m3_clean_tuned_*
 models/v2_downscaling_*
 
+ml/models/rain_classifier.pkl
+ml/models/rain_regressor.pkl
+ml/models/tmax_regressor.pkl
+ml/models/v1.1_*
+ml/models/v1_1_*
+ml/models/v1_rain_regressor.pkl
+ml/models/v1_2_*
+ml/models/m3_clean_*
+ml/models/m3_clean_tuned_*
+ml/models/v2_downscaling_*
+
 # ==========================================
 # Generated ML / external datasets
 # ==========================================
@@ -94,6 +105,29 @@ data/raw/m3_spatial_verification.csv
 data/raw/m3_tuned_spatial_verification.csv
 data/raw/v2_downscaling_*
 data/raw/panchayat_soil_features.csv
+
+# data_pipeline/raw equivalents
+data_pipeline/raw/dem/
+data_pipeline/raw/imd/
+data_pipeline/raw/imerg/
+data_pipeline/raw/rivers/
+data_pipeline/raw/chirps_panchayat_rainfall.csv
+data_pipeline/raw/chirps_spatial_test.csv
+data_pipeline/raw/imd_panchayat_rainfall.csv
+data_pipeline/raw/imerg_panchayat_rainfall.csv
+data_pipeline/raw/v1_2_training_dataset.csv
+data_pipeline/raw/v1_2_evaluation_predictions.csv
+data_pipeline/raw/v1_3_predictions.csv
+data_pipeline/raw/v1_3_residual_strength_results.csv
+data_pipeline/raw/panchayat_terrain_features.csv
+data_pipeline/raw/advisory_weather_history.csv
+data_pipeline/raw/coarse_block_history.csv
+data_pipeline/raw/coarse_forecast.csv
+data_pipeline/raw/m3_clean_*
+data_pipeline/raw/m3_spatial_verification.csv
+data_pipeline/raw/m3_tuned_spatial_verification.csv
+data_pipeline/raw/v2_downscaling_*
+data_pipeline/raw/panchayat_soil_features.csv
 
 # Temporary test/download files
 test_imerg_subset.nc4

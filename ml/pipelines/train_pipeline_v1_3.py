@@ -17,17 +17,20 @@ from xgboost import XGBRegressor
 # 1. PATHS
 # ==========================================
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+DATA_DIR = BASE_DIR / "data_pipeline" / "raw"
+if not DATA_DIR.exists():
+    DATA_DIR = BASE_DIR / "data" / "raw"
 
 DATA_FILE = (
-    BASE_DIR
-    / "data"
-    / "raw"
+    DATA_DIR
     / "v1_2_training_dataset.csv"
 )
 
 MODEL_DIR = (
     BASE_DIR
+    / "ml"
     / "models"
 )
 
@@ -1020,9 +1023,7 @@ prediction_columns = [
 test[
     prediction_columns
 ].to_csv(
-    BASE_DIR
-    / "data"
-    / "raw"
+    DATA_DIR
     / "v1_3_predictions.csv",
     index=False
 )
@@ -1049,9 +1050,7 @@ print(
 )
 
 print(
-    BASE_DIR
-    / "data"
-    / "raw"
+    DATA_DIR
     / "v1_3_predictions.csv"
 )
 

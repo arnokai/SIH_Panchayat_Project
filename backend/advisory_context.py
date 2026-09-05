@@ -89,12 +89,10 @@ def get_soil_type(
     The source file is derived from SoilGrids measurements.
     """
 
-    soil_file = (
-        Path(__file__).parent
-        / "data"
-        / "raw"
-        / "panchayat_soil_context.csv"
-    )
+    root_dir = Path(__file__).resolve().parent.parent
+    soil_file = root_dir / "data_pipeline" / "raw" / "panchayat_soil_context.csv"
+    if not soil_file.exists():
+        soil_file = root_dir / "data" / "raw" / "panchayat_soil_context.csv"
 
     if not soil_file.exists():
         raise FileNotFoundError(

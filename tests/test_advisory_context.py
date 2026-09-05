@@ -1,8 +1,10 @@
 import sys
 from pathlib import Path
 
-# Ensure project root is on sys.path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Ensure project root and backend are on sys.path
+ROOT_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT_DIR))
+sys.path.insert(0, str(ROOT_DIR / "backend"))
 
 from advisory_context import AdvisoryContext, validate_context
 

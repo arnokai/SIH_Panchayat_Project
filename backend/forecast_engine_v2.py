@@ -46,13 +46,16 @@ from forecast_advisory_context import (
 )
 
 
+from pathlib import Path
+
 # ============================================================
 # FILES
 # ============================================================
 
-COARSE_FORECAST_FILE = (
-    "data/raw/coarse_block_forecast.csv"
-)
+ROOT_DIR = Path(__file__).resolve().parent.parent
+COARSE_FORECAST_FILE = ROOT_DIR / "data_pipeline" / "raw" / "coarse_block_forecast.csv"
+if not COARSE_FORECAST_FILE.exists():
+    COARSE_FORECAST_FILE = ROOT_DIR / "data" / "raw" / "coarse_block_forecast.csv"
 
 
 # ============================================================
