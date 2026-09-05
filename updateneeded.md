@@ -24,6 +24,8 @@
 
 ## 🚀 Priority 1: High-Impact Demo Additions — [Member 1: Frontend]
 
+> 📖 **Full Workspace Guide & Technical Tasks:** See [frontend/README.md](file:///home/arnokai/Projects/SIH_Panchayat_Project/frontend/README.md) or [FRONTEND_TODO.md](file:///home/arnokai/Projects/SIH_Panchayat_Project/FRONTEND_TODO.md).
+
 These features require low effort but have a massive visual and practical impact during jury evaluation.
 
 - [ ] **Voice / Text-to-Speech in Bengali ("অডিও শুনুন"):**
@@ -40,6 +42,8 @@ These features require low effort but have a massive visual and practical impact
 
 ## 🌱 Priority 2: Agricultural Intelligence — [Member 2: Backend & Rules]
 
+> 📖 **Full Workspace Guide & Technical Tasks:** See [backend/README.md](file:///home/arnokai/Projects/SIH_Panchayat_Project/backend/README.md) or [BACKEND_TODO.md](file:///home/arnokai/Projects/SIH_Panchayat_Project/BACKEND_TODO.md).
+
 Move beyond raw weather figures into proactive agronomic protection.
 
 - [ ] **Pest & Disease Prediction Models:**
@@ -55,6 +59,8 @@ Move beyond raw weather figures into proactive agronomic protection.
 ---
 
 ## ⛈️ Priority 3: Machine Learning & Downscaling Refinements — [Member 3: AI / ML & Data]
+
+> 📖 **Full Workspace Guide & Technical Tasks:** See [ml/README.md](file:///home/arnokai/Projects/SIH_Panchayat_Project/ml/README.md) or [ML_TODO.md](file:///home/arnokai/Projects/SIH_Panchayat_Project/ML_TODO.md).
 
 ### 🔍 Current Model Diagnostic (from `ml/models/v1_3_metadata.pkl`)
 * **Event Detection is Solid (POD = 0.91):** Detects rain events accurately (91% detection).
@@ -83,6 +89,8 @@ Move beyond raw weather figures into proactive agronomic protection.
 ---
 
 ## 🏛️ Priority 4: Panchayat Administration & Disaster Management — [Member 4: Manager & DevOps]
+
+> 📖 **Full Workspace Guide & Technical Tasks:** See [docs/DEVOPS_README.md](file:///home/arnokai/Projects/SIH_Panchayat_Project/docs/DEVOPS_README.md) or [DEVOPS_TODO.md](file:///home/arnokai/Projects/SIH_Panchayat_Project/DEVOPS_TODO.md).
 
 - [ ] **Waterlogging & Flood Accumulation Heatmap:**
   - Leverage `elevation_dem_m` and `distance_to_river_m` to simulate surface water pooling following heavy rains (>30 mm).
