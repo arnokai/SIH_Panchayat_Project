@@ -402,13 +402,13 @@ The forecast-aware context builder then combines the latest observed streak with
 Main backend:
 
 ```text
-api.py
+backend/api.py  (with root api.py compatibility shim)
 ```
 
 Main forecast engine:
 
 ```text
-forecast_engine_v2.py
+backend/forecast_engine_v2.py
 ```
 
 ## Endpoints
@@ -631,35 +631,55 @@ npm run dev
 
 ---
 
-# 14. V2 Files Added
+# 14. 4-Member Modular Codebase Architecture
 
-The main V2 additions are:
+The project is structured into dedicated, conflict-free workspaces matching the 4 team member responsibilities:
 
 ```text
-advisory_context.py
-advisory_engine.py
-forecast_advisory_context.py
-forecast_engine_v2.py
-
-data/__init__.py
-data/crop_calendar.py
-data/crop_calendar.yaml
-data/build_dry_spell_context.py
-data/build_humidity_context.py
-data/download_soil_context.py
-data/classify_soil_context.py
-data/download_coarse_forecast.py
-data/download_coarse_history.py
-
-frontend/src/ComparisonMap.jsx
-frontend/vercel.json                # SPA rewrites for Vercel deployment
-Dockerfile                          # Containerized backend for Render deployment
-.dockerignore                       # Docker build optimization
-.github/workflows/protect-main.yml  # GitHub Actions branch guard for main
-
-tests/test_advisory_context.py
-tests/test_advisory_rules.py
-tests/test_forecast_advisories.py
+SIH_Panchayat_Project/
+├── frontend/                          # [Member 1: Frontend Engineer]
+│   ├── src/App.jsx                    # React 18 dashboard & weather cards
+│   ├── src/ComparisonMap.jsx          # Interactive Leaflet panchayat comparison map
+│   ├── src/App.css                    # Component styling & high-contrast cards
+│   ├── vite.config.js & package.json  # Vite dev server & dependencies
+│   └── vercel.json                    # Vercel deployment configuration
+│
+├── backend/                           # [Member 2: Backend Engineer]
+│   ├── api.py                         # FastAPI routes (/health, /v1/panchayats, /v1/forecast)
+│   ├── forecast_engine_v2.py          # 5-day forecast coordinator & safe fallback dispatcher
+│   ├── advisory_engine.py             # Rule matching & priority resolution engine
+│   ├── advisory_context.py            # Dataclasses (soil, crop stage, streaks)
+│   └── forecast_advisory_context.py   # Multi-day streak tracking (dry days, humidity streaks)
+│
+├── rules/                             # [Member 2: Backend & Domain Rules]
+│   └── rules.yaml                     # Single source of truth for agronomic rules & Bengali text
+│
+├── ml/                                # [Member 3: AI / ML Engineer]
+│   ├── pipelines/train_pipeline_v1_3.py # Two-stage rainfall & residual training pipeline
+│   ├── models/                        # Serialized .pkl weights (v1_*, v1_3_*, m3_clean_*)
+│   └── evaluations/                   # Baseline evaluation and spatial verification scripts
+│
+├── data_pipeline/                     # [Member 3: Data & GIS Engineer]
+│   ├── ingest/                        # Data downloaders (Open-Meteo, IMERG, CHIRPS, SoilGrids)
+│   ├── features/                      # Terrain & feature builders (SRTM DEM, slope/aspect, rivers)
+│   ├── metadata/                      # Static references (panchayats.csv, crop_calendar.yaml)
+│   └── raw/                           # Cached raw datasets & boundaries (git-ignored)
+│
+├── tests/                             # [Member 4: Manager / DevOps & Shared QA]
+│   ├── test_advisory_context.py       # Dataclass structure and threshold tests
+│   ├── test_advisory_rules.py         # Historical weather (5,848 rows) rule verification
+│   └── test_forecast_advisories.py    # End-to-end integration test
+│
+├── docs/                              # [Member 4: Manager / DevOps]
+│   ├── team_roles.md                  # Team role boundaries and Git workflow guidelines
+│   └── model_card.md                  # Responsible AI model documentation
+│
+└── DevOps & Root Entrypoints          # [Member 4: Manager & DevOps]
+    ├── Dockerfile                     # Container definition for Render cloud deployment
+    ├── .dockerignore                  # Container build exclusions
+    ├── .github/workflows/protect-main.yml # GitHub Actions branch guard for main
+    ├── api.py                         # Root backward-compatibility shim (delegates to backend.api:app)
+    └── requirements.txt               # Pinned Python dependencies
 ```
 
 ---
