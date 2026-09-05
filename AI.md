@@ -105,35 +105,44 @@ To run, develop, or deploy this project, the following components are required:
 
 ---
 
-## 4. Directory & File Reference
+## 4. Directory & Team Workspace Reference (4-Member Modular Setup)
 
-### Core Runtime (Active Stack)
-* **`api.py`**: FastAPI application exposing REST endpoints (`/health`, `/v1/panchayats`, `/v1/forecast`).
-* **`forecast_engine_v2.py`**: Primary forecast dispatcher. Computes 5-day predictions and coordinates with the advisory layer.
-* **`advisory_engine.py`**: Rule evaluation engine. Loads `rules.yaml` and tests conditions against contextual variables.
-* **`advisory_context.py`**: Data classes and builders for panchayat-specific soil, crop, and historical weather streaks.
-* **`forecast_advisory_context.py`**: Integrates multi-day forecast trajectories with historical context to evaluate future multi-day risks (e.g., fungal disease risk from prolonged humidity).
-* **`rules.yaml`**: The single source of truth for agricultural advisory rules, thresholds, priority ranking, and bilingual templates.
+The codebase is organized into dedicated, non-overlapping workspaces for the 4-member team to prevent merge conflicts:
 
-### Data & Machine Learning
-* **`models/`**:
-  * `v1_rain_classifier.pkl`: Probability-of-rain classifier.
-  * `v1_tmax_regressor.pkl`: Maximum temperature regressor.
-  * `v1_3_rain_calibration.pkl` & `v1_3_rain_residual.pkl`: V1.3 operational rainfall calibration + XGBoost residual correction models.
-  * `v1_3_metadata.pkl`: Training metadata, feature list, and evaluation scores.
-* **`train_pipeline_v1_3.py`**: Reference training pipeline for the V1.3 calibration and residual model.
-* **`data/crop_calendar.yaml` & `data/crop_calendar.py`**: Crop calendars and growth stages for local crops.
-* **`data/raw/`**: Reference CSVs and GeoJSONs for panchayat boundaries, coordinates, and historical weather.
-
-### Frontend
+### 🎨 Frontend Workspace (`frontend/`) — [Member 1: Frontend Engineer]
 * **`frontend/src/App.jsx`**: Main application dashboard; handles panchayat selection, crop switching, and rendering forecast cards.
 * **`frontend/src/ComparisonMap.jsx`**: Leaflet map component showing spatial differences across panchayats.
+* **`frontend/src/App.css`**: Component styling and high-contrast color scheme.
 * **`frontend/vite.config.js`**: Vite build configuration.
 
-### Tests (`tests/`)
+### ⚙️ Backend Workspace (`backend/` & `rules/`) — [Member 2: Backend Engineer]
+* **`api.py`** (Root shim): Root entrypoint redirecting to `backend.api:app` for continuous Render cloud compatibility.
+* **`backend/api.py`**: FastAPI application exposing REST endpoints (`/health`, `/v1/panchayats`, `/v1/forecast`).
+* **`backend/forecast_engine_v2.py`**: Primary forecast dispatcher. Computes 5-day predictions and coordinates with the advisory layer.
+* **`backend/advisory_engine.py`**: Rule evaluation engine. Loads `rules/rules.yaml` and tests conditions against contextual variables.
+* **`backend/advisory_context.py`**: Data classes and builders for panchayat-specific soil, crop, and historical weather streaks.
+* **`backend/forecast_advisory_context.py`**: Integrates multi-day forecast trajectories with historical context to evaluate future multi-day risks.
+* **`rules/rules.yaml`**: The single source of truth for agricultural advisory rules, thresholds, priority ranking, and bilingual templates.
+
+### 🧠 AI / ML Workspace (`ml/`) — [Member 3: AI/ML & Data Engineer]
+* **`ml/pipelines/train_pipeline_v1_3.py`**: Reference training pipeline for the V1.3 calibration and residual model.
+* **`ml/models/`**: Serialized `.pkl` models and feature importances (`v1_*`, `v1_3_*`, `m3_clean_*`, `v2_*`).
+* **`ml/evaluations/`**: Model verification scripts (`evaluate_rainfall_baselines.py`, `evaluate_m3_spatial_downscaling.py`).
+
+### 📊 Data Pipeline Workspace (`data_pipeline/`) — [Member 3: AI/ML & Data Engineer]
+* **`data_pipeline/ingest/`**: Ingestion scripts for external weather & satellite data (`download_weather.py`, `download_imerg.py`, `extract_imd_rainfall.py`).
+* **`data_pipeline/features/`**: Feature engineering scripts (`build_terrain_features.py`, `build_ml_dataset.py`, `build_humidity_context.py`).
+* **`data_pipeline/metadata/`**: Master static references (`panchayats.csv`, `crop_calendar.yaml`, `crop_calendar.py`).
+* **`data_pipeline/raw/`**: Raw CSVs, GeoJSONs, NetCDF files, and cache (ignored in Git).
+
+### 🚀 DevOps, Governance & QA — [Member 4: Manager & DevOps]
+* **`docs/team_roles.md`**: Team role boundaries and Git workflow guidelines.
+* **`docs/model_card.md`**: Responsible AI model documentation.
 * **`tests/test_advisory_context.py`**: Validates context dataclass structure and threshold calculations.
 * **`tests/test_advisory_rules.py`**: Tests historical weather events against `rules.yaml` triggers.
 * **`tests/test_forecast_advisories.py`**: End-to-end integration test verifying forecast to advisory pipeline output.
+* **`Dockerfile`**: Render deployment container configuration.
+* **`.github/workflows/protect-main.yml`**: CI guard restricting direct pushes to `main`.
 
 ---
 
