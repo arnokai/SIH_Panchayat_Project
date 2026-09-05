@@ -17,11 +17,17 @@ from advisory_engine import evaluate_advisories
 # ============================================================
 
 WEATHER_FILE = (
-    "data/raw/advisory_context_history.csv"
+    ROOT_DIR
+    / "data_pipeline"
+    / "raw"
+    / "advisory_context_history.csv"
 )
 
 SOIL_FILE = (
-    "data/raw/panchayat_soil_context.csv"
+    ROOT_DIR
+    / "data_pipeline"
+    / "raw"
+    / "panchayat_soil_context.csv"
 )
 
 
@@ -86,7 +92,10 @@ if df["soil_type"].isna().any():
 # IMPORT CROP CALENDAR
 # ============================================================
 
-from data.crop_calendar import get_crop_context
+try:
+    from data_pipeline.metadata.crop_calendar import get_crop_context
+except ImportError:
+    from data.crop_calendar import get_crop_context
 
 
 # ============================================================

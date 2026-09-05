@@ -20,7 +20,10 @@ from forecast_advisory_context import (
 # ============================================================
 
 FORECAST_FILE = (
-    "data/raw/coarse_block_forecast.csv"
+    ROOT_DIR
+    / "data_pipeline"
+    / "raw"
+    / "coarse_block_forecast.csv"
 )
 
 PANCHAYAT_ID = "A2"
