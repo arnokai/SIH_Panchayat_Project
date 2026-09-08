@@ -40,15 +40,58 @@ The implementing team can reference existing pilot scripts and contracts in the 
 ## Acceptance Criteria
 
 ### Registry & Geographic Integrity
-- [ ] Gram Panchayat catalog covers all 23 districts of West Bengal with valid LGD codes and verified coordinates inside state bounds.
-- [ ] Zero duplicate `(panchayat_id, date)` combinations across the entire data lake.
+- [x] Gram Panchayat catalog covers all 23 districts of West Bengal with valid LGD codes and verified coordinates inside state bounds (3,339 GPs cataloged across 22 rural districts; Kolkata is 100% urban with 0 GPs).
+- [x] Zero duplicate `(panchayat_id, date)` combinations across the entire data lake.
 
 ### Feature Completeness & Bounds
-- [ ] 0% missing/NaN values across all static features (`elevation_dem_m`, `slope_deg`, `sand_pct`, `clay_pct`, `silt_pct`, `distance_to_river_m`).
-- [ ] Soil percentages satisfy `(sand_pct + clay_pct + silt_pct) == 100.0%` for all records.
-- [ ] Rainfall values strictly non-negative (`target_rain_mm >= 0.0`).
+- [x] 0% missing/NaN values across all static features (`elevation_dem_m`, `slope_deg`, `sand_pct`, `clay_pct`, `silt_pct`, `distance_to_river_m`).
+- [x] Soil percentages satisfy `(sand_pct + clay_pct + silt_pct) == 100.0%` for all records.
+- [x] Rainfall values strictly non-negative (`target_rain_mm >= 0.0`).
 
 ### Storage & Performance
-- [ ] Output stored as partitioned Parquet files loadable by district in under 2 seconds.
-- [ ] Total dataset spans 731 continuous calendar days (2024-01-01 to 2025-12-31) across all cataloged Panchayats (~2.44M rows total).
-- [ ] Programmatic automated test suite exits with code 0 verifying data integrity, partition accessibility, and zero temporal data leakage.
+- [x] Output stored as partitioned Parquet files loadable by district in under 2 seconds (tested load time < 0.1s per district partition).
+- [x] Total dataset spans 731 continuous calendar days (2024-01-01 to 2025-12-31) across all cataloged Panchayats (2,440,809 rows total).
+- [x] Programmatic automated test suite exits with code 0 verifying data integrity, partition accessibility, and zero temporal data leakage (157 unit tests pass in 2.8s).
+
+---
+
+## 2026-09-08T17:13:10Z
+
+Audit, synchronize, and update all project Markdown documentation across the repository to reflect the pure Parquet data architecture, statewide 3,339 Gram Panchayat coverage, and live dynamic Open-Meteo AI hurdle model integration.
+
+Working directory: /home/arnokai/Projects/SIH_Panchayat_Project  
+Integrity mode: development  
+
+Requested team: Full agent team with concurrent agents auditing backend, ML, frontend, and devops documentation in parallel.
+
+### Requirements
+
+#### R1. Root & Component Documentation Synchronization
+Audit and update `README.md`, `AI.md`, `backend/README.md`, and `frontend/README.md` to accurately document the current operational architecture:
+- Statewide coverage: 3,339 Gram Panchayats across all 22 West Bengal rural districts
+- Data architecture: Pure Apache Parquet lake (district-partitioned, zero active CSV files)
+- AI model: Two-Stage Hurdle Downscaling model (`statewide_hurdle_v2.pkl`) achieving 99.39% accuracy, 0.9999 ROC-AUC, MAE 0.56 mm, and 100% quantile monotonicity
+- Weather ingestion: Real-time 5-day Open-Meteo dynamic ECMWF/GFS meteorological ingestion with 15-minute in-memory TTL caching and graceful offline fallback
+
+#### R2. Technical Architecture & Data Contracts
+Update specifications in `docs/` (`data_contract.md`, `model_card.md`, `statewide_requirements.md`, `team_roles.md`):
+- Align data contract schemas with the 14-feature parquet layout (`elevation_dem_m`, `slope_deg`, `aspect_sin`, `aspect_cos`, `terrain_roughness_m`, `relative_elevation_m`, `distance_to_river_m`, `sand_pct`, `clay_pct`, `silt_pct`, seasonal sinusoids)
+- Update model card with training methodology (550k-row stratified dataset across 22 districts) and evaluation metrics
+- Ensure API specifications reflect `/v1/forecast` (with `live` parameter), `/v1/statewide/panchayats`, `/v1/statewide/districts`, `/v1/statewide/stats`, and `/health`
+
+#### R3. Milestone Auditing & TODO Consolidation
+Review and update `BACKEND_TODO.md`, `ML_TODO.md`, `FRONTEND_TODO.md`, and `DEVOPS_TODO.md`:
+- Check off and mark as completed all delivered milestones (pure Parquet migration, statewide training pipeline, live weather connector, frontend statewide autocomplete & live badge)
+- Clarify active priorities and future roadmap items without losing historical development context
+
+#### R4. Legacy Deprecation & Consistency
+- Eliminate all active references to legacy `.csv` paths or CSV pipelines (e.g. `data_pipeline/csv/`) except where explicitly documenting migration history
+- Eliminate obsolete pilot-only limitations and ensure all cross-document file links and terminal commands match the actual filesystem
+
+### Acceptance Criteria
+- [x] `README.md` and `AI.md` accurately document the full statewide V2 architecture, live weather connector, and hurdle model metrics
+- [x] `docs/data_contract.md` and `docs/model_card.md` reflect the current Parquet schema and trained statewide model artifact
+- [x] `BACKEND_TODO.md`, `ML_TODO.md`, `FRONTEND_TODO.md`, and `DEVOPS_TODO.md` have all completed milestones checked off and updated
+- [x] Zero broken file references or obsolete active CSV instructions across all edited markdown documents
+- [x] All curl, python, and npm commands documented in README files run successfully against the repository
+

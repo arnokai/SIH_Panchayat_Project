@@ -1,132 +1,82 @@
-# TerraMind Frontend Workspace & Technical Roadmap
+# TerraMind Frontend Roadmap & Task Tracking
 
-> **Assigned Owner:** Member 1 — Frontend Engineer  
-> **Workspace:** `frontend/`  
-> **Live Deployment (Vercel):** [https://sih-panchayat-project.vercel.app](https://sih-panchayat-project.vercel.app)  
-> **Backend API (Render):** [https://sih-panchayat-project.onrender.com](https://sih-panchayat-project.onrender.com)  
-> **Problem Statement:** SIH26074 (Ministry of Earth Sciences — Downscaling Weather Forecasts for Agro-Meteorological Advisory Services)  
-> **Status:** React 18 + Vite live in production. Core 5-day cards and comparison map operational. Priority 1 user features in active development.
+> **Owner:** Member 1 — Frontend Engineer  
+> **Framework:** React 19 (`^19.2.8`) + Vite 8 (`^8.2.2`) + React-Leaflet 5 (`^5.0.0`)  
+> **Deployment:** Vercel Production [https://sih-panchayat-project.vercel.app](https://sih-panchayat-project.vercel.app)  
+> **Last Synchronized:** 2026-09-08 (Post Statewide Parquet & Live Open-Meteo Integration)
 
 ---
 
-## 1. Executive Summary & Role Mission
+## 1. Milestone Tracking
 
-As the **Frontend Engineer (Member 1)**, you are the bridge between advanced meteorological AI and rural farmers. You own the complete user interface and client experience. Your mission is to build an intuitive, high-contrast, accessible, and offline-capable dashboard that turns complex multi-variable weather predictions into simple, actionable farming decisions.
-
-### Key Success Criteria for SIH Presentation:
-1. **Extreme Usability for Rural Farmers:** Illiterate and elderly farmers must be able to listen to advisories via Bengali Voice/TTS with a single tap.
-2. **Instant Community Dissemination:** One-click WhatsApp sharing to local farmer groups (*Krishi Dal*).
-3. **Offline Resilience:** PWA caching ensuring forecasts remain viewable even when rural 4G/2G signals drop.
-4. **Spatial Clarity:** Interactive Leaflet map displaying real-time microclimate differences across the 8 panchayats in Amdanga Block.
-
----
-
-## 2. Directory Structure & Key Files
-
-```text
-frontend/
-├── index.html                      # HTML entry point, PWA meta tags, fonts
-├── package.json                    # Dependencies: React 18, Vite, Leaflet, Lucide icons
-├── vite.config.js                  # Vite configuration & PWA plugin settings
-├── vercel.json                     # Vercel SPA routing and cache headers
-├── .env                            # Local / cloud API base URL
-├── src/
-│   ├── main.jsx                    # React root render
-│   ├── App.jsx                     # Core state: panchayat selector, language toggle, forecast view
-│   ├── App.css                     # Mobile-first high-contrast styling (outdoor sunlight readable)
-│   ├── components/
-│   │   ├── ForecastCard.jsx        # Individual daily weather & advisory card
-│   │   ├── ComparisonMap.jsx       # Interactive Leaflet map of the 8 Amdanga Panchayats
-│   │   ├── AudioAdvisory.jsx       # Bengali Text-to-Speech audio player component
-│   │   ├── WhatsAppShare.jsx       # One-click WhatsApp share button and formatter
-│   │   ├── UncertaintyBar.jsx      # P10 / P50 / P90 rainfall uncertainty visualizer
-│   │   ├── CropSelector.jsx        # Crop stage and crop selection dropdown
-│   │   └── OfflineBanner.jsx       # Network status indicator and cached data alert
-│   └── services/
-│       ├── api.js                  # Axios / Fetch client calling backend endpoints
-│       └── cacheService.js         # LocalStorage / IndexedDB offline cache manager
-└── README.md                       # (This workspace guide & technical backlog)
-```
+### Completed Milestones
+- [x] **Statewide 3,339 Gram Panchayat Autocomplete:**
+  - Real-time debounced search calling `GET /v1/statewide/panchayats?search=...&limit=6`.
+  - Dropdown rendering GP name, Block name, and District name.
+  - Selected statewide GP badge displaying LGD code and verified centroid latitude/longitude.
+  - Automatic fallback mapping to surveyed pilot coordinates for Amdanga Panchayats.
+- [x] **Live Dynamic Weather Status Badge:**
+  - Integrated status indicator reflecting real-time Open-Meteo ECMWF/GFS meteorological ingestion downscaled by the Hurdle model (`data.is_live_dynamic`).
+  - Graceful fallback messaging for V2 static model and degraded mode.
+- [x] **Bengali Voice / Text-to-Speech ("অডিও শুনুন"):**
+  - Native browser Web Speech API implementation targeting Bengali (`bn-IN`).
+  - Intelligent voice discovery filtering for Bengali speech synthesizers.
+  - Per-card play/stop controls, per-advisory buttons, and full sequential audio player ("সব পরামর্শ শুনুন").
+- [x] **One-Click WhatsApp Community Dissemination:**
+  - WhatsApp Markdown bulletin generator with crop advisories, rainfall, temperatures, and portal links.
+  - Dedicated share buttons on daily forecast cards and action advisories.
+- [x] **Interactive Comparison Map (Pilot Baseline):**
+  - React-Leaflet spatial map plotting Amdanga Block centre and 8 Panchayat centroids.
+  - Day selector synchronized with 5-day forecast cards.
+- [x] **Core Stack Modernization:**
+  - Migrated to React 19.2 and Vite 8 with zero compilation or lint errors.
 
 ---
 
-## 3. Detailed Action Plan & Task Checklist
+## 2. Active Priorities & Backlog
 
-### Phase 1: High-Impact Jury Features (Priority 1)
-- [ ] **1.1 Bengali Voice / Text-to-Speech ("অডিও শুনুন"):**
-  - Add a dedicated audio play button on every daily forecast and active advisory card.
-  - Implement two-tier audio delivery:
-    - *Tier 1 (Client Native):* Use Web Speech API (`window.speechSynthesis`) targeting Bengali (`bn-IN` / `bn-BD`).
-    - *Tier 2 (Cloud / Backend Stream):* Fallback to backend `GET /v1/tts/synthesize?panchayat_id=A1&lang=bn` streaming high-quality neural Bengali audio.
-  - Provide visual audio state: animated waveform or pulsing speaker icon during playback.
-- [ ] **1.2 One-Click WhatsApp Share Button ("হোয়াটসঅ্যাপে শেয়ার করুন"):**
-  - Add a distinct green WhatsApp button on the advisory banner.
-  - Format message using standard WhatsApp markdown:
-    ```text
-    🌾 *টেরামাইন্ড পঞ্চায়েত কৃষি বার্তা* 🌾
-    📍 পঞ্চায়েত: আমডাঙা (A2) | তারিখ: ০৫/০৯/২০২৬
-    🌧️ আজ: হালকা বৃষ্টি (২.৪ মিমি) | সর্বোচ্চ তাপমাত্রা: ৩২°C
-    ⚠️ কৃষি পরামর্শ:
-    ইউরিয়া সার প্রয়োগ করবেন না। জমিতে জল নিষ্কাশনের ব্যবস্থা রাখুন।
-    🔗 বিস্তারিত দেখুন: https://sih-panchayat-project.vercel.app
-    ```
-  - Trigger via `window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank')`.
-- [ ] **1.3 Offline-First Progressive Web App (PWA):**
+### Priority 1: High-Impact Jury & Operational Features
+- [ ] **Live Dynamic Weather Toggle Switch:**
+  - Add an intuitive UI toggle in the selector card to allow switching between `live=true` (Live Open-Meteo 5-day ECMWF/GFS forecast) and `live=false` (Offline V2 Hurdle model).
+- [ ] **Offline-First Progressive Web App (PWA):**
   - Install and configure `vite-plugin-pwa`.
-  - Add `manifest.json` with high-res green agri icons, `theme_color: "#2e7d32"", and `display: "standalone"`.
-  - Implement service worker caching strategy (`StaleWhileRevalidate`) for API requests to `/v1/forecast`.
-  - Display an "Offline Mode — Showing Cached Forecast" banner when `navigator.onLine === false`.
+  - Add Web App Manifest (`manifest.json`) with agriculture icons, green theme (`#06372b`), and standalone display mode.
+  - Implement ServiceWorker cache strategy (`StaleWhileRevalidate`) for `/v1/forecast` and `/v1/statewide/panchayats`.
+  - Display offline banner when `navigator.onLine === false`.
+- [ ] **Full Quantile Uncertainty Visualization (P10 / P50 / P90):**
+  - Render an intuitive confidence range bar on each daily card displaying:
+    - Minimum likely rain (P10)
+    - Median expected rain (P50)
+    - Worst-case downpour (P90)
 
----
-
-### Phase 2: Scientific Rigor & Data Visualization
-- [ ] **2.1 Quantile Uncertainty Visualization (P10 / P50 / P90):**
-  - Move beyond single deterministic numbers (e.g. "28 mm").
-  - Render an intuitive confidence bar showing:
-    - **P10 (Minimum likely rain):** e.g., 12 mm
-    - **P50 (Expected median):** e.g., 24 mm
-    - **P90 (Worst-case heavy downpour):** e.g., 48 mm
-  - Helps farmers make risk-managed decisions (e.g., whether to dig drainage trenches).
-- [ ] **2.2 Single-Call Spatial Map Integration:**
-  - Update `src/ComparisonMap.jsx` to consume the new batch endpoint `GET /v1/block/overview` in a single network call.
-  - Dynamically color-code all 8 panchayats on the Leaflet map:
-    - 🔴 **Red Marker:** High/Critical Warning (Pest alert, severe rain, heat stress).
-    - 🟡 **Yellow Marker:** Moderate Advisory (Moderate rain, delay spray).
-    - 🟢 **Green Marker:** Normal / Safe Farming Operations.
-  - Clicking any panchayat marker smoothly switches the active dashboard to that panchayat.
-- [ ] **2.3 Operational Agronomic Badges:**
-  - Render clear, color-coded status pills:
+### Priority 2: Statewide Exploration & Spatial Depth
+- [ ] **Cascading Statewide District & Block Selector:**
+  - Consume `GET /v1/statewide/districts` to provide hierarchical district-first browsing (22 Districts -> 342 Blocks -> 3,339 GPs) alongside the search bar.
+- [ ] **Statewide Spatial Map View:**
+  - Expand `ComparisonMap.jsx` beyond Amdanga to render district boundary overlays and dynamically center on any selected statewide Gram Panchayat.
+- [ ] **Operational Agronomic Action Pills:**
+  - Render dedicated high-contrast visual chips for key field operations:
     - 🚫 **Urea Application:** *Avoid for 48 hrs (Runoff risk)*
     - 🚜 **Field Spraying:** *Safe tomorrow 8:00 AM – 11:00 AM*
     - 💧 **Irrigation:** *Not needed (Rain expected)*
 
+### Priority 3: Architecture & Polish
+- [ ] **Component Modularization Refactoring:**
+  - Decompose monolithic `App.jsx` (1,193 lines) into modular components:
+    - `src/components/StatewideSearch.jsx`
+    - `src/components/ForecastCard.jsx`
+    - `src/components/AdvisorySection.jsx`
+    - `src/components/SystemTelemetry.jsx`
+    - `src/services/api.js`
+- [ ] **Language Toggle & Persistence:**
+  - Add Bengali (`বাংলা`) / English (`English`) toggle switch with `localStorage` persistence.
+- [ ] **Printable Notice Board Bulletin:**
+  - Print-optimized CSS stylesheet for Gram Panchayat notice boards and Common Service Centres (CSCs).
+
 ---
 
-### Phase 3: Accessibility & Design Polish
-- [ ] **3.1 High-Contrast Sunlight Theme:**
-  - Farmers use mobile phones in broad daylight in the fields. Ensure bold contrast (WCAG AAA compliant), large bold typography, and minimum 48×48px tap targets.
-- [ ] **3.2 Language Persistence:**
-  - Support instant Bengali (`বাংলা`) and English (`English`) toggle.
-  - Store selected language in `localStorage` so it persists across sessions.
-- [ ] **3.3 Printable Notice Board View:**
-  - Add a "Print Notice Board Bulletin" button triggering a print-optimized CSS layout for Gram Panchayat offices and Common Service Centres (CSCs).
+## 3. Bug Fixes & Technical Debt
 
----
-
-## 4. Local Development & Deployment
-
-```bash
-cd frontend
-npm install
-npm run dev        # Runs local dev server on http://localhost:5173
-npm run build      # Generates production build in frontend/dist
-```
-
-### Environment Setup (`.env`)
-```env
-# Connect to local backend:
-VITE_API_BASE_URL=http://127.0.0.1:8000
-
-# Connect to production Render cloud backend:
-# VITE_API_BASE_URL=https://sih-panchayat-project.onrender.com
-```
+- [x] Fixed ESLint configuration for React 19 flat config in `eslint.config.js`.
+- [ ] Fix execution bit permissions on `frontend/node_modules/.bin/eslint` for seamless CI/CD `npm run lint` execution.
+- [ ] Standardize API error handling with retry toast alerts when backend is warming up on Render cold start.
