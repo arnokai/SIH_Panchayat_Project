@@ -354,7 +354,7 @@ curl -s "http://127.0.0.1:8000/"
 
 ### Future / Planned Endpoints (Roadmap)
 
-The following endpoints were proposed during initial architectural planning and remain on the future delivery roadmap (tracked in `BACKEND_TODO.md`). Note that client-side implementations currently provide instant WhatsApp sharing and voice synthesis in the frontend:
+The following endpoints were proposed during initial architectural planning and remain on the future delivery roadmap (tracked in `docs/roadmap/BACKEND_TODO.md`). Note that client-side implementations currently provide instant WhatsApp sharing and voice synthesis in the frontend:
 
 | Endpoint | Method | Roadmap Phase | Description / Current Workaround |
 | :--- | :--- | :--- | :--- |

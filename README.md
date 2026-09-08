@@ -696,10 +696,20 @@ SIH_Panchayat_Project/
 │   └── test_forecast_advisories.py    # End-to-end forecast and advisory integration tests
 │
 ├── docs/                              # [Member 4: Manager / DevOps]
-│   ├── team_roles.md                  # Team role boundaries and Git workflow guidelines
-│   ├── model_card.md                  # Responsible AI model documentation
-│   ├── data_contract.md               # Pure Parquet data lake schema & handoff contracts
-│   └── DEVOPS_README.md               # DevOps roadmap, milestones, and testing guide
+│   ├── architecture/
+│   │   ├── AI.md                      # AI system architecture and design
+│   │   ├── DEVOPS_README.md           # DevOps roadmap, milestones, and testing guide
+│   │   └── team_roles.md             # Team role boundaries and Git workflow guidelines
+│   ├── roadmap/
+│   │   ├── BACKEND_TODO.md            # Backend milestones and action items
+│   │   ├── DEVOPS_TODO.md             # DevOps milestones and action items
+│   │   ├── feature_roadmap.md         # Feature roadmap and 4-member action plan
+│   │   ├── FRONTEND_TODO.md           # Frontend milestones and action items
+│   │   └── ML_TODO.md                 # ML milestones and action items
+│   └── specs/
+│       ├── data_contract.md           # Pure Parquet data lake schema & handoff contracts
+│       ├── model_card.md              # Responsible AI model documentation
+│       └── statewide_requirements.md  # Statewide expansion requirements
 │
 └── DevOps & Root Entrypoints          # [Member 4: Manager & DevOps]
     ├── Dockerfile                     # Container definition for Render cloud deployment

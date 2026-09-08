@@ -148,8 +148,8 @@ The codebase is organized into dedicated, non-overlapping workspaces for the 4-m
 * **`data_pipeline/processed/statewide/`**: Pure Parquet data lake partitioned by `district_name=*` (731 continuous days, 2,440,809 rows).
 
 ### 🚀 DevOps, Governance & QA — [Member 4: Manager & DevOps]
-* **`docs/team_roles.md`**: Team role boundaries and Git workflow guidelines.
-* **`docs/model_card.md`**: Responsible AI model documentation.
+* **`docs/architecture/team_roles.md`**: Team role boundaries and Git workflow guidelines.
+* **`docs/specs/model_card.md`**: Responsible AI model documentation.
 * **`tests/test_advisory_context.py`**: Validates context dataclass structure and threshold calculations.
 * **`tests/test_advisory_rules.py`**: Tests historical weather events against `rules.yaml` triggers.
 * **`tests/test_forecast_advisories.py`**: End-to-end integration test verifying forecast to advisory pipeline output.

@@ -69,7 +69,7 @@ As the **Project Manager & DevOps Engineer (Member 4)**, you ensure uninterrupte
 ├── docker-compose.yml               # (In Development) Local offline stack (Backend + Frontend)
 ├── requirements.txt                 # Backend & ML Python dependencies
 ├── vercel.json                      # Vercel SPA routing rules
-└── DEVOPS_TODO.md                   # Root-level DevOps action checklist
+└── docs/roadmap/DEVOPS_TODO.md       # DevOps action checklist
 ```
 
 ---
