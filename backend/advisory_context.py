@@ -99,9 +99,13 @@ def get_soil_type(
             f"Soil context file not found: {soil_file}"
         )
 
-    soil_df = pd.read_csv(
-        soil_file
-    )
+    soil_parquet = soil_file.with_suffix(".parquet")
+    if soil_parquet.exists():
+        soil_df = pd.read_parquet(soil_parquet)
+    else:
+        soil_df = pd.read_csv(
+            soil_file
+        )
 
     required_columns = [
         "panchayat_id",

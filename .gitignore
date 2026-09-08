@@ -126,8 +126,21 @@ data_pipeline/raw/coarse_forecast.csv
 data_pipeline/raw/m3_clean_*
 data_pipeline/raw/m3_spatial_verification.csv
 data_pipeline/raw/m3_tuned_spatial_verification.csv
-data_pipeline/raw/v2_downscaling_*
 data_pipeline/raw/panchayat_soil_features.csv
+
+# data_pipeline/raw parquet equivalents
+data_pipeline/raw/chirps_panchayat_rainfall.parquet
+data_pipeline/raw/chirps_spatial_test.parquet
+data_pipeline/raw/imd_panchayat_rainfall.parquet
+data_pipeline/raw/imerg_panchayat_rainfall.parquet
+data_pipeline/raw/v1_2_training_dataset.parquet
+data_pipeline/raw/v1_2_evaluation_predictions.parquet
+data_pipeline/raw/v1_3_predictions.parquet
+data_pipeline/raw/v1_3_residual_strength_results.parquet
+data_pipeline/raw/m3_clean_*
+data_pipeline/raw/m3_spatial_verification.parquet
+data_pipeline/raw/m3_tuned_spatial_verification.parquet
+data_pipeline/raw/v2_downscaling_*
 
 # Temporary test/download files
 test_imerg_subset.nc4
@@ -135,3 +148,6 @@ test_20240102_response.bin
 
 # Temporary API test output
 api_test_output.txt
+
+# Agent logs & temporary artifacts
+.agents/

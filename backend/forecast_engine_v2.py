@@ -53,7 +53,11 @@ from pathlib import Path
 # ============================================================
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-COARSE_FORECAST_FILE = ROOT_DIR / "data_pipeline" / "raw" / "coarse_block_forecast.csv"
+COARSE_FORECAST_FILE = ROOT_DIR / "data_pipeline" / "raw" / "coarse_block_forecast.parquet"
+if not COARSE_FORECAST_FILE.exists():
+    COARSE_FORECAST_FILE = ROOT_DIR / "data_pipeline" / "raw" / "coarse_block_forecast.csv"
+if not COARSE_FORECAST_FILE.exists():
+    COARSE_FORECAST_FILE = ROOT_DIR / "data" / "raw" / "coarse_block_forecast.parquet"
 if not COARSE_FORECAST_FILE.exists():
     COARSE_FORECAST_FILE = ROOT_DIR / "data" / "raw" / "coarse_block_forecast.csv"
 
@@ -104,11 +108,15 @@ PANCHAYAT_DB = {
 # ============================================================
 
 def load_coarse_forecast():
-
-    df = pd.read_csv(
-        COARSE_FORECAST_FILE,
-        parse_dates=["date"]
-    )
+    if COARSE_FORECAST_FILE.suffix == ".parquet":
+        df = pd.read_parquet(COARSE_FORECAST_FILE)
+        if not pd.api.types.is_datetime64_any_dtype(df["date"]):
+            df["date"] = pd.to_datetime(df["date"])
+    else:
+        df = pd.read_csv(
+            COARSE_FORECAST_FILE,
+            parse_dates=["date"]
+        )
 
 
     required_columns = [

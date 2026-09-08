@@ -4,14 +4,16 @@
 [![Backend](https://img.shields.io/badge/Backend-Render%20Live-46E3B7?style=flat&logo=render)](https://sih-panchayat-project.onrender.com)
 [![API Docs](https://img.shields.io/badge/API%20Docs-Swagger-85EA2D?style=flat&logo=swagger)](https://sih-panchayat-project.onrender.com/docs)
 [![CI Guard](https://img.shields.io/badge/CI%20Guard-Active-brightgreen?style=flat&logo=githubactions)](https://github.com/arnokai/SIH_Panchayat_Project/actions)
+[![Data Lake](https://img.shields.io/badge/Data%20Lake-2.44M%20Rows%20(Parquet)-blue)](data_pipeline/processed/statewide)
+[![Tests](https://img.shields.io/badge/Tests-147%20Passing-brightgreen)](tests)
 
 > 🌐 **Live Web Application:** [https://sih-panchayat-project.vercel.app](https://sih-panchayat-project.vercel.app)  
 > ⚡ **Live Cloud API:** [https://sih-panchayat-project.onrender.com](https://sih-panchayat-project.onrender.com)  
 > 📚 **Interactive Swagger Docs:** [https://sih-panchayat-project.onrender.com/docs](https://sih-panchayat-project.onrender.com/docs)  
 > **Repository:** `https://github.com/arnokai/SIH_Panchayat_Project`  
-> **Target Region:** Amdanga Block, North 24 Parganas, West Bengal  
+> **Geographic Scope:** Amdanga Block Pilot (8 Panchayats) scaled to Statewide West Bengal (3,339 Panchayats, 22 Districts)  
 
-TerraMind V2 extends the earlier V0/V1/V1.3 work into a complete, cloud-deployed **forecast + agricultural-advisory decision-support system**.
+TerraMind V2 extends the earlier V0/V1/V1.3 work into a complete, cloud-deployed **downscaling data lake, forecast engine, and agricultural-advisory decision-support system**.
 
 ---
 
@@ -659,16 +661,24 @@ SIH_Panchayat_Project/
 │   ├── models/                        # Serialized .pkl weights (v1_*, v1_3_*, m3_clean_*)
 │   └── evaluations/                   # Baseline evaluation and spatial verification scripts
 │
-├── data_pipeline/                     # [Member 3: Data & GIS Engineer]
-│   ├── ingest/                        # Data downloaders (Open-Meteo, IMERG, CHIRPS, SoilGrids)
-│   ├── features/                      # Terrain & feature builders (SRTM DEM, slope/aspect, rivers)
-│   ├── metadata/                      # Static references (panchayats.csv, crop_calendar.yaml)
-│   └── raw/                           # Cached raw datasets & boundaries (git-ignored)
+├── data_pipeline/                     # [Member 1: Data Engineer & Weather Pipeline Owner]
+│   ├── make_dataset.py                # Amdanga 8-GP pilot pipeline builder (5,848 rows)
+│   ├── make_statewide_dataset.py      # Full West Bengal statewide pipeline (2,440,809 rows)
+│   ├── io_utils.py                    # Unified high-performance Parquet + CSV I/O engine
+│   ├── metadata/                      # GP registries (statewide_panchayats.parquet / .csv)
+│   ├── features/                      # Geospatial enrichment (statewide_static_features.parquet / .csv)
+│   ├── processed/                     # Processed datasets & statewide/ (22 district Parquet partitions)
+│   ├── storage/                       # Data lake QA validator (qa_validator.py)
+│   ├── reports/                       # QA verification reports (statewide_qa_report.md)
+│   └── raw/                           # Raw weather, terrain, and soil datasets
 │
-├── tests/                             # [Member 4: Manager / DevOps & Shared QA]
-│   ├── test_advisory_context.py       # Dataclass structure and threshold tests
-│   ├── test_advisory_rules.py         # Historical weather (5,848 rows) rule verification
-│   └── test_forecast_advisories.py    # End-to-end integration test
+├── tests/                             # [Full 147-Test Automated Verification Suite]
+│   ├── test_statewide_pipeline.py     # 67 comprehensive end-to-end statewide pipeline tests
+│   ├── test_statewide_registry.py     # LGD registry and spatial boundary tests
+│   ├── test_statewide_geo_features.py # DEM, soil texture, and river proximity tests
+│   ├── test_data_pipeline.py          # Amdanga pilot pipeline validation tests
+│   ├── test_advisory_rules.py         # Agricultural advisory rule verification tests
+│   └── test_forecast_advisories.py    # End-to-end forecast and advisory integration tests
 │
 ├── docs/                              # [Member 4: Manager / DevOps]
 │   ├── team_roles.md                  # Team role boundaries and Git workflow guidelines

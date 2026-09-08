@@ -39,6 +39,19 @@ COORDINATE_FILE = (
 )
 
 
+def _read_table(file_path: Path, parse_dates=None) -> pd.DataFrame:
+    """Load Parquet if available, otherwise fall back to CSV."""
+    parquet_path = file_path.with_suffix(".parquet")
+    if parquet_path.exists():
+        df = pd.read_parquet(parquet_path)
+        if parse_dates:
+            for col in parse_dates:
+                if col in df.columns and not pd.api.types.is_datetime64_any_dtype(df[col]):
+                    df[col] = pd.to_datetime(df[col])
+        return df
+    return pd.read_csv(file_path, parse_dates=parse_dates)
+
+
 # ============================================================
 # PANCHAYAT ID MAPPING
 # ============================================================
@@ -54,7 +67,7 @@ def get_panchayat_mappings():
         GPCODE 107777 ... 107784
     """
 
-    coordinates = pd.read_csv(
+    coordinates = _read_table(
         COORDINATE_FILE
     )
 
@@ -100,7 +113,7 @@ def get_panchayat_soil_type(
 
     mappings = get_panchayat_mappings()
 
-    soil = pd.read_csv(
+    soil = _read_table(
         SOIL_FILE
     )
 
@@ -175,7 +188,7 @@ def get_latest_dry_days(
     This is historical context only.
     """
 
-    history = pd.read_csv(
+    history = _read_table(
         HISTORY_FILE,
         parse_dates=["date"]
     )
@@ -382,7 +395,7 @@ if __name__ == "__main__":
     # Load current coarse forecast
     # --------------------------------------------------------
 
-    forecast = pd.read_csv(
+    forecast = _read_table(
         COARSE_FORECAST_FILE,
         parse_dates=["date"]
     )

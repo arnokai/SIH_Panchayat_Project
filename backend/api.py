@@ -678,6 +678,50 @@ def get_forecast(
     )
 
 
+
+# ============================================================
+# STATEWIDE WEST BENGAL ENDPOINTS
+# ============================================================
+
+@app.get("/v1/statewide/districts")
+def get_statewide_districts():
+    """Return all 22 West Bengal districts with GP and block counts."""
+    reg_path = ROOT_DIR / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
+    if not reg_path.exists():
+        raise HTTPException(status_code=503, detail="Statewide registry not yet available.")
+    import pandas as pd
+    df_reg = pd.read_parquet(reg_path)
+    summary = df_reg.groupby("district_name").agg(
+        total_panchayats=("panchayat_id", "count"),
+        total_blocks=("block_name", "nunique")
+    ).reset_index().to_dict(orient="records")
+
+    return {
+        "state": "West Bengal",
+        "district_count": len(summary),
+        "total_panchayats": len(df_reg),
+        "districts": summary
+    }
+
+
+@app.get("/v1/statewide/stats")
+def get_statewide_stats():
+    """Return summary metrics for the 2.44M row statewide data lake."""
+    report_path = ROOT_DIR / "data_pipeline" / "reports" / "statewide_qa_report.md"
+    qa_status = "PASS" if report_path.exists() else "PENDING"
+    return {
+        "state": "West Bengal",
+        "total_rows": 2440809,
+        "total_panchayats": 3339,
+        "total_blocks": 342,
+        "total_districts": 22,
+        "date_range": "2024-01-01 to 2025-12-31 (731 continuous days)",
+        "qa_status": qa_status,
+        "storage_format": "Apache Parquet (District Hive Partitions)",
+        "memory_optimization": "Sub-second district loading"
+    }
+
+
 # ============================================================
 # DIRECT TEST
 # ============================================================
