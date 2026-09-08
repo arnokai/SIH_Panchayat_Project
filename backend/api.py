@@ -98,6 +98,47 @@ PANCHAYAT_DB = {
         "name": "TARABERIA"
     },
 
+    # LGD Code Aliases
+    "WB_107777": {
+        "name": "ADHATA",
+        "alias": "A1"
+    },
+
+    "WB_107778": {
+        "name": "AMDANGA",
+        "alias": "A2"
+    },
+
+    "WB_107779": {
+        "name": "BERABERIA",
+        "alias": "A3"
+    },
+
+    "WB_107780": {
+        "name": "BODAI",
+        "alias": "A4"
+    },
+
+    "WB_107781": {
+        "name": "CHANDIGARH",
+        "alias": "A5"
+    },
+
+    "WB_107782": {
+        "name": "MARICHA",
+        "alias": "A6"
+    },
+
+    "WB_107783": {
+        "name": "SADHANPUR",
+        "alias": "A7"
+    },
+
+    "WB_107784": {
+        "name": "TARABERIA",
+        "alias": "A8"
+    },
+
 }
 
 
@@ -380,11 +421,12 @@ def get_forecast(
     # ========================================================
 
     try:
+        canonical_id = PANCHAYAT_DB[panchayat_id].get("alias", panchayat_id)
 
         result = forecast_panchayat_v2(
 
             panchayat_id=
-                panchayat_id,
+                canonical_id,
 
             days=
                 days,
@@ -470,35 +512,25 @@ def get_forecast(
                     "date"
                 ],
 
-            "rain_mm": {
+            "rain_mm": (
+                day["rain_mm"]
+                if isinstance(day["rain_mm"], dict)
+                else {
+                    "p50": day["rain_mm"],
+                    "p10": None,
+                    "p90": None,
+                }
+            ),
 
-                "p50":
-                    day[
-                        "rain_mm"
-                    ],
-
-                "p10":
-                    None,
-
-                "p90":
-                    None,
-
-            },
-
-            "tmax_c": {
-
-                "p50":
-                    day[
-                        "tmax_c"
-                    ],
-
-                "p10":
-                    None,
-
-                "p90":
-                    None,
-
-            },
+            "tmax_c": (
+                day["tmax_c"]
+                if isinstance(day["tmax_c"], dict)
+                else {
+                    "p50": day["tmax_c"],
+                    "p10": None,
+                    "p90": None,
+                }
+            ),
 
             "tmin_c":
                 day[
@@ -701,6 +733,35 @@ def get_statewide_districts():
         "district_count": len(summary),
         "total_panchayats": len(df_reg),
         "districts": summary
+    }
+
+
+@app.get("/v1/statewide/panchayats")
+def get_statewide_panchayats(
+    district: str | None = None,
+    search: str | None = None,
+    limit: int = 100
+):
+    """Return matching Gram Panchayats across the 3,339 statewide catalog."""
+    reg_path = ROOT_DIR / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
+    if not reg_path.exists():
+        raise HTTPException(status_code=503, detail="Statewide registry not yet available.")
+    import pandas as pd
+    df = pd.read_parquet(reg_path)
+    if district and isinstance(district, str):
+        df = df[df["district_name"].str.lower() == district.strip().lower()]
+    if search and isinstance(search, str):
+        s = search.strip().lower()
+        df = df[
+            df["panchayat_name"].str.lower().str.contains(s, na=False)
+            | df["block_name"].str.lower().str.contains(s, na=False)
+        ]
+    limit_val = int(limit) if isinstance(limit, (int, str)) and str(limit).isdigit() else 100
+    return {
+        "state": "West Bengal",
+        "total_matched": len(df),
+        "returned": min(len(df), limit_val),
+        "panchayats": df.head(limit_val).to_dict(orient="records")
     }
 
 

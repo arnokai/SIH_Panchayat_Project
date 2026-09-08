@@ -19,9 +19,10 @@ import pyarrow.parquet as pq
 from scipy.spatial import cKDTree
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CSV_PATH = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.csv"
+CSV_PATH = PROJECT_ROOT / "data_pipeline" / "csv" / "metadata" / "statewide_panchayats.csv"
 PARQUET_PATH = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
-PILOT_COORDS_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_coordinates.csv"
+PILOT_COORDS_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_coordinates.parquet"
+PILOT_COORDS_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "raw" / "panchayat_coordinates.csv"
 
 # Global Statewide Bounds (WGS84 EPSG:4326)
 WB_LAT_MIN, WB_LAT_MAX = 21.5, 27.3
@@ -61,11 +62,16 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.df_parquet = pd.read_parquet(PARQUET_PATH)
-        cls.df_csv = pd.read_csv(CSV_PATH)
+        if CSV_PATH.is_file():
+            cls.df_csv = pd.read_csv(CSV_PATH)
+            cls.dfs = [("Parquet", cls.df_parquet), ("CSV", cls.df_csv)]
+        else:
+            cls.df_csv = None
+            cls.dfs = [("Parquet", cls.df_parquet)]
 
     def test_01_cardinality_and_administrative_hierarchy(self):
         """Challenger Oracle: Exactly 3,339 GPs, 22 rural districts, 342 blocks, Kolkata excluded."""
-        for name, df in [("Parquet", self.df_parquet), ("CSV", self.df_csv)]:
+        for name, df in self.dfs:
             self.assertEqual(len(df), 3339, f"{name}: Total row count {len(df)} != 3339")
             districts = set(df["district_name"].unique())
             self.assertEqual(len(districts), 22, f"{name}: Expected 22 rural districts, got {len(districts)}")
@@ -76,7 +82,7 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
 
     def test_02_primary_key_uniqueness_and_bijective_format(self):
         """Challenger Oracle: 100% unique gp_code and panchayat_id with strict bijection."""
-        for name, df in [("Parquet", self.df_parquet), ("CSV", self.df_csv)]:
+        for name, df in self.dfs:
             self.assertEqual(df["gp_code"].nunique(), 3339, f"{name}: gp_code not unique")
             self.assertEqual(df["panchayat_id"].nunique(), 3339, f"{name}: panchayat_id not unique")
             self.assertTrue((df["gp_code"] > 0).all(), f"{name}: Non-positive gp_code detected")
@@ -92,7 +98,7 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
     def test_03_zero_nulls_and_corrupt_sentinels(self):
         """Challenger Oracle: Zero nulls, NaNs, infs, whitespace padding, or corrupt sentinels."""
         corrupt = {"nan", "null", "none", "", "n/a", "na", "\\0", "\\n", "undefined"}
-        for name, df in [("Parquet", self.df_parquet), ("CSV", self.df_csv)]:
+        for name, df in self.dfs:
             for col in EXPECTED_COLUMNS:
                 self.assertEqual(df[col].isnull().sum(), 0, f"{name}: nulls found in {col}")
                 if df[col].dtype == object or pd.api.types.is_string_dtype(df[col]):
@@ -104,7 +110,7 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
 
     def test_04_state_bounding_box_compliance_and_margin(self):
         """Challenger Oracle: Coordinates strictly inside West Bengal envelope with non-zero margins."""
-        for name, df in [("Parquet", self.df_parquet), ("CSV", self.df_csv)]:
+        for name, df in self.dfs:
             min_lat = df["latitude"].min()
             max_lat = df["latitude"].max()
             min_lon = df["longitude"].min()
@@ -128,7 +134,7 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
 
     def test_05_zero_spatial_point_collisions(self):
         """Challenger Oracle: Exactly 0 duplicate (lat, lon) pairs across all 3,339 GPs in CSV and Parquet."""
-        for name, df in [("Parquet", self.df_parquet), ("CSV", self.df_csv)]:
+        for name, df in self.dfs:
             dups = df[df.duplicated(subset=["latitude", "longitude"], keep=False)]
             dup_count = len(dups)
             self.assertEqual(dup_count, 0, f"{name}: Found {dup_count} duplicate coordinate records!")
@@ -196,6 +202,8 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
 
     def test_08_csv_vs_parquet_complete_parity(self):
         """Challenger Oracle: Bitwise & semantic parity between CSV and Parquet."""
+        if self.df_csv is None:
+            self.skipTest("CSV retired - pure Parquet architecture")
         self.assertEqual(len(self.df_csv), len(self.df_parquet))
         self.assertEqual(list(self.df_csv.columns), list(self.df_parquet.columns))
 
@@ -212,9 +220,12 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
 
     def test_09_pilot_amdanga_ground_truth_preservation(self):
         """Challenger Oracle: Exact coordinate preservation for all 8 surveyed pilot Panchayats."""
-        if not PILOT_COORDS_CSV.is_file():
-            self.skipTest("Pilot coords CSV missing")
-        pilot_df = pd.read_csv(PILOT_COORDS_CSV)
+        if PILOT_COORDS_PARQUET.is_file():
+            pilot_df = pd.read_parquet(PILOT_COORDS_PARQUET)
+        elif PILOT_COORDS_CSV.is_file():
+            pilot_df = pd.read_csv(PILOT_COORDS_CSV)
+        else:
+            self.skipTest("Pilot coords file missing")
         self.assertEqual(len(pilot_df), 8)
 
         for _, row in pilot_df.iterrows():
@@ -235,20 +246,21 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
     def test_10_stdlib_csv_and_pyarrow_native_parsers(self):
         """Challenger Oracle: Parse CSV with stdlib and Parquet with PyArrow native table reader."""
         # 1. Stdlib CSV
-        with open(CSV_PATH, "r", encoding="utf-8", newline="") as f:
-            reader = csv.DictReader(f)
-            self.assertEqual(reader.fieldnames, EXPECTED_COLUMNS)
-            rows = list(reader)
-            self.assertEqual(len(rows), 3339)
-            seen_codes = set()
-            for r in rows:
-                code = int(r["gp_code"])
-                self.assertNotIn(code, seen_codes)
-                seen_codes.add(code)
-                self.assertEqual(r["panchayat_id"], f"WB_{code}")
-                lat, lon = float(r["latitude"]), float(r["longitude"])
-                self.assertTrue(WB_LAT_MIN <= lat <= WB_LAT_MAX)
-                self.assertTrue(WB_LON_MIN <= lon <= WB_LON_MAX)
+        if CSV_PATH.is_file():
+            with open(CSV_PATH, "r", encoding="utf-8", newline="") as f:
+                reader = csv.DictReader(f)
+                self.assertEqual(reader.fieldnames, EXPECTED_COLUMNS)
+                rows = list(reader)
+                self.assertEqual(len(rows), 3339)
+                seen_codes = set()
+                for r in rows:
+                    code = int(r["gp_code"])
+                    self.assertNotIn(code, seen_codes)
+                    seen_codes.add(code)
+                    self.assertEqual(r["panchayat_id"], f"WB_{code}")
+                    lat, lon = float(r["latitude"]), float(r["longitude"])
+                    self.assertTrue(WB_LAT_MIN <= lat <= WB_LAT_MAX)
+                    self.assertTrue(WB_LON_MIN <= lon <= WB_LON_MAX)
 
         # 2. PyArrow native table
         table = pq.read_table(PARQUET_PATH)

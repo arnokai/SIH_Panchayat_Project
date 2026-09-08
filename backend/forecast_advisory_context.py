@@ -20,27 +20,27 @@ if not DATA_RAW_DIR.exists():
 
 COARSE_FORECAST_FILE = (
     DATA_RAW_DIR
-    / "coarse_block_forecast.csv"
+    / "coarse_block_forecast.parquet"
 )
 
 HISTORY_FILE = (
     DATA_RAW_DIR
-    / "advisory_context_history.csv"
+    / "advisory_context_history.parquet"
 )
 
 SOIL_FILE = (
     DATA_RAW_DIR
-    / "panchayat_soil_context.csv"
+    / "panchayat_soil_context.parquet"
 )
 
 COORDINATE_FILE = (
     DATA_RAW_DIR
-    / "panchayat_coordinates.csv"
+    / "panchayat_coordinates.parquet"
 )
 
 
 def _read_table(file_path: Path, parse_dates=None) -> pd.DataFrame:
-    """Load Parquet if available, otherwise fall back to CSV."""
+    """Load Parquet as primary format, fall back to CSV if needed."""
     parquet_path = file_path.with_suffix(".parquet")
     if parquet_path.exists():
         df = pd.read_parquet(parquet_path)
@@ -49,7 +49,14 @@ def _read_table(file_path: Path, parse_dates=None) -> pd.DataFrame:
                 if col in df.columns and not pd.api.types.is_datetime64_any_dtype(df[col]):
                     df[col] = pd.to_datetime(df[col])
         return df
-    return pd.read_csv(file_path, parse_dates=parse_dates)
+    csv_candidates = [
+        file_path.with_suffix(".csv"),
+        BASE_DIR / "data_pipeline" / "csv" / "raw" / file_path.with_suffix(".csv").name,
+    ]
+    for csv_path in csv_candidates:
+        if csv_path.exists():
+            return pd.read_csv(csv_path, parse_dates=parse_dates)
+    raise FileNotFoundError(f"File not found as parquet or csv: {file_path}")
 
 
 # ============================================================

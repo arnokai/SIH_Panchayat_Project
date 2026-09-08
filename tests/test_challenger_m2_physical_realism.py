@@ -36,11 +36,14 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 STATIC_FEATURES_PARQUET = PROJECT_ROOT / "data_pipeline" / "features" / "statewide_static_features.parquet"
 REGISTRY_PARQUET = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
-REGISTRY_CSV = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.csv"
+REGISTRY_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "metadata" / "statewide_panchayats.csv"
 
-PILOT_TERRAIN_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_terrain_features.csv"
-PILOT_RIVER_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_river_features.csv"
-PILOT_SOIL_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_soil_context.csv"
+PILOT_TERRAIN_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_terrain_features.parquet"
+PILOT_TERRAIN_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "raw" / "panchayat_terrain_features.csv"
+PILOT_RIVER_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_river_features.parquet"
+PILOT_RIVER_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "raw" / "panchayat_river_features.csv"
+PILOT_SOIL_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_soil_context.parquet"
+PILOT_SOIL_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "raw" / "panchayat_soil_context.csv"
 PILOT_TRAINING_PARQUET = PROJECT_ROOT / "data_pipeline" / "processed" / "training_table.parquet"
 
 
@@ -71,9 +74,12 @@ class TestM2PhysicalRealismAndPilotCompatibility(unittest.TestCase):
     # -----------------------------------------------------------------
 
     def test_01_amdanga_terrain_preservation_delta(self):
-        """All 6 terrain features match panchayat_terrain_features.csv with delta < 1e-6."""
-        self.assertTrue(PILOT_TERRAIN_CSV.exists(), "Pilot terrain CSV missing")
-        t_csv = pd.read_csv(PILOT_TERRAIN_CSV)
+        """All 6 terrain features match panchayat_terrain_features.parquet with delta < 1e-6."""
+        if PILOT_TERRAIN_PARQUET.exists():
+            t_csv = pd.read_parquet(PILOT_TERRAIN_PARQUET)
+        else:
+            self.assertTrue(PILOT_TERRAIN_CSV.exists(), "Pilot terrain file missing")
+            t_csv = pd.read_csv(PILOT_TERRAIN_CSV)
         id_map = {
             "A1": 107777, "A2": 107778, "A3": 107779, "A4": 107780,
             "A5": 107781, "A6": 107782, "A7": 107783, "A8": 107784
@@ -93,9 +99,12 @@ class TestM2PhysicalRealismAndPilotCompatibility(unittest.TestCase):
             )
 
     def test_02_amdanga_river_preservation_delta(self):
-        """Hydrology features match panchayat_river_features.csv with delta < 1e-6."""
-        self.assertTrue(PILOT_RIVER_CSV.exists(), "Pilot river CSV missing")
-        r_csv = pd.read_csv(PILOT_RIVER_CSV).rename(columns={"GPCODE": "gp_code"})
+        """Hydrology features match panchayat_river_features.parquet with delta < 1e-6."""
+        if PILOT_RIVER_PARQUET.exists():
+            r_csv = pd.read_parquet(PILOT_RIVER_PARQUET).rename(columns={"GPCODE": "gp_code"})
+        else:
+            self.assertTrue(PILOT_RIVER_CSV.exists(), "Pilot river file missing")
+            r_csv = pd.read_csv(PILOT_RIVER_CSV).rename(columns={"GPCODE": "gp_code"})
         m = self.amdanga.merge(r_csv, on="gp_code", suffixes=("_state", "_pilot"))
 
         # Distance delta < 1e-6
@@ -132,9 +141,12 @@ class TestM2PhysicalRealismAndPilotCompatibility(unittest.TestCase):
                 )
             self.assertTrue((m_train["soil_type_state"] == m_train["soil_type_train"]).all())
 
-        # B. Comparison against raw panchayat_soil_context.csv
-        self.assertTrue(PILOT_SOIL_CSV.exists(), "Pilot soil CSV missing")
-        s_csv = pd.read_csv(PILOT_SOIL_CSV).rename(columns={"panchayat_id": "gp_code"})
+        # B. Comparison against raw panchayat_soil_context.parquet/csv
+        if PILOT_SOIL_PARQUET.exists():
+            s_csv = pd.read_parquet(PILOT_SOIL_PARQUET).rename(columns={"panchayat_id": "gp_code"})
+        else:
+            self.assertTrue(PILOT_SOIL_CSV.exists(), "Pilot soil file missing")
+            s_csv = pd.read_csv(PILOT_SOIL_CSV).rename(columns={"panchayat_id": "gp_code"})
         m_raw = self.amdanga.merge(s_csv, on="gp_code", suffixes=("_state", "_raw"))
 
         # sand_pct and clay_pct match raw CSV with delta < 1e-6

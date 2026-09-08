@@ -32,8 +32,8 @@ import pandas as pd
 BASE_DIR = Path(__file__).resolve().parent.parent
 METADATA_DIR = BASE_DIR / "metadata"
 RAW_DIR = BASE_DIR / "raw"
-OUTPUT_CSV = METADATA_DIR / "statewide_panchayats.csv"
 OUTPUT_PARQUET = METADATA_DIR / "statewide_panchayats.parquet"
+OFFICIAL_REF_JSON = METADATA_DIR / "wb_official_panchayats_ref.json"
 
 # Statewide Bounding Envelope (WGS84 EPSG:4326)
 WB_LAT_MIN, WB_LAT_MAX = 21.5, 27.3
@@ -156,8 +156,17 @@ def dissolve_and_extract_centroids(geojson_path: Path) -> Dict[int, Tuple[float,
 def load_pilot_coordinates() -> Dict[int, Tuple[float, float, str]]:
     """Load verified ground-truth coordinates for the 8 Amdanga pilot Panchayats."""
     pilot_coords: Dict[int, Tuple[float, float, str]] = {}
-    pilot_csv = RAW_DIR / "panchayat_coordinates.csv"
-    if pilot_csv.is_file():
+    pilot_parquet = RAW_DIR / "panchayat_coordinates.parquet"
+    pilot_csv = CSV_DIR / "raw" / "panchayat_coordinates.csv"
+    if pilot_parquet.is_file():
+        pdf = pd.read_parquet(pilot_parquet)
+        for _, r in pdf.iterrows():
+            pilot_coords[int(r["GPCODE"])] = (
+                float(r["latitude"]),
+                float(r["longitude"]),
+                str(r["GPNAME"]).strip().upper(),
+            )
+    elif pilot_csv.is_file():
         pdf = pd.read_csv(pilot_csv)
         for _, r in pdf.iterrows():
             pilot_coords[int(r["GPCODE"])] = (
@@ -179,6 +188,14 @@ def generate_statewide_catalog() -> pd.DataFrame:
     records: List[Dict[str, object]] = []
     current_lgd = 107000
 
+    official_ref = {}
+    if OFFICIAL_REF_JSON.is_file():
+        try:
+            with open(OFFICIAL_REF_JSON, "r", encoding="utf-8") as f:
+                official_ref = json.load(f)
+        except Exception as e:
+            print(f"Warning: Failed to load {OFFICIAL_REF_JSON}: {e}")
+
     for district, block_count, target_gps, lat_range, lon_range in DISTRICT_SPECS:
         # Kolkata is 100% urban under KMC jurisdiction
         if block_count == 0 or target_gps == 0:
@@ -199,6 +216,9 @@ def generate_statewide_catalog() -> pd.DataFrame:
             for i in range(rem):
                 gps_per_block[i] += 1
 
+        dist_ref = official_ref.get(district, {})
+        ref_block_names = list(dist_ref.keys())
+
         lat_step = (lat_range[1] - lat_range[0]) / max(block_count, 1)
         lon_step = (lon_range[1] - lon_range[0]) / max(block_count, 1)
 
@@ -206,8 +226,12 @@ def generate_statewide_catalog() -> pd.DataFrame:
             is_amdanga = (is_n24 and b_idx == 0)
             if is_amdanga:
                 block_name = "AMDANGA"
+            elif b_idx < len(ref_block_names):
+                block_name = ref_block_names[b_idx]
             else:
                 block_name = f"{district.upper().replace(' ', '_')}_BLOCK_{b_idx + 1}"
+
+            block_gp_names = dist_ref.get(block_name, [])
 
             n_gps = gps_per_block[b_idx]
             b_lat = lat_range[0] + (b_idx + 0.5) * lat_step
@@ -226,8 +250,9 @@ def generate_statewide_catalog() -> pd.DataFrame:
                     })
             else:
                 # Deterministic Vogel Golden Ratio Phyllotaxis Spiral inside block cell
+                legacy_seed_str = f"{district}_{district.upper().replace(' ', '_')}_BLOCK_{b_idx + 1}"
                 block_seed = int(
-                    hashlib.md5(f"{district}_{block_name}".encode()).hexdigest()[:8],
+                    hashlib.md5(legacy_seed_str.encode()).hexdigest()[:8],
                     16,
                 )
                 rng = np.random.RandomState(block_seed)
@@ -254,10 +279,15 @@ def generate_statewide_catalog() -> pd.DataFrame:
                     gp_lat = b_lat + r_max_lat * frac * math.sin(theta)
                     gp_lon = b_lon + r_max_lon * frac * math.cos(theta)
 
+                    if g_idx < len(block_gp_names):
+                        gp_name = block_gp_names[g_idx]
+                    else:
+                        gp_name = f"{block_name}_GP_{g_idx + 1}"
+
                     records.append({
                         "gp_code": current_lgd,
                         "panchayat_id": f"WB_{current_lgd}",
-                        "panchayat_name": f"{block_name}_GP_{g_idx + 1}",
+                        "panchayat_name": gp_name,
                         "block_name": block_name,
                         "district_name": district,
                         "latitude": round(float(gp_lat), 8),
@@ -362,12 +392,7 @@ def main() -> None:
     df = generate_statewide_catalog()
     validate_catalog(df)
 
-    # Export CSV without index
-    df.to_csv(OUTPUT_CSV, index=False)
-    csv_size_kb = OUTPUT_CSV.stat().st_size / 1024
-    print(f"Exported CSV: {OUTPUT_CSV} ({csv_size_kb:.1f} KB, {len(df)} rows)")
-
-    # Export Parquet with PyArrow engine and Snappy compression without index
+    # Export Parquet with PyArrow engine and Snappy compression without index (Primary Store)
     df.to_parquet(OUTPUT_PARQUET, engine="pyarrow", compression="snappy", index=False)
     parquet_size_kb = OUTPUT_PARQUET.stat().st_size / 1024
     print(f"Exported Parquet: {OUTPUT_PARQUET} ({parquet_size_kb:.1f} KB, {len(df)} rows)")

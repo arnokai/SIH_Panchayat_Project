@@ -1,4 +1,12 @@
+import sys
+from pathlib import Path
 import pandas as pd
+
+BACKEND_DIR = Path(__file__).resolve().parent
+ROOT_DIR = BACKEND_DIR.parent
+for p in [BACKEND_DIR, ROOT_DIR]:
+    if str(p) not in sys.path:
+        sys.path.insert(0, str(p))
 
 
 # ============================================================
@@ -47,9 +55,10 @@ from forecast_advisory_context import (
 
 
 from pathlib import Path
+import numpy as np
 
 # ============================================================
-# FILES
+# FILES & ML MODEL ARTIFACTS
 # ============================================================
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -60,6 +69,45 @@ if not COARSE_FORECAST_FILE.exists():
     COARSE_FORECAST_FILE = ROOT_DIR / "data" / "raw" / "coarse_block_forecast.parquet"
 if not COARSE_FORECAST_FILE.exists():
     COARSE_FORECAST_FILE = ROOT_DIR / "data" / "raw" / "coarse_block_forecast.csv"
+
+MODEL_PATH = ROOT_DIR / "ml" / "models" / "statewide_hurdle_v2.pkl"
+STATIC_FEATURES_PATH = ROOT_DIR / "data_pipeline" / "features" / "statewide_static_features.parquet"
+
+PILOT_TO_STATEWIDE = {
+    "A1": "WB_107777",
+    "A2": "WB_107778",
+    "A3": "WB_107779",
+    "A4": "WB_107780",
+    "A5": "WB_107781",
+    "A6": "WB_107782",
+    "A7": "WB_107783",
+    "A8": "WB_107784",
+}
+
+_MODEL_ARTIFACT = None
+_STATIC_FEATURES = None
+
+
+def _get_model_artifact():
+    global _MODEL_ARTIFACT
+    if _MODEL_ARTIFACT is None and MODEL_PATH.exists():
+        try:
+            import joblib
+            _MODEL_ARTIFACT = joblib.load(MODEL_PATH)
+        except Exception:
+            _MODEL_ARTIFACT = False
+    return _MODEL_ARTIFACT if isinstance(_MODEL_ARTIFACT, dict) else None
+
+
+def _get_static_features():
+    global _STATIC_FEATURES
+    if _STATIC_FEATURES is None and STATIC_FEATURES_PATH.exists():
+        try:
+            df = pd.read_parquet(STATIC_FEATURES_PATH)
+            _STATIC_FEATURES = df.set_index("panchayat_id")
+        except Exception:
+            _STATIC_FEATURES = False
+    return _STATIC_FEATURES if isinstance(_STATIC_FEATURES, pd.DataFrame) else None
 
 
 # ============================================================
@@ -98,7 +146,48 @@ PANCHAYAT_DB = {
 
     "A8": {
         "name": "TARABERIA"
-    }
+    },
+
+    # LGD Code Aliases
+    "WB_107777": {
+        "name": "ADHATA",
+        "alias": "A1"
+    },
+
+    "WB_107778": {
+        "name": "AMDANGA",
+        "alias": "A2"
+    },
+
+    "WB_107779": {
+        "name": "BERABERIA",
+        "alias": "A3"
+    },
+
+    "WB_107780": {
+        "name": "BODAI",
+        "alias": "A4"
+    },
+
+    "WB_107781": {
+        "name": "CHANDIGARH",
+        "alias": "A5"
+    },
+
+    "WB_107782": {
+        "name": "MARICHA",
+        "alias": "A6"
+    },
+
+    "WB_107783": {
+        "name": "SADHANPUR",
+        "alias": "A7"
+    },
+
+    "WB_107784": {
+        "name": "TARABERIA",
+        "alias": "A8"
+    },
 
 }
 
@@ -227,15 +316,15 @@ def forecast_panchayat_v2(
     crop="paddy"
 ):
 
-    # --------------------------------------------------------
-    # Panchayat validation
-    # --------------------------------------------------------
+    panchayat_id = str(panchayat_id).strip().upper()
 
     if panchayat_id not in PANCHAYAT_DB:
 
         raise ValueError(
             "Panchayat not found."
         )
+
+    canonical_id = PANCHAYAT_DB[panchayat_id].get("alias", panchayat_id)
 
 
     # --------------------------------------------------------
@@ -291,7 +380,7 @@ def forecast_panchayat_v2(
 
     forecast_dry_days = (
         calculate_forecast_dry_days(
-            panchayat_id=panchayat_id,
+            panchayat_id=canonical_id,
             forecast_rows=coarse
         )
     )
@@ -300,6 +389,16 @@ def forecast_panchayat_v2(
     # --------------------------------------------------------
     # Build daily outputs
     # --------------------------------------------------------
+
+    model_artifact = _get_model_artifact()
+    static_features = _get_static_features()
+    statewide_id = PILOT_TO_STATEWIDE.get(canonical_id, canonical_id)
+    gp_feat = (
+        static_features.loc[statewide_id]
+        if (static_features is not None and statewide_id in static_features.index)
+        else None
+    )
+    is_downscaled = model_artifact is not None and gp_feat is not None
 
     forecast = []
 
@@ -348,13 +447,58 @@ def forecast_panchayat_v2(
         )
 
 
+        if is_downscaled:
+            day_of_year = forecast_date.timetuple().tm_yday
+            f_row = pd.DataFrame([{
+                "coarse_rain_mm": rain,
+                "coarse_tmax_c": tmax,
+                "coarse_tmin_c": tmin,
+                "elevation_dem_m": float(gp_feat.get("elevation_dem_m", 15.0)),
+                "slope_deg": float(gp_feat.get("slope_deg", 0.5)),
+                "aspect_sin": float(gp_feat.get("aspect_sin", 0.0)),
+                "aspect_cos": float(gp_feat.get("aspect_cos", 1.0)),
+                "terrain_roughness_m": float(gp_feat.get("terrain_roughness_m", 1.0)),
+                "relative_elevation_m": float(gp_feat.get("relative_elevation_m", 0.0)),
+                "distance_to_river_m": float(gp_feat.get("distance_to_river_m", 5000.0)),
+                "sand_pct": float(gp_feat.get("sand_pct", 45.0)),
+                "clay_pct": float(gp_feat.get("clay_pct", 25.0)),
+                "silt_pct": float(gp_feat.get("silt_pct", 30.0)),
+                "month": forecast_date.month,
+                "day_of_year_sin": np.sin(2 * np.pi * day_of_year / 365.25),
+                "day_of_year_cos": np.cos(2 * np.pi * day_of_year / 365.25),
+            }])
+
+            clf = model_artifact["classifier"]
+            prob = float(clf.predict_proba(f_row)[0, 1])
+
+            if prob >= 0.35:
+                p50_val = max(0.0, float(model_artifact["regressor_p50"].predict(f_row)[0]))
+                p10_val = max(0.0, float(model_artifact["regressor_p10"].predict(f_row)[0]))
+                p90_val = max(p50_val, float(model_artifact["regressor_p90"].predict(f_row)[0]))
+            else:
+                p10_val, p50_val, p90_val = 0.0, 0.0, 0.0
+
+            rain_probability = prob
+            rain_dict = {
+                "p10": round(p10_val, 1),
+                "p50": round(p50_val, 1),
+                "p90": round(p90_val, 1),
+            }
+        else:
+            rain_dict = {
+                "p10": round(max(0.0, rain * 0.7), 1),
+                "p50": round(rain, 1),
+                "p90": round(rain * 1.3, 1),
+            }
+
+
         # ----------------------------------------------------
         # Forecast advisory context
         # ----------------------------------------------------
 
         context = build_forecast_context(
 
-            panchayat_id=panchayat_id,
+            panchayat_id=canonical_id,
 
             forecast_row=row,
 
@@ -366,6 +510,7 @@ def forecast_panchayat_v2(
                 ],
 
         )
+        context.rain_mm = rain_dict["p50"]
 
 
         # ----------------------------------------------------
@@ -389,10 +534,7 @@ def forecast_panchayat_v2(
                 forecast_date.isoformat(),
 
             "rain_mm":
-                round(
-                    rain,
-                    1
-                ),
+                rain_dict,
 
             "rain_probability":
                 round(
@@ -400,11 +542,13 @@ def forecast_panchayat_v2(
                     2
                 ),
 
-            "tmax_c":
-                round(
-                    tmax,
-                    1
-                ),
+            "tmax_c": {
+                "p50":
+                    round(
+                        tmax,
+                        1
+                    ),
+            },
 
             "tmin_c":
                 round(
@@ -528,10 +672,10 @@ def forecast_panchayat_v2(
             crop,
 
         "model_version":
-            "V2 delivery scaffold",
+            "V2.0 Statewide Hurdle (Quantile HGB)" if is_downscaled else "V2 delivery scaffold",
 
         "rainfall_model":
-            "Coarse forecast fallback",
+            "Two-Stage Hurdle Downscaling (P10/P50/P90)" if is_downscaled else "Coarse forecast fallback",
 
         "source":
             source,
@@ -546,16 +690,16 @@ def forecast_panchayat_v2(
             advisories,
 
         "degraded":
-            True,
+            False if is_downscaled else True,
 
         "degraded_reason":
-            (
+            None if is_downscaled else (
                 "Operational five-day "
                 "Panchayat-level ML downscaling "
                 "is not yet validated. "
                 "Coarse block forecast is used "
                 "as the safe rainfall fallback."
-            )
+            ),
 
     }
 

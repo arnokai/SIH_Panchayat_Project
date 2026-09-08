@@ -20,14 +20,14 @@ WEATHER_FILE = (
     ROOT_DIR
     / "data_pipeline"
     / "raw"
-    / "advisory_context_history.csv"
+    / "advisory_context_history.parquet"
 )
 
 SOIL_FILE = (
     ROOT_DIR
     / "data_pipeline"
     / "raw"
-    / "panchayat_soil_context.csv"
+    / "panchayat_soil_context.parquet"
 )
 
 
@@ -35,14 +35,22 @@ SOIL_FILE = (
 # LOAD DATA
 # ============================================================
 
-weather = pd.read_csv(
-    WEATHER_FILE,
-    parse_dates=["date"]
-)
+if WEATHER_FILE.exists():
+    weather = pd.read_parquet(WEATHER_FILE)
+    if "date" in weather.columns and not pd.api.types.is_datetime64_any_dtype(weather["date"]):
+        weather["date"] = pd.to_datetime(weather["date"])
+else:
+    weather = pd.read_csv(
+        ROOT_DIR / "data_pipeline" / "csv" / "raw" / "advisory_context_history.csv",
+        parse_dates=["date"]
+    )
 
-soil = pd.read_csv(
-    SOIL_FILE
-)
+if SOIL_FILE.exists():
+    soil = pd.read_parquet(SOIL_FILE)
+else:
+    soil = pd.read_csv(
+        ROOT_DIR / "data_pipeline" / "csv" / "raw" / "panchayat_soil_context.csv"
+    )
 
 
 # ============================================================

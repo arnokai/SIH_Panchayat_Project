@@ -79,54 +79,11 @@ data/raw/dem/
 data/raw/imd/
 data/raw/imerg/
 data/raw/rivers/
-
-# Generated rainfall/reference datasets
-data/raw/chirps_panchayat_rainfall.csv
-data/raw/chirps_spatial_test.csv
-data/raw/imd_panchayat_rainfall.csv
-data/raw/imerg_panchayat_rainfall.csv
-
-# Generated ML datasets/results
-data/raw/v1_2_training_dataset.csv
-data/raw/v1_2_evaluation_predictions.csv
-data/raw/v1_3_predictions.csv
-data/raw/v1_3_residual_strength_results.csv
-
-# Python-generated feature tables
-data/raw/panchayat_terrain_features.csv
-
-# Generated V2 / advisory datasets and evaluation outputs
-# (Note: advisory_context_history.csv and panchayat_soil_context.csv are tracked because the runtime code loads them)
-data/raw/advisory_weather_history.csv
-data/raw/coarse_block_history.csv
-data/raw/coarse_forecast.csv
-data/raw/m3_clean_*
-data/raw/m3_spatial_verification.csv
-data/raw/m3_tuned_spatial_verification.csv
-data/raw/v2_downscaling_*
-data/raw/panchayat_soil_features.csv
-
-# data_pipeline/raw equivalents
 data_pipeline/raw/dem/
 data_pipeline/raw/imd/
 data_pipeline/raw/imerg/
 data_pipeline/raw/rivers/
-data_pipeline/raw/chirps_panchayat_rainfall.csv
-data_pipeline/raw/chirps_spatial_test.csv
-data_pipeline/raw/imd_panchayat_rainfall.csv
-data_pipeline/raw/imerg_panchayat_rainfall.csv
-data_pipeline/raw/v1_2_training_dataset.csv
-data_pipeline/raw/v1_2_evaluation_predictions.csv
-data_pipeline/raw/v1_3_predictions.csv
-data_pipeline/raw/v1_3_residual_strength_results.csv
-data_pipeline/raw/panchayat_terrain_features.csv
-data_pipeline/raw/advisory_weather_history.csv
-data_pipeline/raw/coarse_block_history.csv
-data_pipeline/raw/coarse_forecast.csv
-data_pipeline/raw/m3_clean_*
-data_pipeline/raw/m3_spatial_verification.csv
-data_pipeline/raw/m3_tuned_spatial_verification.csv
-data_pipeline/raw/panchayat_soil_features.csv
+
 
 # data_pipeline/raw parquet equivalents
 data_pipeline/raw/chirps_panchayat_rainfall.parquet

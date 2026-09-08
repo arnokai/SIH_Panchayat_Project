@@ -29,9 +29,10 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CSV_PATH = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.csv"
+CSV_PATH = PROJECT_ROOT / "data_pipeline" / "csv" / "metadata" / "statewide_panchayats.csv"
 PARQUET_PATH = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
-PILOT_COORDS_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_coordinates.csv"
+PILOT_COORDS_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_coordinates.parquet"
+PILOT_COORDS_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "raw" / "panchayat_coordinates.csv"
 
 # Global Statewide Bounds (WGS84 EPSG:4326)
 WB_LAT_MIN, WB_LAT_MAX = 21.5, 27.3
@@ -62,16 +63,19 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if not CSV_PATH.is_file():
-            raise FileNotFoundError(f"CSV artifact not found: {CSV_PATH}")
         if not PARQUET_PATH.is_file():
             raise FileNotFoundError(f"Parquet artifact not found: {PARQUET_PATH}")
-        cls.df_csv = pd.read_csv(CSV_PATH)
         cls.df_parquet = pd.read_parquet(PARQUET_PATH)
+        if CSV_PATH.is_file():
+            cls.df_csv = pd.read_csv(CSV_PATH)
+            cls.dfs = [("Parquet", cls.df_parquet), ("CSV", cls.df_csv)]
+        else:
+            cls.df_csv = None
+            cls.dfs = [("Parquet", cls.df_parquet)]
 
     def test_01_coordinate_bounds_oracle(self):
         """Oracle: All coordinates strictly within [21.5N, 27.3N] and [85.8E, 89.9E]."""
-        for name, df in [("CSV", self.df_csv), ("Parquet", self.df_parquet)]:
+        for name, df in self.dfs:
             lats = df["latitude"].to_numpy()
             lons = df["longitude"].to_numpy()
 
@@ -98,7 +102,7 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
 
     def test_02_primary_key_uniqueness_oracle(self):
         """Oracle: Zero duplicate gp_code or panchayat_id across entire registry."""
-        for name, df in [("CSV", self.df_csv), ("Parquet", self.df_parquet)]:
+        for name, df in self.dfs:
             total_records = len(df)
             unique_gp_codes = df["gp_code"].nunique()
             unique_panchayat_ids = df["panchayat_id"].nunique()
@@ -111,7 +115,7 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
         """Oracle: 0% nulls or NaNs, empty strings, unstripped whitespace, or corrupt sentinels."""
         corrupt_sentinels = {"nan", "null", "none", "undefined", "", "n/a", "na", "\\n", "\\0"}
 
-        for name, df in [("CSV", self.df_csv), ("Parquet", self.df_parquet)]:
+        for name, df in self.dfs:
             # Exact columns
             self.assertEqual(list(df.columns), EXPECTED_COLUMNS, f"{name} column mismatch")
 
@@ -134,7 +138,7 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
         """Oracle: Formatting consistency of panchayat_id ('WB_<gp_code>')."""
         regex_pattern = re.compile(r"^WB_([1-9][0-9]*)$")
 
-        for name, df in [("CSV", self.df_csv), ("Parquet", self.df_parquet)]:
+        for name, df in self.dfs:
             for pid, code in zip(df["panchayat_id"], df["gp_code"]):
                 match = regex_pattern.match(pid)
                 self.assertIsNotNone(match, f"{name}: panchayat_id '{pid}' does not match regex ^WB_([1-9][0-9]*)$")
@@ -144,7 +148,7 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
 
     def test_05_district_and_total_gp_count_oracle(self):
         """Oracle: Exactly 22 rural districts represented and total GP count ~3,339."""
-        for name, df in [("CSV", self.df_csv), ("Parquet", self.df_parquet)]:
+        for name, df in self.dfs:
             # Exact GP count
             self.assertEqual(len(df), 3339, f"{name}: total GP count {len(df)} != 3339")
 
@@ -154,7 +158,7 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
             self.assertEqual(districts, CANONICAL_22_RURAL_DISTRICTS, f"{name}: rural districts mismatch")
 
             # Urban exclusion
-            self.assertNotIn("Kolkata", districts, f"{name}: Kolkata (urban) must have 0 rural GPs")
+            self.assertNotIn("Kolkata", districts, f"{name}: Kolkata found in rural district list")
 
             # Block count
             blocks = set(df["block_name"].unique())
@@ -162,6 +166,8 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
 
     def test_06_csv_parquet_parity_oracle(self):
         """Oracle: Strict cross-format parity between CSV and Parquet."""
+        if self.df_csv is None:
+            self.skipTest("CSV retired - pure Parquet architecture")
         self.assertEqual(len(self.df_csv), len(self.df_parquet))
         self.assertEqual(list(self.df_csv.columns), list(self.df_parquet.columns))
 
@@ -178,10 +184,12 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
 
     def test_07_pilot_amdanga_backward_compatibility_oracle(self):
         """Oracle: Pilot Amdanga coordinates preserved identically."""
-        if not PILOT_COORDS_CSV.is_file():
-            self.skipTest(f"Pilot coordinate reference file not found at {PILOT_COORDS_CSV}")
-
-        pilot_df = pd.read_csv(PILOT_COORDS_CSV)
+        if PILOT_COORDS_PARQUET.is_file():
+            pilot_df = pd.read_parquet(PILOT_COORDS_PARQUET)
+        elif PILOT_COORDS_CSV.is_file():
+            pilot_df = pd.read_csv(PILOT_COORDS_CSV)
+        else:
+            self.skipTest(f"Pilot coordinate reference file not found at {PILOT_COORDS_PARQUET}")
         self.assertEqual(len(pilot_df), 8)
 
         for _, row in pilot_df.iterrows():
@@ -201,6 +209,8 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
 
     def test_08_stdlib_csv_independent_parser(self):
         """Oracle: Parse CSV with Python standard library csv module independently."""
+        if not CSV_PATH.is_file():
+            self.skipTest("CSV retired - pure Parquet architecture")
         with open(CSV_PATH, "r", encoding="utf-8", newline="") as f:
             reader = csv.reader(f)
             header = next(reader)

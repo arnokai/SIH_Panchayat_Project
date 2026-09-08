@@ -90,22 +90,21 @@ def get_soil_type(
     """
 
     root_dir = Path(__file__).resolve().parent.parent
-    soil_file = root_dir / "data_pipeline" / "raw" / "panchayat_soil_context.csv"
-    if not soil_file.exists():
-        soil_file = root_dir / "data" / "raw" / "panchayat_soil_context.csv"
+    soil_parquet = root_dir / "data_pipeline" / "raw" / "panchayat_soil_context.parquet"
+    if not soil_parquet.exists():
+        soil_parquet = root_dir / "data" / "raw" / "panchayat_soil_context.parquet"
 
-    if not soil_file.exists():
-        raise FileNotFoundError(
-            f"Soil context file not found: {soil_file}"
-        )
-
-    soil_parquet = soil_file.with_suffix(".parquet")
     if soil_parquet.exists():
         soil_df = pd.read_parquet(soil_parquet)
     else:
-        soil_df = pd.read_csv(
-            soil_file
-        )
+        soil_csv = root_dir / "data_pipeline" / "csv" / "raw" / "panchayat_soil_context.csv"
+        if not soil_csv.exists():
+            soil_csv = root_dir / "data_pipeline" / "raw" / "panchayat_soil_context.csv"
+        if not soil_csv.exists():
+            raise FileNotFoundError(
+                f"Soil context file not found: {soil_parquet}"
+            )
+        soil_df = pd.read_csv(soil_csv)
 
     required_columns = [
         "panchayat_id",

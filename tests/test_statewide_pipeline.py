@@ -35,7 +35,7 @@ PROCESSED_DIR = PROJECT_ROOT / "data_pipeline" / "processed"
 STATEWIDE_LAKE_DIR = PROCESSED_DIR / "statewide"
 REPORTS_DIR = PROJECT_ROOT / "data_pipeline" / "reports"
 
-STATEWIDE_REGISTRY_CSV = METADATA_DIR / "statewide_panchayats.csv"
+STATEWIDE_REGISTRY_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "metadata" / "statewide_panchayats.csv"
 STATEWIDE_REGISTRY_PARQUET = METADATA_DIR / "statewide_panchayats.parquet"
 STATEWIDE_STATIC_FEATURES = FEATURES_DIR / "statewide_static_features.parquet"
 STATEWIDE_QA_REPORT = REPORTS_DIR / "statewide_qa_report.md"

@@ -1,6 +1,0 @@
-date,coarse_rain_mm,coarse_tmax_c,coarse_tmin_c,coarse_rain_probability,source,coarse_latitude,coarse_longitude
-2026-09-01,8.7,29.1,25.3,100,Open-Meteo forecast,22.836123,88.492335
-2026-09-02,3.3,31.2,25.3,90,Open-Meteo forecast,22.836123,88.492335
-2026-09-03,4.7,31.4,25.6,84,Open-Meteo forecast,22.836123,88.492335
-2026-09-04,0.9,32.4,26.5,82,Open-Meteo forecast,22.836123,88.492335
-2026-09-05,1.2,32.2,26.3,89,Open-Meteo forecast,22.836123,88.492335

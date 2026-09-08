@@ -60,10 +60,10 @@ def load_static_geospatial_features() -> pd.DataFrame:
     """Consolidate terrain, soil, river, and coordinate static features."""
     print(" [1/5] Loading static geospatial features (Parquet)...")
     
-    terrain_file = RAW_DIR / "panchayat_terrain_features.csv"
-    soil_file = RAW_DIR / "panchayat_soil_context.csv"
-    river_file = RAW_DIR / "panchayat_river_features.csv"
-    coords_file = RAW_DIR / "panchayat_coordinates.csv"
+    terrain_file = RAW_DIR / "panchayat_terrain_features.parquet"
+    soil_file = RAW_DIR / "panchayat_soil_context.parquet"
+    river_file = RAW_DIR / "panchayat_river_features.parquet"
+    coords_file = RAW_DIR / "panchayat_coordinates.parquet"
     
     df_terr = _load_file(terrain_file)
     df_soil = _load_file(soil_file)
@@ -104,7 +104,7 @@ def load_static_geospatial_features() -> pd.DataFrame:
 def load_atmospheric_inputs() -> pd.DataFrame:
     """Load daily coarse block-level forecasts/history."""
     print(" [2/5] Loading coarse atmospheric inputs (Parquet)...")
-    coarse_file = RAW_DIR / "coarse_block_history.csv"
+    coarse_file = RAW_DIR / "coarse_block_history.parquet"
     df_coarse = _load_file(coarse_file)
     df_coarse['date'] = pd.to_datetime(df_coarse['date']).dt.strftime('%Y-%m-%d')
     print(f"       -> Loaded {len(df_coarse)} coarse forecast days ({df_coarse['date'].min()} to {df_coarse['date'].max()}).")
@@ -114,8 +114,8 @@ def load_atmospheric_inputs() -> pd.DataFrame:
 def load_ground_truth_targets() -> pd.DataFrame:
     """Load observed daily rainfall and temperature ground truth."""
     print(" [3/5] Loading ground-truth observation targets (Parquet)...")
-    chirps_file = RAW_DIR / "chirps_panchayat_rainfall.csv"
-    imd_file = RAW_DIR / "imd_panchayat_rainfall.csv"
+    chirps_file = RAW_DIR / "chirps_panchayat_rainfall.parquet"
+    imd_file = RAW_DIR / "imd_panchayat_rainfall.parquet"
     
     df_chirps = _load_file(chirps_file)
     df_chirps['date'] = pd.to_datetime(df_chirps['date']).dt.strftime('%Y-%m-%d')
@@ -226,12 +226,9 @@ def run_qa_and_export(df: pd.DataFrame):
     
     df['qa_flag'] = 'PASS' if qa_passed else 'FAIL'
     
-    # Export Formats
+    # Export Formats (Parquet primary store)
     parquet_path = PROCESSED_DIR / "training_table.parquet"
-    csv_path = PROCESSED_DIR / "training_table.csv"
-    
     df.to_parquet(parquet_path, index=False, engine='pyarrow')
-    df.to_csv(csv_path, index=False)
     
     # Generate QA Report
     report_content = f"""# SIH26074 — Data Quality & Integrity Report
@@ -248,7 +245,6 @@ def run_qa_and_export(df: pd.DataFrame):
 * **Grid Format:** Exactly 1 row per `(panchayat_id, date)`
 * **Duplicates:** {duplicates} duplicate keys
 * **Parquet File:** `{parquet_path}` ({parquet_path.stat().st_size / (1024*1024):.2f} MB)
-* **CSV File:** `{csv_path}` ({csv_path.stat().st_size / (1024*1024):.2f} MB)
 
 ---
 
@@ -285,7 +281,6 @@ def run_qa_and_export(df: pd.DataFrame):
     print(f"\n========================================================")
     print(f" SUCCESS: Pipeline complete!")
     print(f" Parquet dataset: {parquet_path}")
-    print(f" CSV dataset:     {csv_path}")
     print(f" QA Report:       {report_path}")
     print(f" Status:          {'PASS' if qa_passed else 'FAIL'}")
     print(f"========================================================\n")

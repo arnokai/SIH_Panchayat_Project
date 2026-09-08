@@ -27,7 +27,7 @@ def smart_read(file_path: Union[str, Path], parse_dates: Optional[List[str]] = N
     """
     Read optimal format:
     - Checks for .parquet first (10x faster, zero type guessing).
-    - Falls back to .csv if .parquet is not found.
+    - Falls back to .csv in same dir or in data_pipeline/csv/ if .parquet is not found.
     """
     path = Path(file_path)
     parquet_path = path.with_suffix(".parquet")
@@ -41,6 +41,15 @@ def smart_read(file_path: Union[str, Path], parse_dates: Optional[List[str]] = N
                     df[col] = pd.to_datetime(df[col])
         return df
 
+    # Check dedicated csv directory
+    parts = list(path.parts)
+    if "data_pipeline" in parts and "csv" not in parts:
+        dp_idx = parts.index("data_pipeline")
+        parts.insert(dp_idx + 1, "csv")
+        sep_csv_path = Path(*parts).with_suffix(".csv")
+        if sep_csv_path.exists():
+            return pd.read_csv(sep_csv_path, parse_dates=parse_dates, **kwargs)
+
     if csv_path.exists():
         return pd.read_csv(csv_path, parse_dates=parse_dates, **kwargs)
 
@@ -50,17 +59,14 @@ def smart_read(file_path: Union[str, Path], parse_dates: Optional[List[str]] = N
 def smart_save(
     df: pd.DataFrame,
     file_path: Union[str, Path],
-    export_csv: bool = True,
+    export_csv: bool = False,
     sample_size: int = DEFAULT_SAMPLE_CSV_ROWS,
     **kwargs
 ) -> None:
     """
     Save using best practices:
-    - Always saves full dataset to .parquet for ML training and pipeline execution.
-    - If export_csv is True:
-        - If len(df) <= MAX_HUMAN_CSV_ROWS: saves full .csv for Excel/Notepad.
-        - If len(df) > MAX_HUMAN_CSV_ROWS: saves a representative sample .sample.csv
-          so Excel will not freeze or error out (Excel row limit is 1,048,576).
+    - Always saves full dataset to .parquet for ML training and pipeline execution (Primary Store).
+    - If export_csv is True: saves CSV copy into separate data_pipeline/csv/ folder.
     """
     path = Path(file_path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -69,9 +75,19 @@ def smart_save(
     df.to_parquet(parquet_path, index=False, engine="pyarrow", **kwargs)
 
     if export_csv:
+        parts = list(path.parts)
+        if "data_pipeline" in parts and "csv" not in parts:
+            dp_idx = parts.index("data_pipeline")
+            parts.insert(dp_idx + 1, "csv")
+            dest_path = Path(*parts)
+        else:
+            dest_path = path
+
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+
         if len(df) <= MAX_HUMAN_CSV_ROWS:
-            csv_path = path.with_suffix(".csv")
+            csv_path = dest_path.with_suffix(".csv")
             df.to_csv(csv_path, index=False)
         else:
-            sample_csv_path = path.parent / f"{path.stem}_sample_for_excel.csv"
+            sample_csv_path = dest_path.parent / f"{dest_path.stem}_sample_for_excel.csv"
             df.sample(n=min(sample_size, len(df)), random_state=42).to_csv(sample_csv_path, index=False)

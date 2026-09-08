@@ -23,7 +23,7 @@ FORECAST_FILE = (
     ROOT_DIR
     / "data_pipeline"
     / "raw"
-    / "coarse_block_forecast.csv"
+    / "coarse_block_forecast.parquet"
 )
 
 PANCHAYAT_ID = "A2"
@@ -34,10 +34,15 @@ CROP = "paddy"
 # LOAD FORECAST
 # ============================================================
 
-forecast = pd.read_csv(
-    FORECAST_FILE,
-    parse_dates=["date"],
-)
+if FORECAST_FILE.exists():
+    forecast = pd.read_parquet(FORECAST_FILE)
+    if "date" in forecast.columns and not pd.api.types.is_datetime64_any_dtype(forecast["date"]):
+        forecast["date"] = pd.to_datetime(forecast["date"])
+else:
+    forecast = pd.read_csv(
+        ROOT_DIR / "data_pipeline" / "csv" / "raw" / "coarse_block_forecast.csv",
+        parse_dates=["date"],
+    )
 
 
 if forecast.empty:

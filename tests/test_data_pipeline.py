@@ -3,14 +3,13 @@ import pandas as pd
 from pathlib import Path
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data_pipeline" / "processed" / "training_table.parquet"
-CSV_PATH = Path(__file__).resolve().parent.parent / "data_pipeline" / "processed" / "training_table.csv"
+CSV_PATH = Path(__file__).resolve().parent.parent / "data_pipeline" / "csv" / "processed" / "training_table.csv"
 QA_REPORT = Path(__file__).resolve().parent.parent / "data_pipeline" / "reports" / "qa_report.md"
 
 class TestDataPipeline(unittest.TestCase):
 
     def test_files_exist(self):
         self.assertTrue(DATA_PATH.exists(), f"Missing Parquet dataset: {DATA_PATH}")
-        self.assertTrue(CSV_PATH.exists(), f"Missing CSV dataset: {CSV_PATH}")
         self.assertTrue(QA_REPORT.exists(), f"Missing QA report: {QA_REPORT}")
 
     def test_parquet_schema_and_shape(self):

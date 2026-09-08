@@ -185,3 +185,41 @@ rules:
     text_en: "No rain expected. Maintain normal irrigation schedule."
 
     text_bn: "বৃষ্টির সম্ভাবনা নেই। স্বাভাবিক জলসেচ বজায় রাখুন."
+
+
+  # ----------------------------------------------------------
+  # 9. CHEMICAL SPRAY SAFE WINDOW
+  # ----------------------------------------------------------
+
+  - id: chemical_spray_safe_window
+
+    crop:
+      - all
+
+    condition: "rain_mm == 0 and tmax_c <= 34 and tmax_c >= 20"
+
+    priority: low
+    type: advisory
+
+    text_en: "Safe chemical spray window: Morning hours (07:00 - 10:30 AM). Zero wash-off risk."
+
+    text_bn: "কীটনাশক স্প্রে করার উপযুক্ত সময়: সকাল ০৭:০০ থেকে ১০:৩০। ওষুধের কার্যকারিতা বজায় থাকবে."
+
+
+  # ----------------------------------------------------------
+  # 10. SHEATH BLIGHT RISK
+  # ----------------------------------------------------------
+
+  - id: sheath_blight_risk
+
+    crop:
+      - paddy
+
+    condition: "humidity > 80 and humidity_days >= 2 and tmax_c >= 28"
+
+    priority: medium
+    type: warning
+
+    text_en: "Favorable conditions for Sheath Blight. Inspect lower leaf sheaths; avoid excessive nitrogen."
+
+    text_bn: "শীত ব্লাইট রোগের অনুকূল আবহাওয়া। গাছের গোড়ায় রোগ লক্ষণ পরীক্ষা করুন এবং অতিরিক্ত নাইট্রোজেন এড়িয়ে চলুন."

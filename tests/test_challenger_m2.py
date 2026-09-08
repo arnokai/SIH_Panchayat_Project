@@ -33,12 +33,15 @@ import pyarrow.parquet as pq
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_PARQUET = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
-REGISTRY_CSV = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.csv"
+REGISTRY_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "metadata" / "statewide_panchayats.csv"
 STATIC_FEATURES_PARQUET = PROJECT_ROOT / "data_pipeline" / "features" / "statewide_static_features.parquet"
 
-PILOT_TERRAIN_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_terrain_features.csv"
-PILOT_RIVER_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_river_features.csv"
-PILOT_SOIL_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_soil_context.csv"
+PILOT_TERRAIN_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_terrain_features.parquet"
+PILOT_TERRAIN_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "raw" / "panchayat_terrain_features.csv"
+PILOT_RIVER_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_river_features.parquet"
+PILOT_RIVER_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "raw" / "panchayat_river_features.csv"
+PILOT_SOIL_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_soil_context.parquet"
+PILOT_SOIL_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "raw" / "panchayat_soil_context.csv"
 
 MANDATORY_14_COLUMNS = [
     "gp_code", "panchayat_id",
@@ -217,9 +220,15 @@ class TestM2ChallengerEmpirical(unittest.TestCase):
         # Nearest river: Ganges
         self.assertTrue((amdanga["nearest_river"] == "Ganges").all())
 
-        # Check against terrain pilot CSV
-        if PILOT_TERRAIN_CSV.exists():
+        # Check against terrain pilot Parquet/CSV
+        if PILOT_TERRAIN_PARQUET.exists():
+            pt = pd.read_parquet(PILOT_TERRAIN_PARQUET)
+        elif PILOT_TERRAIN_CSV.exists():
             pt = pd.read_csv(PILOT_TERRAIN_CSV)
+        else:
+            pt = None
+
+        if pt is not None:
             id_map = {f"A{i}": 107776 + i for i in range(1, 9)}
             pt["gp_code"] = pt["panchayat_id"].map(id_map)
             merged = pd.merge(amdanga, pt, on="gp_code", suffixes=("_static", "_pilot"))

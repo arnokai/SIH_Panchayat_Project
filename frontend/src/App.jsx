@@ -55,6 +55,105 @@ function App() {
 
   const [mapDate, setMapDate] = useState("");
 
+  const [speakingId, setSpeakingId] = useState(null);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [activeStatewideGP, setActiveStatewideGP] = useState(null);
+
+  const PILOT_LGD_MAP = {
+    107777: "A1",
+    107778: "A2",
+    107779: "A3",
+    107780: "A4",
+    107781: "A5",
+    107782: "A6",
+    107783: "A7",
+    107784: "A8",
+  };
+
+  const handleSearchChange = async (val) => {
+    setSearchTerm(val);
+    if (!val || val.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    try {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+      const res = await fetch(`${apiBase}/v1/statewide/panchayats?search=${encodeURIComponent(val.trim())}&limit=6`);
+      if (res.ok) {
+        const json = await res.json();
+        setSearchResults(json.panchayats || []);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSelectStatewide = (gp) => {
+    setSearchTerm(gp.panchayat_name);
+    setSearchResults([]);
+    if (PILOT_LGD_MAP[gp.gp_code]) {
+      setSelectedId(PILOT_LGD_MAP[gp.gp_code]);
+      setActiveStatewideGP(null);
+    } else {
+      setActiveStatewideGP(gp);
+    }
+  };
+
+
+  // ==========================================================
+  // BENGALI VOICE (TTS) & WHATSAPP BULLETIN DISSEMINATION
+  // ==========================================================
+
+  const speakAdvisory = (text, id) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      alert("আপনার ব্রাউজারে স্পিচ সাপোর্ট নেই (Speech synthesis not supported in this browser).");
+      return;
+    }
+
+    if (speakingId === id) {
+      window.speechSynthesis.cancel();
+      setSpeakingId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "bn-IN";
+    utterance.rate = 0.88;
+
+    const voices = window.speechSynthesis.getVoices();
+    const bnVoice = voices.find(
+      (v) => v.lang.startsWith("bn") || v.name.toLowerCase().includes("bengali")
+    );
+    if (bnVoice) {
+      utterance.voice = bnVoice;
+    }
+
+    utterance.onend = () => setSpeakingId(null);
+    utterance.onerror = () => setSpeakingId(null);
+
+    setSpeakingId(id);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const shareOnWhatsApp = ({ panchayatName, date, rainMm, tempC, advisoryText }) => {
+    const lines = [
+      "🌾 *টেরামাইন্ড পঞ্চায়েত কৃষি আবহাওয়া বার্তা* 🌾",
+      `📍 *পঞ্চায়েত:* ${panchayatName}`,
+      date ? `📅 *তারিখ:* ${formatDate(date)} (${date})` : null,
+      rainMm !== undefined && rainMm !== null ? `🌧️ *পূর্বাভাস বৃষ্টি:* ${rainMm} মিমি` : null,
+      tempC !== undefined && tempC !== null ? `🌡️ *সর্বোচ্চ তাপমাত্রা:* ${tempC}°C` : null,
+      advisoryText ? `📢 *পরামর্শ:* ${advisoryText}` : null,
+      "",
+      "🔗 _টেরামাইন্ড — হাইপারলোকাল আবহাওয়া সেবা_",
+    ].filter(Boolean).join("\n");
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(lines)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
 
   // ==========================================================
   // FETCH FORECAST
@@ -260,6 +359,58 @@ function App() {
           </div>
 
 
+          {/* Statewide Search */}
+
+          <div className="selector-left statewide-search-box">
+
+            <label
+              htmlFor="statewide-search"
+            >
+              STATEWIDE SEARCH (3,339 GPs)
+            </label>
+
+
+            <input
+              id="statewide-search"
+              type="text"
+              placeholder="Search GP e.g. Banchukamari, Falakata..."
+              value={searchTerm}
+              onChange={(e) =>
+                handleSearchChange(
+                  e.target.value
+                )
+              }
+              className="statewide-input"
+            />
+
+            {searchResults.length > 0 && (
+              <ul className="search-dropdown">
+                {searchResults.map(
+                  (gp) => (
+                    <li
+                      key={gp.gp_code}
+                      onClick={() =>
+                        handleSelectStatewide(
+                          gp
+                        )
+                      }
+                      className="search-result-item"
+                    >
+                      <strong>
+                        {gp.panchayat_name}
+                      </strong>
+                      <span>
+                        {gp.block_name} • {gp.district_name}
+                      </span>
+                    </li>
+                  )
+                )}
+              </ul>
+            )}
+
+          </div>
+
+
           {/* Model status */}
 
           <div className="model-status">
@@ -287,6 +438,32 @@ function App() {
           </div>
 
         </section>
+
+        {activeStatewideGP && (
+          <div className="statewide-badge">
+            <span className="badge-pin">📍</span>
+            <div style={{ flex: 1 }}>
+              <strong>{activeStatewideGP.panchayat_name} Gram Panchayat</strong>
+              <div style={{ fontSize: "12px", color: "#54786b", marginTop: "2px" }}>
+                Block: {activeStatewideGP.block_name} • District: {activeStatewideGP.district_name} • LGD: {activeStatewideGP.gp_code} ({Number(activeStatewideGP.latitude).toFixed(4)}°N, {Number(activeStatewideGP.longitude).toFixed(4)}°E)
+              </div>
+            </div>
+            <button
+              className="badge-close"
+              onClick={() => setActiveStatewideGP(null)}
+              style={{
+                background: "transparent",
+                border: "none",
+                fontSize: "16px",
+                cursor: "pointer",
+                color: "#54786b"
+              }}
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
 
         {/* ====================================================
@@ -621,6 +798,52 @@ function App() {
 
                         </div>
 
+                        {/* Farmer Action Buttons: Voice (TTS) & WhatsApp */}
+                        <div className="card-farmer-actions">
+                          <button
+                            type="button"
+                            className={`btn-action btn-voice ${speakingId === day.date ? "is-speaking" : ""}`}
+                            onClick={() =>
+                              speakAdvisory(
+                                day.advisory?.text_bn ||
+                                  day.advisory?.text_en ||
+                                  "কোনো বিশেষ কৃষি পরামর্শ নেই।",
+                                day.date
+                              )
+                            }
+                            title="বাংলায় শুনুন"
+                          >
+                            <span className="action-icon">
+                              {speakingId === day.date ? "⏹️" : "🔊"}
+                            </span>
+                            <span>
+                              {speakingId === day.date
+                                ? "থামান"
+                                : "বাংলায় শুনুন"}
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn-action btn-whatsapp"
+                            onClick={() =>
+                              shareOnWhatsApp({
+                                panchayatName: data.panchayat_name,
+                                date: day.date,
+                                rainMm: day.rain_mm?.p50,
+                                tempC: day.tmax_c?.p50,
+                                advisoryText:
+                                  day.advisory?.text_bn ||
+                                  day.advisory?.text_en,
+                              })
+                            }
+                            title="হোয়াটসঅ্যাপে শেয়ার"
+                          >
+                            <span className="action-icon">💬</span>
+                            <span>শেয়ার</span>
+                          </button>
+                        </div>
+
                       </article>
 
                     );
@@ -677,21 +900,47 @@ function App() {
                   </div>
 
 
-                  <span
-                    className={
-                      `priority priority-${
-                        activeAdvisories.length > 0
-                          ? "high"
-                          : "low"
-                      }`
-                    }
-                  >
+                  <div className="advisory-top-right">
+                    <span
+                      className={
+                        `priority priority-${
+                          activeAdvisories.length > 0
+                            ? "high"
+                            : "low"
+                        }`
+                      }
+                    >
+                      {activeAdvisories.length > 0
+                        ? "ATTENTION"
+                        : "LOW"}
+                    </span>
 
-                    {activeAdvisories.length > 0
-                      ? "ATTENTION"
-                      : "LOW"}
-
-                  </span>
+                    {data.advisories?.length > 0 && (
+                      <button
+                        type="button"
+                        className={`btn-action btn-voice-all ${speakingId === "all-advisories" ? "is-speaking" : ""}`}
+                        onClick={() => {
+                          const allText = data.advisories
+                            .map(
+                              (a) =>
+                                `${formatDate(a.date)}: ${a.text_bn || a.text_en}`
+                            )
+                            .join("। ");
+                          speakAdvisory(allText, "all-advisories");
+                        }}
+                        title="সব পরামর্শ বাংলায় শুনুন"
+                      >
+                        <span className="action-icon">
+                          {speakingId === "all-advisories" ? "⏹️" : "🔊"}
+                        </span>
+                        <span>
+                          {speakingId === "all-advisories"
+                            ? "থামান"
+                            : "সব পরামর্শ শুনুন"}
+                        </span>
+                      </button>
+                    )}
+                  </div>
 
                 </div>
 
@@ -738,6 +987,39 @@ function App() {
                             <small>
                               {item.text_en}
                             </small>
+
+                            <div className="advisory-item-actions">
+                              <button
+                                type="button"
+                                className={`btn-mini btn-mini-voice ${speakingId === `summary-${item.date}-${item.rule_id}` ? "is-speaking" : ""}`}
+                                onClick={() =>
+                                  speakAdvisory(
+                                    item.text_bn || item.text_en,
+                                    `summary-${item.date}-${item.rule_id}`
+                                  )
+                                }
+                                title="বাংলায় শুনুন"
+                              >
+                                {speakingId === `summary-${item.date}-${item.rule_id}`
+                                  ? "⏹️ থামান"
+                                  : "🔊 শুনুন"}
+                              </button>
+
+                              <button
+                                type="button"
+                                className="btn-mini btn-mini-whatsapp"
+                                onClick={() =>
+                                  shareOnWhatsApp({
+                                    panchayatName: data.panchayat_name,
+                                    date: item.date,
+                                    advisoryText: item.text_bn || item.text_en,
+                                  })
+                                }
+                                title="হোয়াটসঅ্যাপে শেয়ার"
+                              >
+                                💬 শেয়ার
+                              </button>
+                            </div>
 
                           </div>
 

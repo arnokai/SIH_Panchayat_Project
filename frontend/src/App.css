@@ -1557,3 +1557,233 @@ footer span {
 
   color: #082b20;
 }
+
+
+/* =========================================================
+   FARMER ACTION BUTTONS (BENGALI VOICE TTS & WHATSAPP)
+========================================================= */
+
+.card-farmer-actions {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e1ebe5;
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+
+.btn-action .action-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.btn-voice {
+  background: #ebf5f0;
+  color: #0d593f;
+  border-color: #b8ded0;
+}
+
+.btn-voice:hover {
+  background: #d3ede0;
+  border-color: #0d593f;
+}
+
+.btn-voice.is-speaking {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #b91c1c;
+  animation: pulse-speaking 1.5s infinite;
+}
+
+.btn-whatsapp {
+  background: #25d366;
+  color: #ffffff;
+  border-color: #20ba5a;
+}
+
+.btn-whatsapp:hover {
+  background: #1ebc59;
+  box-shadow: 0 2px 6px rgba(37, 211, 102, 0.35);
+}
+
+.advisory-top-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-voice-all {
+  background: #0d593f;
+  color: #ffffff;
+  border-color: #09402d;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.btn-voice-all:hover {
+  background: #147352;
+}
+
+.btn-voice-all.is-speaking {
+  background: #dc2626;
+  border-color: #b91c1c;
+  animation: pulse-speaking 1.5s infinite;
+}
+
+.advisory-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-mini-voice {
+  background: #f0f7f3;
+  color: #0b4f37;
+  border-color: #c0ded2;
+}
+
+.btn-mini-voice:hover {
+  background: #d8eee3;
+}
+
+.btn-mini-voice.is-speaking {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #b91c1c;
+  animation: pulse-speaking 1.5s infinite;
+}
+
+.btn-mini-whatsapp {
+  background: #25d366;
+  color: #ffffff;
+  border-color: #1ebc59;
+}
+
+.btn-mini-whatsapp:hover {
+  background: #1da851;
+}
+
+@keyframes pulse-speaking {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+/* =========================================================
+   STATEWIDE SEARCH & BADGE
+========================================================= */
+
+.statewide-search-box {
+  position: relative;
+  min-width: 240px;
+}
+
+.statewide-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #c9ded3;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  background: #ffffff;
+  color: #1a382d;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.statewide-input:focus {
+  border-color: #2e7d47;
+  box-shadow: 0 0 0 3px rgba(46, 125, 71, 0.15);
+}
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1.5px solid #d0e2d7;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid #f0f6f2;
+  transition: background 0.1s ease;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: #f0f7f3;
+}
+
+.search-result-item strong {
+  font-size: 14px;
+  color: #1a382d;
+}
+
+.search-result-item span {
+  font-size: 12px;
+  color: #55786b;
+  font-weight: 500;
+}
+
+.statewide-badge {
+  margin-top: 14px;
+  padding: 12px 18px;
+  background: #eaf4ed;
+  border: 1.5px solid #bfe0cc;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #17422f;
+}
+
+.statewide-badge .badge-pin {
+  font-size: 20px;
+}

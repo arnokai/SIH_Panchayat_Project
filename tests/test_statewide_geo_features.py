@@ -24,12 +24,12 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_PARQUET = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
-REGISTRY_CSV = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.csv"
+REGISTRY_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "metadata" / "statewide_panchayats.csv"
 STATIC_FEATURES_PARQUET = PROJECT_ROOT / "data_pipeline" / "features" / "statewide_static_features.parquet"
 
-PILOT_TERRAIN_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_terrain_features.csv"
-PILOT_RIVER_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_river_features.csv"
-PILOT_SOIL_CSV = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_soil_context.csv"
+PILOT_TERRAIN_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_terrain_features.parquet"
+PILOT_RIVER_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_river_features.parquet"
+PILOT_SOIL_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_soil_context.parquet"
 
 MANDATORY_14_COLUMNS = [
     "gp_code", "panchayat_id",
@@ -185,9 +185,9 @@ class TestStatewideStaticFeaturesContract(unittest.TestCase):
         # River check: Amdanga pilot points are closest to Ganges
         self.assertTrue((amdanga["nearest_river"] == "Ganges").all())
 
-        # Check against pilot terrain CSV if available
-        if PILOT_TERRAIN_CSV.exists():
-            pilot_t = pd.read_csv(PILOT_TERRAIN_CSV)
+        # Check against pilot terrain Parquet if available
+        if PILOT_TERRAIN_PARQUET.exists():
+            pilot_t = pd.read_parquet(PILOT_TERRAIN_PARQUET)
             id_map = {"A1": 107777, "A2": 107778, "A3": 107779, "A4": 107780,
                       "A5": 107781, "A6": 107782, "A7": 107783, "A8": 107784}
             pilot_t["gp_code"] = pilot_t["panchayat_id"].map(id_map)

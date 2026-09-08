@@ -48,13 +48,13 @@ RAW_RIVERS_DIR = RAW_DIR / "rivers"
 PROCESSED_DIR = PROJECT_ROOT / "data_pipeline" / "processed"
 
 STATEWIDE_REGISTRY_PARQUET = METADATA_DIR / "statewide_panchayats.parquet"
-STATEWIDE_REGISTRY_CSV = METADATA_DIR / "statewide_panchayats.csv"
+STATEWIDE_REGISTRY_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "metadata" / "statewide_panchayats.csv"
 OUTPUT_PARQUET = FEATURES_DIR / "statewide_static_features.parquet"
 
 CURATED_RIVERS_GEOJSON = RAW_RIVERS_DIR / "wb_major_rivers.geojson"
-PILOT_TERRAIN_CSV = RAW_DIR / "panchayat_terrain_features.csv"
-PILOT_RIVER_CSV = RAW_DIR / "panchayat_river_features.csv"
-PILOT_SOIL_CSV = RAW_DIR / "panchayat_soil_context.csv"
+PILOT_TERRAIN_PARQUET = RAW_DIR / "panchayat_terrain_features.parquet"
+PILOT_RIVER_PARQUET = RAW_DIR / "panchayat_river_features.parquet"
+PILOT_SOIL_PARQUET = RAW_DIR / "panchayat_soil_context.parquet"
 PILOT_TRAINING_PARQUET = PROCESSED_DIR / "training_table.parquet"
 
 # Calibrated district topographic baselines across West Bengal's 6 physiographic provinces
