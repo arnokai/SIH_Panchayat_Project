@@ -62,8 +62,8 @@ TARGET_BINARY = "target_rain_binary"
 TARGET_CONTINUOUS = "target_rain_mm"
 
 
-def load_training_data(districts=None, max_rows=100000):
-    """Load statewide partitioned Parquet datasets with optional district sampling."""
+def load_training_data(districts=None, max_rows=550000):
+    """Load statewide partitioned Parquet datasets with stratified district sampling."""
     print("============================================================")
     print("TERRAMIND — STATEWIDE HURDLE MODEL TRAINING PIPELINE")
     print("============================================================")
@@ -73,35 +73,39 @@ def load_training_data(districts=None, max_rows=100000):
     if not partition_dirs:
         raise FileNotFoundError(f"No statewide partitions found in {DATA_DIR}")
 
-    frames = []
-    total_loaded = 0
+    if districts:
+        active_partitions = [p for p in partition_dirs if p.name.split("=")[-1] in districts]
+    else:
+        active_partitions = partition_dirs
 
-    for p_dir in partition_dirs:
+    samples_per_district = max_rows // len(active_partitions) if active_partitions else max_rows
+
+    frames = []
+    for p_dir in active_partitions:
         d_name = p_dir.name.split("=")[-1]
-        if districts and d_name not in districts:
-            continue
         parquet_file = p_dir / "data.parquet"
         if not parquet_file.exists():
             continue
 
         df_dist = pd.read_parquet(parquet_file)
-        frames.append(df_dist)
-        total_loaded += len(df_dist)
-        print(f"  Loaded {d_name}: {len(df_dist):,} rows")
-        if total_loaded >= max_rows:
-            break
+        if len(df_dist) > samples_per_district:
+            df_sampled = df_dist.sample(n=samples_per_district, random_state=42)
+        else:
+            df_sampled = df_dist
+
+        frames.append(df_sampled)
+        print(f"  Loaded {d_name:20s}: {len(df_sampled):,} rows (from {len(df_dist):,} total)")
 
     df_all = pd.concat(frames, ignore_index=True)
     df_all["date"] = pd.to_datetime(df_all["date"])
-    print(f"Total dataset assembled: {len(df_all):,} rows across {len(frames)} districts.")
+    print(f"\nTotal dataset assembled: {len(df_all):,} rows across {len(frames)} districts.")
     return df_all
 
 
 def train_hurdle_model():
     start_time = time.time()
-    # Load representative districts including Gangetic Delta, North Bengal, and Western Rarh
-    target_districts = ["North_24_Parganas", "South_24_Parganas", "Darjeeling", "Purulia"]
-    df = load_training_data(districts=target_districts, max_rows=250000)
+    # Train across all 22 agro-climatic rural districts of West Bengal
+    df = load_training_data(districts=None, max_rows=550000)
 
     # Temporal split (2024 = Train, 2025 = Validation/Test)
     train_mask = df["date"].dt.year == 2024

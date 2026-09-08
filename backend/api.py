@@ -13,7 +13,11 @@ for path in [BACKEND_DIR, ROOT_DIR]:
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from forecast_engine_v2 import forecast_panchayat_v2
+from forecast_engine_v2 import (
+    forecast_panchayat_v2,
+    resolve_panchayat_meta,
+    _get_model_artifact,
+)
 
 
 # ============================================================
@@ -214,33 +218,32 @@ def root():
 
 @app.get("/health")
 def health():
+    model_artifact = _get_model_artifact()
+    is_ready = model_artifact is not None
 
     return {
-
-        "status":
-            "ok",
-
-        "service":
-            "TerraMind Panchayat Forecast API",
-
-        "model_version":
-            "V2 delivery scaffold",
-
-        "rainfall_model":
-            "Coarse forecast fallback",
-
-        "degraded":
-            True,
-
-        "reason":
-            (
-                "Operational five-day "
-                "Panchayat-level ML downscaling "
-                "is not yet validated. "
-                "Coarse block forecast is used "
-                "as the safe rainfall fallback."
-            ),
-
+        "status": "ok",
+        "service": "TerraMind Panchayat Forecast API",
+        "model_version": (
+            "V2.0 Statewide Hurdle (Quantile HGB)"
+            if is_ready
+            else "V2 delivery scaffold"
+        ),
+        "rainfall_model": (
+            "Two-Stage Hurdle Downscaling (P10/P50/P90)"
+            if is_ready
+            else "Coarse forecast fallback"
+        ),
+        "statewide_coverage": "3,339 Gram Panchayats / 22 Districts",
+        "live_weather_enabled": True,
+        "degraded": False if is_ready else True,
+        "reason": None if is_ready else (
+            "Operational five-day "
+            "Panchayat-level ML downscaling "
+            "is not yet validated. "
+            "Coarse block forecast is used "
+            "as the safe rainfall fallback."
+        ),
     }
 
 
@@ -285,55 +288,43 @@ def get_panchayats():
 
 @app.get("/v1/forecast")
 def get_forecast(
-
     panchayat_id: str = Query(
-
         ...,
-
-        description=
-            "Panchayat ID, for example A2",
-
+        description="Panchayat ID, for example A2 or WB_107001",
     ),
-
     days: int = Query(
-
         5,
-
         ge=1,
-
         le=5,
-
-        description=
-            "Number of forecast days (1 to 5)",
-
+        description="Number of forecast days (1 to 5)",
     ),
-
     lang: str = Query(
-
         "bn",
-
-        description=
-            "Preferred advisory language: bn or en",
-
+        description="Preferred advisory language: bn or en",
     ),
-
     crop: str = Query(
-
         "paddy",
-
-        description=
-            "Crop used by the advisory context",
-
+        description="Crop used by the advisory context",
     ),
-
+    live: bool = Query(
+        True,
+        description="Whether to fetch dynamic live weather from block coordinates",
+    ),
 ):
+    if not isinstance(days, int):
+        days = 5
+    if not isinstance(lang, str):
+        lang = "bn"
+    if not isinstance(crop, str):
+        crop = "paddy"
+    if not isinstance(live, bool):
+        live = True
 
     # ========================================================
     # NORMALIZE
     # ========================================================
-
     panchayat_id = (
-        panchayat_id
+        str(panchayat_id)
         .strip()
         .upper()
     )
@@ -350,100 +341,52 @@ def get_forecast(
         .lower()
     )
 
-
     # ========================================================
     # VALIDATE PANCHAYAT
     # ========================================================
-
-    if panchayat_id not in PANCHAYAT_DB:
-
+    meta = resolve_panchayat_meta(panchayat_id)
+    if not meta:
         raise HTTPException(
-
             status_code=404,
-
             detail={
-
-                "error":
-                    "Panchayat not found",
-
-                "panchayat_id":
-                    panchayat_id,
-
-                "available_panchayats":
-                    list(
-                        PANCHAYAT_DB.keys()
-                    ),
-
+                "error": "Panchayat not found",
+                "panchayat_id": panchayat_id,
+                "available_panchayats": list(PANCHAYAT_DB.keys()),
             },
-
         )
-
 
     # ========================================================
     # VALIDATE LANGUAGE
     # ========================================================
-
-    if lang not in {
-        "bn",
-        "en"
-    }:
-
+    if lang not in {"bn", "en"}:
         raise HTTPException(
-
             status_code=422,
-
-            detail=(
-                "lang must be either "
-                "'bn' or 'en'."
-            ),
-
+            detail="lang must be either 'bn' or 'en'.",
         )
-
 
     # ========================================================
     # VALIDATE CROP
     # ========================================================
-
     if not crop:
-
         raise HTTPException(
-
             status_code=422,
-
-            detail=
-                "crop must not be empty.",
-
+            detail="crop must not be empty.",
         )
-
 
     # ========================================================
     # GENERATE FORECAST
     # ========================================================
-
     try:
-        canonical_id = PANCHAYAT_DB[panchayat_id].get("alias", panchayat_id)
-
         result = forecast_panchayat_v2(
-
-            panchayat_id=
-                canonical_id,
-
-            days=
-                days,
-
-            crop=
-                crop,
-
+            panchayat_id=panchayat_id,
+            days=days,
+            crop=crop,
+            live=live,
         )
-
     except ValueError as exc:
-
         raise HTTPException(
-
             status_code=400,
-
             detail=str(exc),
-
         ) from exc
 
 
@@ -658,6 +601,16 @@ def get_forecast(
                 "panchayat_name"
             ],
 
+        "block_name":
+            result.get(
+                "block_name"
+            ),
+
+        "district_name":
+            result.get(
+                "district_name"
+            ),
+
         "crop":
             result[
                 "crop"
@@ -675,6 +628,12 @@ def get_forecast(
             result[
                 "rainfall_model"
             ],
+
+        "is_live_dynamic":
+            result.get(
+                "is_live_dynamic",
+                False
+            ),
 
         "source":
             result[

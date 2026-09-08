@@ -97,6 +97,7 @@ function App() {
       setSelectedId(PILOT_LGD_MAP[gp.gp_code]);
       setActiveStatewideGP(null);
     } else {
+      setSelectedId(gp.panchayat_id);
       setActiveStatewideGP(gp);
     }
   };
@@ -295,11 +296,11 @@ function App() {
             <select
               id="panchayat-select"
               value={selectedId}
-              onChange={(e) =>
-                setSelectedId(
-                  e.target.value
-                )
-              }
+              onChange={(e) => {
+                setSelectedId(e.target.value);
+                setActiveStatewideGP(null);
+                setSearchTerm("");
+              }}
             >
 
               {PANCHAYATS.map(
@@ -419,20 +420,21 @@ function App() {
 
 
             <div className="model-status-text">
-
               <span>
-                {data?.degraded
+                {data?.is_live_dynamic
+                  ? "LIVE DYNAMIC WEATHER"
+                  : data?.degraded
                   ? "V2 FALLBACK ACTIVE"
                   : "V2 MODEL ACTIVE"}
               </span>
 
-
-              {data?.degraded && (
-                <small>
-                  Coarse 5-day forecast
-                </small>
-              )}
-
+              <small>
+                {data?.is_live_dynamic
+                  ? "AI Downscaled (Open-Meteo ECMWF/GFS)"
+                  : data?.degraded
+                  ? "Coarse 5-day forecast"
+                  : "AI Downscaled (P10/P50/P90)"}
+              </small>
             </div>
 
           </div>
@@ -450,7 +452,11 @@ function App() {
             </div>
             <button
               className="badge-close"
-              onClick={() => setActiveStatewideGP(null)}
+              onClick={() => {
+                setActiveStatewideGP(null);
+                setSelectedId("A2");
+                setSearchTerm("");
+              }}
               style={{
                 background: "transparent",
                 border: "none",
@@ -532,6 +538,11 @@ function App() {
 
                   <h2>
                     {data.panchayat_name}
+                    {data.district_name && (
+                      <span style={{ fontSize: "0.5em", fontWeight: 400, color: "#54786b", marginLeft: "10px", display: "inline-block" }}>
+                        ({data.block_name ? `${data.block_name} Block, ` : ""}{data.district_name})
+                      </span>
+                    )}
                   </h2>
 
                 </div>

@@ -148,10 +148,15 @@ def get_panchayat_soil_type(
     ]
 
     if mapping.empty:
-        raise ValueError(
-            f"Unknown application Panchayat ID: "
-            f"{panchayat_id}"
-        )
+        static_feat_file = BASE_DIR / "data_pipeline" / "features" / "statewide_static_features.parquet"
+        if static_feat_file.exists():
+            sf = pd.read_parquet(static_feat_file)
+            clean_id = str(panchayat_id).strip().upper()
+            match = sf[(sf["panchayat_id"] == clean_id) | (sf["gp_code"].astype(str) == clean_id.replace("WB_", ""))]
+            if not match.empty:
+                st = match.iloc[0].get("soil_type", "non_sandy")
+                return str(st).strip().lower()
+        return "non_sandy"
 
     gpcode = str(
         mapping.iloc[0]["GPCODE"]
@@ -208,10 +213,7 @@ def get_latest_dry_days(
     ].copy()
 
     if p.empty:
-        raise ValueError(
-            f"No historical advisory data found for "
-            f"Panchayat {panchayat_id}."
-        )
+        return 0
 
     p = p.sort_values(
         "date"

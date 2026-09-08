@@ -54,6 +54,10 @@ from forecast_advisory_context import (
 )
 
 
+import json
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 import numpy as np
 
@@ -72,6 +76,7 @@ if not COARSE_FORECAST_FILE.exists():
 
 MODEL_PATH = ROOT_DIR / "ml" / "models" / "statewide_hurdle_v2.pkl"
 STATIC_FEATURES_PATH = ROOT_DIR / "data_pipeline" / "features" / "statewide_static_features.parquet"
+STATEWIDE_REGISTRY_PATH = ROOT_DIR / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
 
 PILOT_TO_STATEWIDE = {
     "A1": "WB_107777",
@@ -86,6 +91,64 @@ PILOT_TO_STATEWIDE = {
 
 _MODEL_ARTIFACT = None
 _STATIC_FEATURES = None
+_STATEWIDE_REGISTRY = None
+
+# In-memory cache for live weather to prevent spamming Open-Meteo API
+# Key: (round(lat, 4), round(lon, 4), days) -> (timestamp, pd.DataFrame)
+_LIVE_WEATHER_CACHE = {}
+_LIVE_WEATHER_TTL_SECONDS = 900  # 15 minutes
+
+
+def fetch_live_block_weather(lat: float, lon: float, days: int = 5):
+    """
+    Fetch dynamic 5-day weather forecast from Open-Meteo ECMWF/GFS model
+    for block coordinates with in-memory TTL caching (15 min).
+    
+    Returns a DataFrame conforming to the coarse_block_forecast schema,
+    or None if the network request times out or fails (triggering offline fallback).
+    """
+    cache_key = (round(float(lat), 4), round(float(lon), 4), int(days))
+    now = time.time()
+
+    if cache_key in _LIVE_WEATHER_CACHE:
+        cached_time, cached_df = _LIVE_WEATHER_CACHE[cache_key]
+        if now - cached_time < _LIVE_WEATHER_TTL_SECONDS:
+            return cached_df.copy()
+
+    url = (
+        f"https://api.open-meteo.com/v1/forecast?"
+        f"latitude={lat}&longitude={lon}"
+        f"&daily=precipitation_sum,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+        f"&timezone=Asia%2FKolkata&forecast_days={days}"
+    )
+
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "TerraMind-Weather-Intelligence/2.0"}
+        )
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            daily = data.get("daily", {})
+            if not daily or "time" not in daily:
+                return None
+
+            df = pd.DataFrame({
+                "date": pd.to_datetime(daily["time"]),
+                "coarse_rain_mm": [float(x if x is not None else 0.0) for x in daily.get("precipitation_sum", [])],
+                "coarse_tmax_c": [float(x if x is not None else 30.0) for x in daily.get("temperature_2m_max", [])],
+                "coarse_tmin_c": [float(x if x is not None else 24.0) for x in daily.get("temperature_2m_min", [])],
+                "coarse_rain_probability": [float(x if x is not None else 0.0) for x in daily.get("precipitation_probability_max", [])],
+                "source": "Open-Meteo Live API (ECMWF/GFS)",
+                "coarse_latitude": float(lat),
+                "coarse_longitude": float(lon),
+            })
+
+            _LIVE_WEATHER_CACHE[cache_key] = (now, df)
+            return df.copy()
+    except Exception:
+        # Fall back gracefully to offline coarse forecast on network timeout or failure
+        return None
 
 
 def _get_model_artifact():
@@ -108,6 +171,91 @@ def _get_static_features():
         except Exception:
             _STATIC_FEATURES = False
     return _STATIC_FEATURES if isinstance(_STATIC_FEATURES, pd.DataFrame) else None
+
+
+def _get_statewide_registry():
+    global _STATEWIDE_REGISTRY
+    if _STATEWIDE_REGISTRY is None:
+        if STATEWIDE_REGISTRY_PATH.exists():
+            try:
+                df = pd.read_parquet(STATEWIDE_REGISTRY_PATH)
+                reg_map = {}
+                for _, row in df.iterrows():
+                    entry = {
+                        "panchayat_id": str(row["panchayat_id"]),
+                        "gp_code": int(row["gp_code"]),
+                        "name": str(row["panchayat_name"]),
+                        "block_name": str(row["block_name"]),
+                        "district_name": str(row["district_name"]),
+                        "latitude": float(row["latitude"]),
+                        "longitude": float(row["longitude"]),
+                    }
+                    reg_map[str(row["panchayat_id"]).upper()] = entry
+                    reg_map[str(row["gp_code"])] = entry
+                _STATEWIDE_REGISTRY = reg_map
+            except Exception:
+                _STATEWIDE_REGISTRY = {}
+        else:
+            _STATEWIDE_REGISTRY = {}
+    return _STATEWIDE_REGISTRY
+
+
+def resolve_panchayat_meta(panchayat_id: str):
+    """
+    Resolve panchayat metadata (name, block, district, lat, lon, canonical ID).
+    Supports:
+    - Pilot codes A1..A8
+    - LGD codes WB_107777..WB_107784
+    - Statewide codes WB_107001..WB_111115 or raw gp_code
+    """
+    clean_id = str(panchayat_id).strip().upper()
+    statewide_reg = _get_statewide_registry()
+
+    # 1. Check pilot PANCHAYAT_DB
+    if clean_id in PANCHAYAT_DB:
+        info = PANCHAYAT_DB[clean_id]
+        canonical_id = info.get("alias", clean_id)
+        statewide_id = PILOT_TO_STATEWIDE.get(clean_id, PILOT_TO_STATEWIDE.get(canonical_id, clean_id))
+
+        if statewide_id in statewide_reg:
+            sw_info = statewide_reg[statewide_id]
+            return {
+                "panchayat_id": clean_id,
+                "canonical_id": canonical_id,
+                "statewide_id": statewide_id,
+                "panchayat_name": info["name"],
+                "block_name": sw_info["block_name"],
+                "district_name": sw_info["district_name"],
+                "latitude": sw_info["latitude"],
+                "longitude": sw_info["longitude"],
+            }
+        else:
+            return {
+                "panchayat_id": clean_id,
+                "canonical_id": canonical_id,
+                "statewide_id": statewide_id,
+                "panchayat_name": info["name"],
+                "block_name": "Amdanga",
+                "district_name": "North 24 Parganas",
+                "latitude": 22.805,
+                "longitude": 88.510,
+            }
+
+    # 2. Check statewide registry
+    if clean_id in statewide_reg:
+        sw_info = statewide_reg[clean_id]
+        return {
+            "panchayat_id": sw_info["panchayat_id"],
+            "canonical_id": sw_info["panchayat_id"],
+            "statewide_id": sw_info["panchayat_id"],
+            "panchayat_name": sw_info["name"],
+            "block_name": sw_info["block_name"],
+            "district_name": sw_info["district_name"],
+            "latitude": sw_info["latitude"],
+            "longitude": sw_info["longitude"],
+        }
+
+    return None
 
 
 # ============================================================
@@ -313,139 +461,106 @@ def load_coarse_forecast():
 def forecast_panchayat_v2(
     panchayat_id,
     days=5,
-    crop="paddy"
+    crop="paddy",
+    live=True,
 ):
-
-    panchayat_id = str(panchayat_id).strip().upper()
-
-    if panchayat_id not in PANCHAYAT_DB:
-
+    meta = resolve_panchayat_meta(panchayat_id)
+    if not meta:
         raise ValueError(
             "Panchayat not found."
         )
 
-    canonical_id = PANCHAYAT_DB[panchayat_id].get("alias", panchayat_id)
-
+    canonical_id = meta["canonical_id"]
+    statewide_id = meta["statewide_id"]
 
     # --------------------------------------------------------
     # Days validation
     # --------------------------------------------------------
-
     if days < 1 or days > 5:
-
         raise ValueError(
             "days must be between 1 and 5."
         )
 
-
     # --------------------------------------------------------
-    # Load coarse forecast
+    # Load forecast (Live Dynamic with Offline Fallback)
     # --------------------------------------------------------
+    coarse = None
+    is_live_dynamic = False
 
-    coarse = load_coarse_forecast()
+    if live:
+        try:
+            coarse = fetch_live_block_weather(
+                lat=meta["latitude"],
+                lon=meta["longitude"],
+                days=days,
+            )
+            if coarse is not None and not coarse.empty:
+                is_live_dynamic = True
+        except Exception:
+            coarse = None
 
-
-    coarse = (
-        coarse
-        .head(days)
-        .copy()
-    )
-
-
-    if len(coarse) < days:
-
-        raise ValueError(
-            f"Only {len(coarse)} forecast "
-            f"days are available."
+    if coarse is None or coarse.empty:
+        coarse = load_coarse_forecast()
+        coarse = (
+            coarse
+            .head(days)
+            .copy()
         )
-
+        if len(coarse) < days:
+            raise ValueError(
+                f"Only {len(coarse)} forecast "
+                f"days are available."
+            )
+        is_live_dynamic = False
 
     # --------------------------------------------------------
     # Calculate forecast-aware dry streak
     # --------------------------------------------------------
-    #
-    # This combines the latest historical dry streak with
-    # future forecast rainfall.
-    #
-    # Example:
-    #
-    # latest observed dry_days = 5
-    #
-    # forecast:
-    # 0 mm → 6
-    # 0 mm → 7
-    # 5 mm → 0
-    #
-    # --------------------------------------------------------
-
     forecast_dry_days = (
         calculate_forecast_dry_days(
             panchayat_id=canonical_id,
-            forecast_rows=coarse
+            forecast_rows=coarse,
         )
     )
 
-
     # --------------------------------------------------------
-    # Build daily outputs
+    # Build daily outputs & ML downscaling
     # --------------------------------------------------------
-
     model_artifact = _get_model_artifact()
     static_features = _get_static_features()
-    statewide_id = PILOT_TO_STATEWIDE.get(canonical_id, canonical_id)
     gp_feat = (
         static_features.loc[statewide_id]
         if (static_features is not None and statewide_id in static_features.index)
         else None
     )
-    is_downscaled = model_artifact is not None and gp_feat is not None
+    if isinstance(gp_feat, pd.DataFrame):
+        gp_feat = gp_feat.iloc[0]
 
+    is_downscaled = model_artifact is not None and gp_feat is not None
     forecast = []
 
-
     for _, row in coarse.iterrows():
-
         forecast_date = (
             pd.Timestamp(
                 row["date"]
             ).date()
         )
 
-
-        # ----------------------------------------------------
-        # Forecast values
-        # ----------------------------------------------------
-
         rain = float(
-            row[
-                "coarse_rain_mm"
-            ]
+            row["coarse_rain_mm"]
         )
-
-
         tmax = float(
-            row[
-                "coarse_tmax_c"
-            ]
+            row["coarse_tmax_c"]
         )
-
-
         tmin = float(
-            row[
-                "coarse_tmin_c"
-            ]
+            row["coarse_tmin_c"]
         )
-
-
         rain_probability = (
             float(
-                row[
-                    "coarse_rain_probability"
-                ]
+                row["coarse_rain_probability"]
             )
             / 100.0
         )
-
 
         if is_downscaled:
             day_of_year = forecast_date.timetuple().tm_yday
@@ -473,7 +588,7 @@ def forecast_panchayat_v2(
 
             if prob >= 0.35:
                 p50_val = max(0.0, float(model_artifact["regressor_p50"].predict(f_row)[0]))
-                p10_val = max(0.0, float(model_artifact["regressor_p10"].predict(f_row)[0]))
+                p10_val = min(p50_val, max(0.0, float(model_artifact["regressor_p10"].predict(f_row)[0])))
                 p90_val = max(p50_val, float(model_artifact["regressor_p90"].predict(f_row)[0]))
             else:
                 p10_val, p50_val, p90_val = 0.0, 0.0, 0.0
@@ -491,216 +606,93 @@ def forecast_panchayat_v2(
                 "p90": round(rain * 1.3, 1),
             }
 
-
         # ----------------------------------------------------
         # Forecast advisory context
         # ----------------------------------------------------
-
         context = build_forecast_context(
-
             panchayat_id=canonical_id,
-
             forecast_row=row,
-
             crop=crop,
-
-            forecast_dry_days=
-                forecast_dry_days[
-                    forecast_date
-                ],
-
+            forecast_dry_days=forecast_dry_days[forecast_date],
         )
         context.rain_mm = rain_dict["p50"]
-
 
         # ----------------------------------------------------
         # Advisory engine
         # ----------------------------------------------------
-
-        advisory = (
-            build_advisory_response(
-                context
-            )
-        )
-
+        advisory = build_advisory_response(context)
 
         # ----------------------------------------------------
         # Daily forecast response
         # ----------------------------------------------------
-
         forecast.append({
-
-            "date":
-                forecast_date.isoformat(),
-
-            "rain_mm":
-                rain_dict,
-
-            "rain_probability":
-                round(
-                    rain_probability,
-                    2
-                ),
-
+            "date": forecast_date.isoformat(),
+            "rain_mm": rain_dict,
+            "rain_probability": round(rain_probability, 2),
             "tmax_c": {
-                "p50":
-                    round(
-                        tmax,
-                        1
-                    ),
+                "p50": round(tmax, 1),
             },
-
-            "tmin_c":
-                round(
-                    tmin,
-                    1
-                ),
-
-            "advisory":
-                advisory,
-
+            "tmin_c": round(tmin, 1),
+            "advisory": advisory,
         })
 
-
     # ========================================================
-    # SOURCE
+    # SOURCE & COORDINATE
     # ========================================================
-
-    source = str(
-        coarse[
-            "source"
-        ].iloc[0]
-    )
-
-
-    # ========================================================
-    # COARSE COORDINATE
-    # ========================================================
-
+    source = str(coarse["source"].iloc[0])
     coarse_coordinate = {
-
-        "latitude":
-            float(
-                coarse[
-                    "coarse_latitude"
-                ].iloc[0]
-            ),
-
-        "longitude":
-            float(
-                coarse[
-                    "coarse_longitude"
-                ].iloc[0]
-            ),
-
+        "latitude": float(coarse["coarse_latitude"].iloc[0]),
+        "longitude": float(coarse["coarse_longitude"].iloc[0]),
     }
-
 
     # ========================================================
     # ADVISORY SUMMARY
     # ========================================================
-    #
-    # Include only days that actually have an advisory rule.
-    # "none" is not included in the summary.
-    #
-    # ========================================================
-
     advisories = []
-
-
     for day in forecast:
-
-        advisory = day[
-            "advisory"
-        ]
-
-
-        if (
-            advisory["rule_id"]
-            !=
-            "none"
-        ):
-
+        advisory = day["advisory"]
+        if advisory["rule_id"] != "none":
             advisories.append({
-
-                "date":
-                    day["date"],
-
-                "rule_id":
-                    advisory[
-                        "rule_id"
-                    ],
-
-                "priority":
-                    advisory[
-                        "priority"
-                    ],
-
-                "type":
-                    advisory[
-                        "type"
-                    ],
-
-                "text_en":
-                    advisory[
-                        "text_en"
-                    ],
-
-                "text_bn":
-                    advisory[
-                        "text_bn"
-                    ],
-
+                "date": day["date"],
+                "rule_id": advisory["rule_id"],
+                "priority": advisory["priority"],
+                "type": advisory["type"],
+                "text_en": advisory["text_en"],
+                "text_bn": advisory["text_bn"],
             })
-
 
     # ========================================================
     # FINAL RESPONSE
     # ========================================================
-
     return {
-
-        "panchayat_id":
-            panchayat_id,
-
-        "panchayat_name":
-            PANCHAYAT_DB[
-                panchayat_id
-            ]["name"],
-
-        "crop":
-            crop,
-
-        "model_version":
-            "V2.0 Statewide Hurdle (Quantile HGB)" if is_downscaled else "V2 delivery scaffold",
-
-        "rainfall_model":
-            "Two-Stage Hurdle Downscaling (P10/P50/P90)" if is_downscaled else "Coarse forecast fallback",
-
-        "source":
-            source,
-
-        "coarse_coordinate":
-            coarse_coordinate,
-
-        "forecast":
-            forecast,
-
-        "advisories":
-            advisories,
-
-        "degraded":
-            False if is_downscaled else True,
-
-        "degraded_reason":
-            None if is_downscaled else (
-                "Operational five-day "
-                "Panchayat-level ML downscaling "
-                "is not yet validated. "
-                "Coarse block forecast is used "
-                "as the safe rainfall fallback."
-            ),
-
+        "panchayat_id": meta["panchayat_id"],
+        "panchayat_name": meta["panchayat_name"],
+        "block_name": meta.get("block_name"),
+        "district_name": meta.get("district_name"),
+        "crop": crop,
+        "model_version": (
+            "V2.0 Statewide Hurdle (Quantile HGB)"
+            if is_downscaled
+            else "V2 delivery scaffold"
+        ),
+        "rainfall_model": (
+            "Two-Stage Hurdle Downscaling (P10/P50/P90)"
+            if is_downscaled
+            else "Coarse forecast fallback"
+        ),
+        "is_live_dynamic": is_live_dynamic,
+        "source": source,
+        "coarse_coordinate": coarse_coordinate,
+        "forecast": forecast,
+        "advisories": advisories,
+        "degraded": False if is_downscaled else True,
+        "degraded_reason": None if is_downscaled else (
+            "Operational five-day "
+            "Panchayat-level ML downscaling "
+            "is not yet validated. "
+            "Coarse block forecast is used "
+            "as the safe rainfall fallback."
+        ),
     }
 
 
