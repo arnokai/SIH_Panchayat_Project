@@ -1,7 +1,17 @@
-html {
-  min-width: 320px;
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Poppins', sans-serif;
+    color: #163A32;
+  }
 }
 
-body {
-  min-width: 320px;
+/* Custom Glassmorphism matching your exact Figma design */
+.glass-card {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 40px rgba(22, 58, 50, 0.08);
 }

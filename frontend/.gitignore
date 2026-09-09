@@ -1,24 +1,37 @@
-# Logs
-logs
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Vite build
+frontend/dist/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python generated files
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# OS files
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Old V0 models
+models/rain_classifier.pkl
+models/rain_regressor.pkl
+models/tmax_regressor.pkl
+
+# Large external river source dataset
+data/raw/rivers/

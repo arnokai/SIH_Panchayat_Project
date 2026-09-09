@@ -1,292 +1,303 @@
 // src/App.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import LocationSelector from './components/LocationSelector';
+import ForecastView from './ForecastView';
+import AdvisoryView from './AdvisoryView';
 import './App.css';
 
 export default function App() {
   const [locationData, setLocationData] = useState(() => {
-    const saved = localStorage.getItem('panchmausam_loc');
+    const saved = localStorage.getItem('terramind_location');
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [activeTab, setActiveTab] = useState('home');
+  const [forecast, setForecast] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('home'); 
   const [lang, setLang] = useState('bn'); // 'en', 'bn', 'hi'
 
-  // Dropdown states for Landing Page
-  const [selectedDistrict, setSelectedDistrict] = useState('North 24 Parganas');
-  const [selectedBlock, setSelectedBlock] = useState('Amdanga');
-  const [selectedPanchayat, setSelectedPanchayat] = useState('AMDANGA');
-
-  const handleViewForecast = () => {
-    const locInfo = {
-      district: selectedDistrict,
-      block: selectedBlock,
-      panchayat: selectedPanchayat,
-      panchayat_id: "107778"
-    };
+  const handleSelectLocation = (locInfo) => {
     setLocationData(locInfo);
-    localStorage.setItem('panchmausam_loc', JSON.stringify(locInfo));
+    localStorage.setItem('terramind_location', JSON.stringify(locInfo));
   };
 
   const handleResetLocation = () => {
-    localStorage.removeItem('panchmausam_loc');
+    localStorage.removeItem('terramind_location');
     setLocationData(null);
+    setForecast(null);
   };
 
-  // Multilingual Dictionaries matching your designs
-  const t = {
+  // Complete multilingual dictionary for all UI text across the entire app
+  const dict = {
     en: {
-      brand: "PanchMausam",
       tagline: "Smarter Weather, Better Farming",
-      selectTitle: "Select Your Location",
-      selectSubtitle: "Get accurate weather and advisory for your Panchayat",
-      district: "District",
-      block: "Block",
-      panchayat: "Panchayat",
-      useCurrent: "Use My Current Location",
-      viewForecastBtn: "VIEW FORECAST",
+      about: "About",
+      online: "Online",
+      offlineMode: "Offline Mode",
+      cachedData: "Showing cached data",
+      updated: "Updated",
+      changeLocation: "Change Location",
       home: "Home",
       forecast: "Forecast",
       map: "Map",
       advisory: "Advisory",
       more: "More",
-      offlineMode: "Offline Mode",
-      cachedNotice: "Showing cached data",
-      updatedTime: "Last updated: Today, 8:30 AM",
       currentWeather: "Current Weather",
-      temp: "Temperature",
       feelsLike: "Feels like",
+      temperature: "Temperature",
       rainProb: "Rain Prob.",
       rainfall: "Rainfall",
       humidity: "Humidity",
-      windSpeed: "Wind Speed",
-      airQuality: "Air Quality",
       agroAdvisory: "Agro Advisory",
-      listen: "Listen (Voice)",
-      extraTip: "Tip: Clear weeds if water stagnation occurs.",
-      fiveDay: "5-Day Forecast",
+      highPriority: "High Priority",
+      listen: "Listen",
+      fiveDayForecast: "5-Day Forecast",
       viewDetails: "View Details",
-      rainAlertBanner: "Light to moderate rain is expected in your area. Keep an umbrella when going outside.",
-      mapTitle: "Forecast Comparison Map",
+      rainAlert: "Light to moderate rain is expected in your area. Keep an umbrella when going outside.",
+      forecastComparisonMap: "Forecast Comparison Map",
       mapSubtitle: "See how the forecast varies across Panchayats within a Block.",
-      riskLow: "Low",
-      riskMod: "Moderate",
-      riskHigh: "High",
-      riskVHigh: "Very High",
-      officerDashboard: "Officer & Admin Review Dashboard",
-      officerNotice: "This is a high-risk weather alert zone requiring official agriculture department review."
+      district: "District",
+      block: "Block",
+      panchayat: "Panchayat",
+      allPanchayats: "All Panchayats",
+      blockLevelRef: "Block Level (Amdanga)",
+      referenceAvg: "Reference / Average",
+      panchayatLevel: "Panchayat Level",
+      forecastRiskLevel: "Forecast / Risk Level",
+      low: "Low",
+      moderate: "Moderate",
+      high: "High",
+      veryHigh: "Very High",
+      mapNotice: "Block-level forecast is an average (reference). Individual panchayats may have distinct forecasts.",
+      returnHome: "Return to Home Dashboard",
+      viewSection: "section of PanchMausam."
     },
     bn: {
-      brand: "PanchMausam",
       tagline: "স্মার্ট আবহাওয়া, উন্নত কৃষি",
-      selectTitle: "আপনার অবস্থান নির্বাচন করুন",
-      selectSubtitle: "আপনার পঞ্চায়েতের জন্য সঠিক আবহাওয়া ও কৃষি পরামর্শ পান",
-      district: "জেলা",
-      block: "ব্লক",
-      panchayat: "পঞ্চায়েত",
-      useCurrent: "আমার বর্তমান অবস্থান ব্যবহার করুন",
-      viewForecastBtn: "পূর্বাভাস দেখুন",
+      about: "সম্পর্কিত",
+      online: "অনলাইন",
+      offlineMode: "অফলাইন মোড",
+      cachedData: "ক্যাশে থাকা তথ্য দেখানো হচ্ছে",
+      updated: "আপডেট",
+      changeLocation: "অবস্থান পরিবর্তন করুন",
       home: "হোম",
       forecast: "পূর্বাভাস",
       map: "ম্যাপ",
       advisory: "পরামর্শ",
       more: "আরও",
-      offlineMode: "অফলাইন মোড",
-      cachedNotice: "ক্যাশে থাকা তথ্য দেখানো হচ্ছে",
-      updatedTime: "আপডেট: আজ, সকাল ৮:৩০",
       currentWeather: "এখনকার আবহাওয়া",
-      temp: "তাপমাত্রা",
       feelsLike: "অনুভূত",
+      temperature: "তাপমাত্রা",
       rainProb: "বৃষ্টি সম্ভাবনা",
       rainfall: "বৃষ্টিপাত",
       humidity: "আর্দ্রতা",
-      windSpeed: "বাতাসের গতি",
-      airQuality: "বায়ুর গুণমান",
       agroAdvisory: "কৃষি পরামর্শ",
-      listen: "শুনুন (Listen)",
-      extraTip: "পরামর্শ: জমিতে জল জমে থাকলে আগাছা পরিষ্কার করুন।",
-      fiveDay: "৫ দিনের পূর্বাভাস",
+      highPriority: "উচ্চ অগ্রাধিকার",
+      listen: "শুনুন",
+      fiveDayForecast: "৫ দিনের পূর্বাভাস",
       viewDetails: "বিস্তারিত দেখুন",
-      rainAlertBanner: "আপনার এলাকায় হালকা থেকে মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। বাইরে যাওয়ার সময় ছাতা সাথে রাখুন।",
-      mapTitle: "পূর্বাভাস তুলনা মানচিত্র",
+      rainAlert: "আপনার এলাকায় হালকা থেকে মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। বাইরে যাওয়ার সময় ছাতা সাথে রাখুন।",
+      forecastComparisonMap: "পূর্বাভাস তুলনা মানচিত্র",
       mapSubtitle: "একটি ব্লকের অধীনে বিভিন্ন পঞ্চায়েতের আবহাওয়ার পূর্বাভাস কীভাবে পরিবর্তিত হয় তা দেখুন।",
-      riskLow: "কম",
-      riskMod: "মাঝারি",
-      riskHigh: "বেশি",
-      riskVHigh: "খুব বেশি",
-      officerDashboard: "অফিসিয়াল পর্যালোচনা ড্যাশবোর্ড",
-      officerNotice: "এটি একটি উচ্চ ঝুঁকির আবহাওয়া সতর্কতা। কত্ক/কৃষি দপ্তরের অফিসিয়াল পর্যালোচনা প্রয়োজন।"
+      district: "জেলা",
+      block: "ব্লক",
+      panchayat: "পঞ্চায়েত",
+      allPanchayats: "সকল পঞ্চায়েত",
+      blockLevelRef: "ব্লক স্তর (আমডাঙা)",
+      referenceAvg: "রেফারেন্স / গড়",
+      panchayatLevel: "পঞ্চায়েত স্তর",
+      forecastRiskLevel: "পূর্বাভাস / ঝুঁকির মাত্রা",
+      low: "কম",
+      moderate: "মাঝারি",
+      high: "বেশি",
+      veryHigh: "খুব বেশি",
+      mapNotice: "ব্লক স্তরের পূর্বাভাসটি গড় মান (রেফারেন্স)। প্রতিটি পঞ্চায়েতের জন্য আলাদা পূর্বাভাস থাকতে পারে।",
+      returnHome: "হোম ড্যাশবোর্ডে ফিরে যান",
+      viewSection: "সেকশনটি দেখছেন।"
     },
     hi: {
-      brand: "PanchMausam",
       tagline: "बेहतर मौसम, उन्नत खेती",
-      selectTitle: "अपना स्थान चुनें",
-      selectSubtitle: "अपनी पंचायत के लिए सटीक मौसम और कृषि सलाह प्राप्त करें",
-      district: "जिला",
-      block: "ब्लॉक",
-      panchayat: "पंचायत",
-      useCurrent: "मेरा वर्तमान स्थान उपयोग करें",
-      viewForecastBtn: "पूर्वानुमान देखें",
+      about: "परिचय",
+      online: "ऑनलाइन",
+      offlineMode: "ऑफ़लाइन मोड",
+      cachedData: "कैश्ड डेटा दिखाया जा रहा है",
+      updated: "अपडेट",
+      changeLocation: "स्थान बदलें",
       home: "होम",
       forecast: "पूर्वानुमान",
       map: "नक्शा",
       advisory: "सलाह",
       more: "और अधिक",
-      offlineMode: "ऑफ़लाइन मोड",
-      cachedNotice: "कैश्ड डेटा दिखाया जा रहा है",
-      updatedTime: "अपडेट: आज, सुबह 8:30",
       currentWeather: "वर्तमान मौसम",
-      temp: "तापमान",
       feelsLike: "महसूस होता है",
+      temperature: "तापमान",
       rainProb: "बारिश की संभावना",
       rainfall: "वर्षा",
       humidity: "आर्द्रता",
-      windSpeed: "हवा की गति",
-      airQuality: "वायु गुणवत्ता",
       agroAdvisory: "कृषि सलाह",
-      listen: "सुनें (Listen)",
-      extraTip: "सलाह: खेत में पानी जमा होने पर खरपतवार हटाएं।",
-      fiveDay: "5-दिन का पूर्वानुमान",
+      highPriority: "उच्च प्राथमिकता",
+      listen: "सुनें",
+      fiveDayForecast: "5-दिन का पूर्वानुमान",
       viewDetails: "विस्तृत देखें",
-      rainAlertBanner: "आपके क्षेत्र में हल्की से मध्यम बारिश की संभावना है। बाहर जाते समय छाता साथ रखें।",
-      mapTitle: "पूर्वानुमान तुलना नक्शा",
+      rainAlert: "आपके क्षेत्र में हल्की से मध्यम बारिश की संभावना है। बाहर जाते समय छाता साथ रखें।",
+      forecastComparisonMap: "पूर्वानुमान तुलना नक्शा",
       mapSubtitle: "देखें कि एक ब्लॉक के भीतर विभिन्न पंचायतों में पूर्वानुमान कैसे भिन्न होता है।",
-      riskLow: "कम",
-      riskMod: "मध्यम",
-      riskHigh: "अधिक",
-      riskVHigh: "बहुत अधिक",
-      officerDashboard: "अधिकारी और प्रशासनिक समीक्षा डैशबोर्ड",
-      officerNotice: "यह उच्च जोखिम वाला मौसम अलर्ट है, कृषि विभाग की समीक्षा आवश्यक है।"
+      district: "जिला",
+      block: "ब्लॉक",
+      panchayat: "पंचायत",
+      allPanchayats: "सभी पंचायतें",
+      blockLevelRef: "ब्लॉक स्तर (आमडांगा)",
+      referenceAvg: "संदर्भ / औसत",
+      panchayatLevel: "पंचायत स्तर",
+      forecastRiskLevel: "पूर्वानुमान / जोखिम स्तर",
+      low: "कम",
+      moderate: "मध्यम",
+      high: "अधिक",
+      veryHigh: "बहुत अधिक",
+      mapNotice: "ब्लॉक-स्तरीय पूर्वानुमान एक औसत (संदर्भ) है। प्रत्येक पंचायत का अलग पूर्वानुमान हो सकता है।",
+      returnHome: "होम डैशबोर्ड पर लौटें",
+      viewSection: "खंड देख रहे हैं।"
     }
-  }[lang];
+  };
 
-  // SCREEN 1: LANDING & LOCATION SELECTOR (Matches Image 1)
+  const t = dict[lang] || dict.en;
+
+  useEffect(() => {
+    if (!locationData) return;
+    const panchayatId = locationData.panchayat_id || "107778";
+    setLoading(true);
+
+    fetch(`http://127.0.0.1:8000/v1/forecast?panchayat_id=${panchayatId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch weather forecast data from server.");
+        return res.json();
+      })
+      .then((data) => {
+        setForecast(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.warn("Backend API fallback sample active:", err);
+        setForecast({
+          panchayat_id: panchayatId,
+          panchayat_name: locationData.panchayat || "AMDANGA",
+          block: locationData.block || "Amdanga",
+          district: locationData.district || "North 24 Parganas",
+          updated_at: "8:30 AM",
+          current: {
+            condition_bn: "আংশিক মেঘলা",
+            condition_en: "Partly Cloudy",
+            temp: 28,
+            feels_like: 31,
+            rain_prob: 40,
+            rain_mm: 2.4,
+            humidity: 78,
+            wind_speed: 12,
+            wind_dir: "उत्तर-पूर्व",
+            aqi: 38
+          },
+          advisory: {
+            text_bn: "আগামী ২-৩ দিন হালকা বৃষ্টি হতে পারে। জমিতে জল দাঁড়ানোর সুযোগ আছে। ধান গাছের ক্ষেতের নিকাশির ব্যবস্থা করুন। ইউরিয়া সার প্রয়োগ করুন।",
+            text_en: "Light rain expected in next 2-3 days. Ensure proper drainage for paddy fields."
+          },
+          daily_forecast: [
+            { day_bn: "আজ", day_en: "Today", date: "29 May", temp_max: 29, temp_min: 24, rain_prob: 40, rain_mm: "2-4 mm", icon: "⛅" },
+            { day_bn: "শুক্র", day_en: "Fri", date: "30 May", temp_max: 30, temp_min: 24, rain_prob: 60, rain_mm: "5-8 mm", icon: "🌧️" },
+            { day_bn: "শনিবার", day_en: "Sat", date: "31 May", temp_max: 30, temp_min: 25, rain_prob: 70, rain_mm: "8-12 mm", icon: "🌧️" },
+            { day_bn: "রবি", day_en: "Sun", date: "01 Jun", temp_max: 31, temp_min: 25, rain_prob: 40, rain_mm: "2-4 mm", icon: "⛅" },
+            { day_bn: "সোম", day_en: "Mon", date: "02 Jun", temp_max: 32, temp_min: 26, rain_prob: 20, rain_mm: "0-1 mm", icon: "⛅" }
+          ]
+        });
+        setLoading(false);
+      });
+  }, [locationData]);
+
+  // ==========================================
+  // PAGE 1: LOCATION SELECTOR VIEW
+  // ==========================================
   if (!locationData) {
     return (
-      <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans bg-gradient-to-br from-[#e4f1ea] to-[#c1e2d1]">
-        {/* Header */}
-        <header className="w-full py-6 px-10 md:px-16 flex justify-between items-center relative z-10">
+      <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans" style={{ background: 'linear-gradient(135deg, #e4f1ea 0%, #c1e2d1 100%)' }}>
+        
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute top-12 left-12 flex items-center gap-3 opacity-80">
+            <div className="text-5xl">☀️</div>
+          </div>
+          <div className="absolute bottom-0 inset-x-0 h-64 bg-repeat-x opacity-45 bg-bottom" style={{ backgroundImage: 'radial-gradient(circle, #2d6a4f 10px, transparent 11px)' }}></div>
+        </div>
+
+        <header className="w-full py-5 px-8 md:px-16 flex justify-between items-center relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-xl shadow">⛅</div>
             <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-[#163A32]">{t.brand}</h1>
+              <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: '#163A32' }}>PanchMausam</h1>
               <p className="text-xs font-bold text-emerald-700">{t.tagline}</p>
             </div>
           </div>
+
           <div className="flex items-center gap-4">
-            <select 
-              value={lang} 
-              onChange={(e) => setLang(e.target.value)}
-              className="bg-white/90 px-4 py-2 rounded-full text-sm font-bold border border-emerald-300 outline-none cursor-pointer shadow-xs"
-            >
-              <option value="en">English</option>
-              <option value="bn">বাংলা</option>
-              <option value="hi">हिंदी</option>
-            </select>
-            <span className="text-sm font-bold text-emerald-900 cursor-pointer">About</span>
+            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full text-sm font-bold border border-emerald-200 shadow-xs cursor-pointer">
+              <select 
+                value={lang} 
+                onChange={(e) => setLang(e.target.value)}
+                className="bg-transparent border-none outline-none font-bold text-slate-800 cursor-pointer"
+              >
+                <option value="en">English</option>
+                <option value="bn">বাংলা</option>
+                <option value="hi">हिंदी</option>
+              </select>
+            </div>
+            <button className="text-sm font-bold text-slate-700 hover:text-emerald-900 transition cursor-pointer">
+              {t.about}
+            </button>
           </div>
         </header>
 
-        {/* Center Card Container */}
-        <main className="flex-1 flex items-center justify-center p-4 relative z-10">
-          <div className="bg-white/85 backdrop-blur-md border border-white/60 rounded-3xl p-8 max-w-lg w-full shadow-2xl flex flex-col gap-6">
-            <div>
-              <h2 className="text-2xl font-extrabold text-[#082b20]">{t.selectTitle}</h2>
-              <p className="text-xs font-bold text-[#54786b] mt-1">{t.selectSubtitle}</p>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="text-xs font-bold text-[#082b20] mb-1 block">{t.district}</label>
-                <select 
-                  value={selectedDistrict}
-                  onChange={(e) => setSelectedDistrict(e.target.value)}
-                  className="w-full bg-[#f4f7f5] border border-[#d7e2dc] p-3 rounded-xl font-bold text-sm outline-none"
-                >
-                  <option value="North 24 Parganas">North 24 Parganas</option>
-                  <option value="Nadia">Nadia</option>
-                  <option value="Hooghly">Hooghly</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-[#082b20] mb-1 block">{t.block}</label>
-                <select 
-                  value={selectedBlock}
-                  onChange={(e) => setSelectedBlock(e.target.value)}
-                  className="w-full bg-[#f4f7f5] border border-[#d7e2dc] p-3 rounded-xl font-bold text-sm outline-none"
-                >
-                  <option value="Amdanga">Amdanga</option>
-                  <option value="Barasat I">Barasat I</option>
-                  <option value="Habra I">Habra I</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-[#082b20] mb-1 block">{t.panchayat}</label>
-                <select 
-                  value={selectedPanchayat}
-                  onChange={(e) => setSelectedPanchayat(e.target.value)}
-                  className="w-full bg-[#f4f7f5] border border-[#d7e2dc] p-3 rounded-xl font-bold text-sm outline-none"
-                >
-                  <option value="AMDANGA">AMDANGA</option>
-                  <option value="Haripur">Haripur</option>
-                  <option value="Kalyanpur">Kalyanpur</option>
-                  <option value="Chanditala">Chanditala</option>
-                </select>
-              </div>
-            </div>
-
-            <button className="text-xs font-bold text-emerald-800 flex items-center gap-2 hover:underline cursor-pointer">
-              <span>📍</span> {t.useCurrent}
-            </button>
-
-            <button 
-              onClick={handleViewForecast}
-              className="w-full py-4 bg-[#0095ff] hover:bg-[#0080e6] text-white font-extrabold rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer text-sm tracking-wider"
-            >
-              <span>{t.viewForecastBtn}</span>
-              <span>→</span>
-            </button>
-          </div>
+        <main className="flex-1 flex items-center justify-center p-4 relative z-10 my-auto">
+          <LocationSelector onSelectLocation={handleSelectLocation} lang={lang} />
         </main>
       </div>
     );
   }
 
-  // SCREEN 2: MAIN DASHBOARD (Matches Images 2, 3, and 4)
+  // ==========================================
+  // PAGES 2 & 3: DASHBOARD VIEW (Sidebar + Content)
+  // ==========================================
   return (
     <div className="min-h-screen w-full flex flex-col bg-[#f4f7f5] text-[#082b20] font-sans">
-      {/* Top Header */}
+      
       <header className="w-full bg-white border-b border-[#d7e2dc] py-3.5 px-6 md:px-10 flex justify-between items-center shadow-xs sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center text-lg text-white shadow">⛅</div>
+          <div className="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center text-lg shadow-xs text-white">⛅</div>
           <div>
-            <h1 className="text-xl font-extrabold text-[#163A32]">{t.brand}</h1>
+            <h1 className="text-xl font-extrabold tracking-tight text-[#163A32]">PanchMausam</h1>
             <p className="text-[11px] font-bold text-emerald-700">{t.tagline}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <select 
-            value={lang} 
-            onChange={(e) => setLang(e.target.value)}
-            className="bg-[#f4f7f5] border border-[#d7e2dc] px-3.5 py-2 rounded-full text-xs font-bold cursor-pointer outline-none"
-          >
-            <option value="en">English</option>
-            <option value="bn">বাংলা</option>
-            <option value="hi">हिंदी</option>
-          </select>
-          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-800">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 bg-[#f4f7f5] border border-[#d7e2dc] px-3.5 py-2 rounded-full text-xs font-bold text-slate-800">
+            <span>🌐</span>
+            <select 
+              value={lang} 
+              onChange={(e) => setLang(e.target.value)}
+              className="bg-transparent border-none outline-none font-bold cursor-pointer"
+            >
+              <option value="en">English</option>
+              <option value="bn">বাংলা</option>
+              <option value="hi">हिंदी</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 bg-[#edf6ef] px-3.5 py-2 rounded-full text-xs font-bold border border-[#cfe0d4] text-[#1e5c3a]">
             <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
-            <span>{t.online} Online</span>
+            <span>{t.online}</span>
           </div>
         </div>
       </header>
 
-      {/* App Body Container */}
       <div className="flex-1 flex flex-col md:flex-row p-6 gap-6 max-w-[1600px] w-full mx-auto">
         
-        {/* Sidebar Navigation */}
         <aside className="w-full md:w-64 flex flex-col gap-4 shrink-0">
           <div className="bg-white border border-[#d7e2dc] rounded-3xl p-3 flex flex-col gap-1 shadow-xs">
             {[
@@ -300,7 +311,9 @@ export default function App() {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm transition cursor-pointer ${
-                  activeTab === item.id ? 'bg-[#e2f2e7] text-[#082b20]' : 'text-[#54786b] hover:bg-slate-50'
+                  activeTab === item.id 
+                    ? 'bg-[#e2f2e7] text-[#082b20] shadow-xs' 
+                    : 'text-[#54786b] hover:bg-slate-50'
                 }`}
               >
                 <span className="text-lg">{item.icon}</span>
@@ -309,231 +322,300 @@ export default function App() {
             ))}
           </div>
 
-          {/* Offline Box */}
-          <div className="bg-[#fff9e6] border border-[#ffe099] rounded-3xl p-4 flex flex-col gap-2 shadow-xs">
-            <div className="flex items-center gap-2 text-amber-800 font-extrabold text-xs">
-              <span>⚡</span> {t.offlineMode}
+          <div className="bg-[#fff9e6] border border-[#f3e1a9] rounded-3xl p-4 text-xs">
+            <div className="font-bold text-[#8c6d19] flex items-center gap-1.5 mb-1">
+              <span>📶</span> {t.offlineMode}
             </div>
-            <p className="text-[11px] font-bold text-amber-900">{t.cachedNotice}</p>
-            <p className="text-[10px] text-amber-700 font-medium">{t.updatedTime}</p>
+            <p className="text-[#736338] mb-2">{t.cachedData}</p>
+            <p className="text-[11px] text-[#99844c]">{t.updated}: 8:30 AM</p>
           </div>
 
-          {/* Mini Village Art Box */}
-          <div className="bg-gradient-to-t from-emerald-200 to-emerald-100 rounded-3xl p-4 h-40 flex items-end justify-center border border-emerald-300 shadow-xs relative overflow-hidden">
-            <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px]"></div>
-            <span className="text-xs font-extrabold text-emerald-900 z-10 bg-white/80 px-3 py-1 rounded-full shadow-xs">
-              {locationData.panchayat} Village View
-            </span>
+          <div className="bg-gradient-to-b from-emerald-100 to-emerald-200 border border-emerald-300 rounded-3xl p-4 flex flex-col items-center text-center overflow-hidden">
+            <div className="text-3xl mb-2">🌾🏡</div>
+            <p className="text-xs font-extrabold text-emerald-900 mb-1">{locationData.panchayat}</p>
+            <p className="text-[10px] text-emerald-700 mb-3">{locationData.district}</p>
+            <button 
+              onClick={handleResetLocation} 
+              className="text-xs font-bold bg-white text-emerald-900 px-3.5 py-2 rounded-xl shadow-xs hover:bg-emerald-50 transition cursor-pointer"
+            >
+              📍 {t.changeLocation}
+            </button>
           </div>
-
-          <button 
-            onClick={handleResetLocation} 
-            className="text-xs font-bold bg-emerald-100 hover:bg-emerald-200 text-emerald-900 p-3 rounded-2xl shadow-xs transition cursor-pointer text-center"
-          >
-            📍 Change Panchayat Location
-          </button>
         </aside>
 
-        {/* Dynamic Main Content Window based on active tab */}
         <main className="flex-1 flex flex-col gap-6">
-          
-          {/* TAB 1: HOME (Matches Image 2) */}
-          {activeTab === 'home' && (
-            <>
-              {/* Top Banner Bar */}
-              <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+
+          {activeTab === 'home' && forecast && !loading && (
+            <div className="flex flex-col gap-6">
+              
+              <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center shadow-xs">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-emerald-600 text-xl">📍</span>
-                    <h2 className="text-2xl font-extrabold uppercase text-[#082b20]">
-                      {locationData.panchayat}, {locationData.block} Block
-                    </h2>
-                  </div>
-                  <p className="text-xs font-bold text-[#54786b] mt-0.5">{locationData.district}, West Bengal</p>
+                  <h2 className="text-2xl font-extrabold uppercase text-[#082b20]">
+                    {locationData.panchayat || "AMDANGA"}, {locationData.block || "Amdanga Block"}
+                  </h2>
+                  <p className="text-xs font-bold text-[#54786b] mt-1">
+                    {locationData.district || "North 24 Parganas"}, West Bengal
+                  </p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-xs font-bold text-[#54786b]">{t.updatedTime}</span>
-                  <button onClick={() => window.location.reload()} className="p-2 bg-emerald-50 rounded-full hover:bg-emerald-100 cursor-pointer">🔄</button>
+                <div className="flex items-center gap-2 text-xs font-bold text-[#54786b] mt-3 sm:mt-0 bg-[#f4f7f5] px-4 py-2 rounded-xl">
+                  <span>{t.updated}: 8:30 AM</span>
+                  <span className="cursor-pointer">🔄</span>
                 </div>
               </div>
 
-              {/* Weather & Advisory Split Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Weather Card */}
+                
                 <div className="lg:col-span-7 bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col justify-between">
-                  <h3 className="text-xs font-extrabold text-[#54786b] uppercase tracking-wider mb-4">{t.currentWeather}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                    <div className="md:col-span-5 flex flex-col items-center justify-center p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100">
-                      <span className="text-6xl mb-2">⛅</span>
-                      <h4 className="text-xl font-extrabold text-[#082b20]">Partly Cloudy</h4>
-                      <p className="text-xs font-bold text-[#54786b] mt-1">{t.feelsLike}: 31°C</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#54786b] mb-4">{t.currentWeather}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                    <div className="sm:col-span-5 flex flex-col items-center sm:items-start text-center sm:text-left">
+                      <div className="text-6xl mb-2">⛅</div>
+                      <h3 className="text-2xl font-extrabold text-[#082b20]">
+                        {lang === 'en' ? forecast.current?.condition_en : forecast.current?.condition_bn}
+                      </h3>
+                      <p className="text-xs text-[#54786b] mt-1">{t.feelsLike} {forecast.current?.feels_like}°C</p>
                     </div>
-                    <div className="md:col-span-7 grid grid-cols-2 gap-3">
-                      <div className="bg-[#f4f7f5] p-3.5 rounded-2xl border border-[#d7e2dc]">
-                        <span className="text-xs font-bold text-[#54786b]">{t.temp}</span>
-                        <p className="text-xl font-extrabold text-[#082b20] mt-1">28°C</p>
-                        <span className="text-[10px] text-emerald-700 font-bold">{t.feelsLike} 31°C</span>
+                    <div className="sm:col-span-7 grid grid-cols-2 gap-3 bg-[#f8faf9] p-4 rounded-2xl border border-[#e2e8e5]">
+                      <div>
+                        <span className="text-[11px] font-bold text-[#6a8479]">{t.temperature}</span>
+                        <p className="text-lg font-extrabold text-[#082b20]">{forecast.current?.temp}°C</p>
                       </div>
-                      <div className="bg-[#f4f7f5] p-3.5 rounded-2xl border border-[#d7e2dc]">
-                        <span className="text-xs font-bold text-[#54786b]">{t.rainProb}</span>
-                        <p className="text-xl font-extrabold text-[#082b20] mt-1">40%</p>
-                        <span className="text-[10px] text-emerald-700 font-bold">Moderate</span>
+                      <div>
+                        <span className="text-[11px] font-bold text-[#6a8479]">{t.rainProb}</span>
+                        <p className="text-lg font-extrabold text-[#082b20]">{forecast.current?.rain_prob}%</p>
                       </div>
-                      <div className="bg-[#f4f7f5] p-3.5 rounded-2xl border border-[#d7e2dc]">
-                        <span className="text-xs font-bold text-[#54786b]">{t.rainfall}</span>
-                        <p className="text-xl font-extrabold text-[#082b20] mt-1">2.4 mm</p>
-                        <span className="text-[10px] text-[#54786b]">Past 24 hrs</span>
+                      <div className="pt-2 border-t border-[#e2e8e5]">
+                        <span className="text-[11px] font-bold text-[#6a8479]">{t.rainfall}</span>
+                        <p className="text-base font-extrabold text-[#082b20]">{forecast.current?.rain_mm} mm</p>
                       </div>
-                      <div className="bg-[#f4f7f5] p-3.5 rounded-2xl border border-[#d7e2dc]">
-                        <span className="text-xs font-bold text-[#54786b]">{t.humidity}</span>
-                        <p className="text-xl font-extrabold text-[#082b20] mt-1">78%</p>
-                        <span className="text-[10px] text-emerald-700 font-bold">Humid</span>
+                      <div className="pt-2 border-t border-[#e2e8e5]">
+                        <span className="text-[11px] font-bold text-[#6a8479]">{t.humidity}</span>
+                        <p className="text-base font-extrabold text-[#082b20]">{forecast.current?.humidity}%</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Advisory Card */}
-                <div className="lg:col-span-5 bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col justify-between bg-gradient-to-br from-white to-emerald-50/40">
+                <div className="lg:col-span-5 bg-[#edf6ef] border border-[#cfe0d4] rounded-3xl p-6 shadow-xs flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center gap-2 text-emerald-700 font-extrabold text-xs mb-3">
-                      <span>🍃</span> {t.agroAdvisory}
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-xs font-extrabold uppercase tracking-widest text-[#1e5c3a]">🍃 {t.agroAdvisory}</span>
+                      <span className="text-[10px] bg-[#dceee0] px-2.5 py-1 rounded-full font-bold text-[#1e5c3a]">{t.highPriority}</span>
                     </div>
-                    <p className="text-sm font-bold text-[#082b20] leading-relaxed">
-                      Light rain expected in next 2-3 days. Ensure proper drainage for paddy fields. Apply fertilizer after rain stops.
+                    <p className="text-xs sm:text-sm text-[#082b20] font-medium leading-relaxed">
+                      {lang === 'en' ? forecast.advisory?.text_en : forecast.advisory?.text_bn}
                     </p>
                   </div>
-                  <div className="mt-6 flex flex-col gap-3">
-                    <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl shadow-sm text-xs flex items-center justify-center gap-2 cursor-pointer transition">
-                      <span>🔊</span> {t.listen}
-                    </button>
-                    <div className="bg-[#fff9e6] border border-[#ffe099] p-2.5 rounded-xl text-xs font-bold text-amber-900 flex items-center gap-2">
-                      <span>💡</span> {t.extraTip}
+                  <div className="mt-4 flex items-center justify-between bg-[#1e5c3a] text-white p-3 rounded-2xl shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <span>🔊</span> <span className="text-xs font-bold">{t.listen}</span>
                     </div>
+                    <span className="text-xs tracking-widest text-emerald-300">📶📶📶</span>
                   </div>
                 </div>
+
               </div>
 
-              {/* 5-Day Forecast Row */}
               <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-extrabold uppercase text-[#082b20] tracking-wider">{t.fiveDay}</h3>
-                  <button onClick={() => setActiveTab('forecast')} className="text-xs font-extrabold text-emerald-700 hover:underline cursor-pointer">{t.viewDetails} →</button>
+                  <h3 className="text-lg font-extrabold text-[#082b20] flex items-center gap-2">
+                    <span>📅</span> {t.fiveDayForecast}
+                  </h3>
+                  <span onClick={() => setActiveTab('forecast')} className="text-xs font-bold text-emerald-700 cursor-pointer hover:underline">{t.viewDetails} →</span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                  {[
-                    { day: 'Today', date: '29 May', icon: '⛅', max: 29, min: 24, rain: '40%' },
-                    { day: 'Fri', date: '30 May', icon: '🌧️', max: 30, min: 24, rain: '60%' },
-                    { day: 'Sat', date: '31 May', icon: '🌧️', max: 30, min: 25, rain: '70%' },
-                    { day: 'Sun', date: '01 Jun', icon: '⛅', max: 31, min: 25, rain: '40%' },
-                    { day: 'Mon', date: '02 Jun', icon: '☀️', max: 32, min: 26, rain: '20%' },
-                  ].map((d, i) => (
-                    <div key={i} className="bg-[#f4f7f5] border border-[#d7e2dc] rounded-2xl p-4 flex flex-col items-center text-center">
-                      <span className="text-xs font-bold text-emerald-800">{d.day}</span>
-                      <span className="text-[11px] text-[#54786b] mb-2">{d.date}</span>
-                      <span className="text-3xl my-1">{d.icon}</span>
-                      <span className="text-sm font-extrabold text-[#082b20] mt-1">{d.max}°C / {d.min}°C</span>
-                      <span className="text-[11px] font-bold text-blue-600 mt-1">💧 {d.rain}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                  {forecast.daily_forecast?.map((day, idx) => (
+                    <div key={idx} className="bg-[#f8faf9] border border-[#e2e8e5] p-3 rounded-2xl text-center">
+                      <p className="text-xs font-extrabold text-emerald-850">
+                        {lang === 'en' ? day.day_en : day.day_bn}
+                      </p>
+                      <p className="text-[10px] text-[#6a8479] mb-1">{day.date}</p>
+                      <div className="text-2xl my-1">{day.icon}</div>
+                      <p className="text-xs font-extrabold text-[#082b20]">{day.temp_max}°C / {day.temp_min}°C</p>
+                      <p className="text-[10px] text-[#6a8479] mt-1">💧 {day.rain_prob}% ({day.rain_mm})</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Bottom Notice Bar */}
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-xs font-bold text-blue-900 flex items-center gap-3">
+              <div className="bg-[#e8f4ed] border border-[#b8d6c3] p-4 rounded-2xl text-xs text-[#082b20] flex items-center gap-3">
                 <span className="text-lg">ℹ️</span>
-                <span>{t.rainAlertBanner}</span>
-              </div>
-            </>
-          )}
-
-          {/* TAB 2: FORECAST (Matches Image 3 Detail View) */}
-          {activeTab === 'forecast' && (
-            <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col gap-6">
-              <div className="flex justify-between items-center border-b border-[#d7e2dc] pb-4">
-                <div>
-                  <h2 className="text-xl font-extrabold text-[#082b20]">Detailed Weather & Forecast Suite</h2>
-                  <p className="text-xs font-bold text-[#54786b]">Comprehensive meteorological breakdown for {locationData.panchayat}</p>
-                </div>
-                <button onClick={() => setActiveTab('home')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Back to Home</button>
+                <span>{t.rainAlert}</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl">
-                  <h4 className="text-xs font-extrabold text-emerald-800 uppercase">Hourly Trend</h4>
-                  <p className="text-2xl font-extrabold text-[#082b20] mt-2">Stable (28°C)</p>
-                  <p className="text-xs text-emerald-700 mt-1">No sudden wind gusts expected until evening.</p>
-                </div>
-                <div className="bg-blue-50 border border-blue-200 p-5 rounded-2xl">
-                  <h4 className="text-xs font-extrabold text-blue-800 uppercase">Precipitation Accumulation</h4>
-                  <p className="text-2xl font-extrabold text-[#082b20] mt-2">12.4 mm</p>
-                  <p className="text-xs text-blue-700 mt-1">Expected over the next 48 hours.</p>
-                </div>
-                <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl">
-                  <h4 className="text-xs font-extrabold text-amber-800 uppercase">Soil Moisture Status</h4>
-                  <p className="text-2xl font-extrabold text-[#082b20] mt-2">Optimal (74%)</p>
-                  <p className="text-xs text-amber-700 mt-1">Good condition for vegetative crop stage.</p>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* TAB 3: MAP (Matches Image 4) */}
+          {/* =========================================
+              FORECAST TAB VIEW (Integrates ForecastView)
+             ========================================= */}
+          {activeTab === 'forecast' && forecast && !loading && (
+            <ForecastView 
+              forecast={forecast}
+              locationData={locationData}
+              lang={lang}
+              t={t}
+              onReturnHome={() => setActiveTab('home')}
+            />
+          )}
+
+          {/* =========================================
+              ADVISORY TAB VIEW (Integrates AdvisoryView)
+             ========================================= */}
+          {activeTab === 'advisory' && (
+            <AdvisoryView 
+              forecast={forecast}
+              locationData={locationData}
+              lang={lang}
+              t={t}
+              onReturnHome={() => setActiveTab('home')}
+            />
+          )}
+
+          {/* =========================================
+              MAP COMPARISON VIEW
+             ========================================= */}
           {activeTab === 'map' && (
-            <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col gap-6">
-              <div>
-                <h2 className="text-2xl font-extrabold text-[#082b20]">{t.mapTitle}</h2>
-                <p className="text-xs font-bold text-[#54786b]">{t.mapSubtitle}</p>
+            <div className="flex flex-col gap-6">
+              
+              <div className="bg-white border border-[#d7e2dc] rounded-3xl p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shadow-xs">
+                <div>
+                  <h2 className="text-xl font-extrabold text-[#082b20] flex items-center gap-2">
+                    <span>🗺️</span> {t.forecastComparisonMap}
+                  </h2>
+                  <p className="text-xs text-[#54786b] mt-0.5">{t.mapSubtitle}</p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-[#54786b] mb-1">{t.district}</span>
+                    <select className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                      <option>North 24 Parganas</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-[#54786b] mb-1">{t.block}</span>
+                    <select className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                      <option>Amdanga</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-[#54786b] mb-1">{t.panchayat}</span>
+                    <select className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                      <option>{t.allPanchayats}</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-8 bg-[#e4f1ea] border border-[#d7e2dc] rounded-3xl h-[400px] flex items-center justify-center relative overflow-hidden shadow-inner">
-                  <div className="absolute inset-0 bg-emerald-200/40 flex flex-col items-center justify-center gap-3">
-                    <span className="text-4xl">🗺️</span>
-                    <p className="text-sm font-extrabold text-emerald-900">Interactive Panchayat Risk Heatmap Active</p>
-                    <div className="flex gap-2">
-                      <span className="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold">Barasat (Low)</span>
-                      <span className="px-3 py-1 bg-yellow-400 text-slate-900 rounded-full text-xs font-bold">{locationData.panchayat} (Moderate)</span>
-                      <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-bold">Haripur (High)</span>
+                
+                <div className="lg:col-span-7 bg-white border border-[#d7e2dc] rounded-3xl p-5 shadow-xs flex flex-col justify-between">
+                  <div className="bg-[#f8faf9] border border-[#e2e8e5] rounded-2xl p-3 flex justify-between items-center mb-4 text-xs font-bold">
+                    <div className="flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center">🗺️</span>
+                      <div>
+                        <p className="text-[#082b20]">{t.blockLevelRef}</p>
+                        <p className="text-[10px] text-[#54786b]">{t.referenceAvg}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 text-[#082b20]">
+                      <span>🌡️ <b>28°C</b></span>
+                      <span>🌧️ <b>4.2 mm</b></span>
+                      <span>💧 <b>72%</b></span>
+                    </div>
+                  </div>
+
+                  <div className="relative w-full h-[360px] bg-emerald-100/50 rounded-2xl border border-emerald-200 flex items-center justify-center overflow-hidden">
+                    <div className="grid grid-cols-3 gap-3 text-center text-xs font-extrabold w-full max-w-md p-4">
+                      <div className="p-3 bg-emerald-400 text-emerald-950 rounded-xl shadow-xs">Barasat</div>
+                      <div className="p-3 bg-amber-300 text-amber-950 rounded-xl shadow-xs">Kalyanpur</div>
+                      <div className="p-3 bg-emerald-300 text-emerald-950 rounded-xl shadow-xs">Rajarhat</div>
+                      <div className="p-3 bg-emerald-400 text-emerald-950 rounded-xl shadow-xs">Chanditala</div>
+                      <div className="p-3 bg-amber-400 text-amber-950 rounded-xl border-2 border-white shadow-md scale-105">
+                        <span className="text-[9px] bg-white px-1 rounded text-slate-900 block mb-0.5">AMDANGA</span>
+                        Amdanga
+                      </div>
+                      <div className="p-3 bg-orange-400 text-orange-950 rounded-xl shadow-xs">Haripur</div>
+                      <div className="p-3 bg-emerald-400 text-emerald-950 rounded-xl shadow-xs">Madhyamgram</div>
+                      <div className="p-3 bg-emerald-400 text-emerald-950 rounded-xl shadow-xs">Bamangachi</div>
+                    </div>
+                    <div className="absolute bottom-3 left-3 bg-white px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-xs">Leaflet</div>
+                  </div>
+                  <div className="mt-3 p-2 bg-sky-50 text-sky-900 text-xs rounded-xl">
+                    ℹ️ {t.mapNotice}
+                  </div>
+                </div>
+
+                <div className="lg:col-span-5 flex flex-col gap-4">
+                  <div className="bg-white border border-[#d7e2dc] rounded-3xl p-5 shadow-xs">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">{t.panchayatLevel}</span>
+                        <h3 className="text-xl font-extrabold text-[#082b20] mt-1">AMDANGA</h3>
+                        <p className="text-xs text-[#54786b]">Amdanga Block, North 24 Parganas</p>
+                      </div>
+                      <span className="cursor-pointer text-slate-400 hover:text-slate-700">✕</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 bg-[#f8faf9] p-3 rounded-2xl mb-4 text-xs">
+                      <div>
+                        <span className="text-[#54786b] font-bold">{t.rainfall}</span>
+                        <p className="text-sm font-extrabold text-[#082b20]">2.4 mm</p>
+                      </div>
+                      <div>
+                        <span className="text-[#54786b] font-bold">{t.rainProb} / {t.humidity}</span>
+                        <p className="text-sm font-extrabold text-[#082b20]">32°C / 75%</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#edf6ef] p-3.5 rounded-2xl border border-[#cfe0d4]">
+                      <span className="text-xs font-bold text-[#1e5c3a] block mb-1">🍃 {t.agroAdvisory}</span>
+                      <p className="text-xs text-[#082b20] leading-relaxed">
+                        {lang === 'en' ? forecast?.advisory?.text_en : forecast?.advisory?.text_bn}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-[#d7e2dc] rounded-3xl p-5 shadow-xs">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#54786b] mb-3">{t.forecastRiskLevel}</h4>
+                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                      <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl">
+                        <div className="w-3 h-3 bg-emerald-500 rounded-full mx-auto mb-1"></div>
+                        <span className="font-bold text-emerald-900">{t.low}</span>
+                        <p className="text-[9px] text-slate-500">0-5 mm</p>
+                      </div>
+                      <div className="p-2 bg-amber-50 border border-amber-200 rounded-xl">
+                        <div className="w-3 h-3 bg-amber-400 rounded-full mx-auto mb-1"></div>
+                        <span className="font-bold text-amber-900">{t.moderate}</span>
+                        <p className="text-[9px] text-slate-500">6-15 mm</p>
+                      </div>
+                      <div className="p-2 bg-orange-50 border border-orange-200 rounded-xl">
+                        <div className="w-3 h-3 bg-orange-500 rounded-full mx-auto mb-1"></div>
+                        <span className="font-bold text-orange-900">{t.high}</span>
+                        <p className="text-[9px] text-slate-500">16-30 mm</p>
+                      </div>
+                      <div className="p-2 bg-purple-50 border border-purple-200 rounded-xl">
+                        <div className="w-3 h-3 bg-purple-500 rounded-full mx-auto mb-1"></div>
+                        <span className="font-bold text-purple-900">{t.veryHigh}</span>
+                        <p className="text-[9px] text-slate-500">&gt;30 mm</p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="lg:col-span-4 flex flex-col gap-4">
-                  <div className="bg-[#f4f7f5] border border-[#d7e2dc] rounded-3xl p-5 flex flex-col gap-3">
-                    <h4 className="text-xs font-extrabold uppercase text-[#082b20]">Risk Level Index</h4>
-                    <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-full bg-green-500"></span><span className="text-xs font-bold">{t.riskLow} (0-5 mm)</span></div>
-                    <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-full bg-yellow-400"></span><span className="text-xs font-bold">{t.riskMod} (6-15 mm)</span></div>
-                    <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-full bg-orange-500"></span><span className="text-xs font-bold">{t.riskHigh} (16-30 mm)</span></div>
-                    <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-full bg-purple-600"></span><span className="text-xs font-bold">{t.riskVHigh} (&gt;30 mm)</span></div>
-                  </div>
-                </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4: ADVISORY */}
-          {activeTab === 'advisory' && (
-            <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col gap-6">
-              <h2 className="text-2xl font-extrabold text-[#082b20]">{t.agroAdvisory} Dashboard</h2>
-              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl">
-                <h4 className="text-lg font-extrabold text-emerald-900 mb-2">Paddy Crop Advisory (Vegetative Stage)</h4>
-                <p className="text-sm font-bold text-[#082b20] leading-relaxed">
-                  Due to high humidity and expected rainfall, farmers are advised to avoid heavy nitrogen fertilizer application. Keep field drainage channels open to prevent root rot.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: MORE (Officer Dashboard) */}
-          {activeTab === 'more' && (
-            <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col gap-6">
-              <h2 className="text-2xl font-extrabold text-[#082b20]">{t.officerDashboard}</h2>
-              <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col gap-3">
-                <span className="text-xs font-extrabold uppercase text-amber-900">🔒 Restricted Admin View</span>
-                <p className="text-sm font-bold text-amber-950">{t.officerNotice}</p>
-                <button className="self-start px-5 py-2.5 bg-amber-600 text-white rounded-xl text-xs font-extrabold shadow">Approve Block Bulletin</button>
-              </div>
+          {activeTab !== 'home' && activeTab !== 'forecast' && activeTab !== 'advisory' && activeTab !== 'map' && (
+            <div className="bg-white border border-[#d7e2dc] rounded-3xl p-8 text-center shadow-xs">
+              <h2 className="text-xl font-extrabold text-[#082b20] mb-2 capitalize">{activeTab} {t.viewSection}</h2>
+              <button 
+                onClick={() => setActiveTab('home')}
+                className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold shadow-xs cursor-pointer mt-4"
+              >
+                {t.returnHome}
+              </button>
             </div>
           )}
 
