@@ -1,1193 +1,544 @@
-import { useEffect, useState } from "react";
-import "./App.css";
-import ComparisonMap from "./ComparisonMap";
+// src/App.jsx
+import React, { useState } from 'react';
+import './App.css';
 
-
-const PANCHAYATS = [
-  { id: "A1", name: "ADHATA" },
-  { id: "A2", name: "AMDANGA" },
-  { id: "A3", name: "BERABERIA" },
-  { id: "A4", name: "BODAI" },
-  { id: "A5", name: "CHANDIGARH" },
-  { id: "A6", name: "MARICHA" },
-  { id: "A7", name: "SADHANPUR" },
-  { id: "A8", name: "TARABERIA" },
-];
-
-
-const CROPS = [
-  { id: "paddy", name: "Paddy" },
-  { id: "vegetables", name: "Vegetables" },
-];
-
-
-function formatDate(dateString) {
-  const date = new Date(`${dateString}T00:00:00`);
-
-  return date.toLocaleDateString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
+export default function App() {
+  const [locationData, setLocationData] = useState(() => {
+    const saved = localStorage.getItem('panchmausam_loc');
+    return saved ? JSON.parse(saved) : null;
   });
-}
 
+  const [activeTab, setActiveTab] = useState('home');
+  const [lang, setLang] = useState('bn'); // 'en', 'bn', 'hi'
 
-function getAdvisoryClass(priority) {
-  const value = priority?.toLowerCase();
+  // Dropdown states for Landing Page
+  const [selectedDistrict, setSelectedDistrict] = useState('North 24 Parganas');
+  const [selectedBlock, setSelectedBlock] = useState('Amdanga');
+  const [selectedPanchayat, setSelectedPanchayat] = useState('AMDANGA');
 
-  if (value === "high") return "high";
-  if (value === "medium") return "medium";
-
-  return "low";
-}
-
-
-function App() {
-  const [selectedId, setSelectedId] = useState("A2");
-
-  const [selectedCrop, setSelectedCrop] = useState("paddy");
-
-  const [data, setData] = useState(null);
-
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState("");
-
-  const [mapDate, setMapDate] = useState("");
-
-  const [speakingId, setSpeakingId] = useState(null);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [activeStatewideGP, setActiveStatewideGP] = useState(null);
-
-  const PILOT_LGD_MAP = {
-    107777: "A1",
-    107778: "A2",
-    107779: "A3",
-    107780: "A4",
-    107781: "A5",
-    107782: "A6",
-    107783: "A7",
-    107784: "A8",
+  const handleViewForecast = () => {
+    const locInfo = {
+      district: selectedDistrict,
+      block: selectedBlock,
+      panchayat: selectedPanchayat,
+      panchayat_id: "107778"
+    };
+    setLocationData(locInfo);
+    localStorage.setItem('panchmausam_loc', JSON.stringify(locInfo));
   };
 
-  const handleSearchChange = async (val) => {
-    setSearchTerm(val);
-    if (!val || val.trim().length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
-      const res = await fetch(`${apiBase}/v1/statewide/panchayats?search=${encodeURIComponent(val.trim())}&limit=6`);
-      if (res.ok) {
-        const json = await res.json();
-        setSearchResults(json.panchayats || []);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+  const handleResetLocation = () => {
+    localStorage.removeItem('panchmausam_loc');
+    setLocationData(null);
   };
 
-  const handleSelectStatewide = (gp) => {
-    setSearchTerm(gp.panchayat_name);
-    setSearchResults([]);
-    if (PILOT_LGD_MAP[gp.gp_code]) {
-      setSelectedId(PILOT_LGD_MAP[gp.gp_code]);
-      setActiveStatewideGP(null);
-    } else {
-      setSelectedId(gp.panchayat_id);
-      setActiveStatewideGP(gp);
+  // Multilingual Dictionaries matching your designs
+  const t = {
+    en: {
+      brand: "PanchMausam",
+      tagline: "Smarter Weather, Better Farming",
+      selectTitle: "Select Your Location",
+      selectSubtitle: "Get accurate weather and advisory for your Panchayat",
+      district: "District",
+      block: "Block",
+      panchayat: "Panchayat",
+      useCurrent: "Use My Current Location",
+      viewForecastBtn: "VIEW FORECAST",
+      home: "Home",
+      forecast: "Forecast",
+      map: "Map",
+      advisory: "Advisory",
+      more: "More",
+      offlineMode: "Offline Mode",
+      cachedNotice: "Showing cached data",
+      updatedTime: "Last updated: Today, 8:30 AM",
+      currentWeather: "Current Weather",
+      temp: "Temperature",
+      feelsLike: "Feels like",
+      rainProb: "Rain Prob.",
+      rainfall: "Rainfall",
+      humidity: "Humidity",
+      windSpeed: "Wind Speed",
+      airQuality: "Air Quality",
+      agroAdvisory: "Agro Advisory",
+      listen: "Listen (Voice)",
+      extraTip: "Tip: Clear weeds if water stagnation occurs.",
+      fiveDay: "5-Day Forecast",
+      viewDetails: "View Details",
+      rainAlertBanner: "Light to moderate rain is expected in your area. Keep an umbrella when going outside.",
+      mapTitle: "Forecast Comparison Map",
+      mapSubtitle: "See how the forecast varies across Panchayats within a Block.",
+      riskLow: "Low",
+      riskMod: "Moderate",
+      riskHigh: "High",
+      riskVHigh: "Very High",
+      officerDashboard: "Officer & Admin Review Dashboard",
+      officerNotice: "This is a high-risk weather alert zone requiring official agriculture department review."
+    },
+    bn: {
+      brand: "PanchMausam",
+      tagline: "স্মার্ট আবহাওয়া, উন্নত কৃষি",
+      selectTitle: "আপনার অবস্থান নির্বাচন করুন",
+      selectSubtitle: "আপনার পঞ্চায়েতের জন্য সঠিক আবহাওয়া ও কৃষি পরামর্শ পান",
+      district: "জেলা",
+      block: "ব্লক",
+      panchayat: "পঞ্চায়েত",
+      useCurrent: "আমার বর্তমান অবস্থান ব্যবহার করুন",
+      viewForecastBtn: "পূর্বাভাস দেখুন",
+      home: "হোম",
+      forecast: "পূর্বাভাস",
+      map: "ম্যাপ",
+      advisory: "পরামর্শ",
+      more: "আরও",
+      offlineMode: "অফলাইন মোড",
+      cachedNotice: "ক্যাশে থাকা তথ্য দেখানো হচ্ছে",
+      updatedTime: "আপডেট: আজ, সকাল ৮:৩০",
+      currentWeather: "এখনকার আবহাওয়া",
+      temp: "তাপমাত্রা",
+      feelsLike: "অনুভূত",
+      rainProb: "বৃষ্টি সম্ভাবনা",
+      rainfall: "বৃষ্টিপাত",
+      humidity: "আর্দ্রতা",
+      windSpeed: "বাতাসের গতি",
+      airQuality: "বায়ুর গুণমান",
+      agroAdvisory: "কৃষি পরামর্শ",
+      listen: "শুনুন (Listen)",
+      extraTip: "পরামর্শ: জমিতে জল জমে থাকলে আগাছা পরিষ্কার করুন।",
+      fiveDay: "৫ দিনের পূর্বাভাস",
+      viewDetails: "বিস্তারিত দেখুন",
+      rainAlertBanner: "আপনার এলাকায় হালকা থেকে মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। বাইরে যাওয়ার সময় ছাতা সাথে রাখুন।",
+      mapTitle: "পূর্বাভাস তুলনা মানচিত্র",
+      mapSubtitle: "একটি ব্লকের অধীনে বিভিন্ন পঞ্চায়েতের আবহাওয়ার পূর্বাভাস কীভাবে পরিবর্তিত হয় তা দেখুন।",
+      riskLow: "কম",
+      riskMod: "মাঝারি",
+      riskHigh: "বেশি",
+      riskVHigh: "খুব বেশি",
+      officerDashboard: "অফিসিয়াল পর্যালোচনা ড্যাশবোর্ড",
+      officerNotice: "এটি একটি উচ্চ ঝুঁকির আবহাওয়া সতর্কতা। কত্ক/কৃষি দপ্তরের অফিসিয়াল পর্যালোচনা প্রয়োজন।"
+    },
+    hi: {
+      brand: "PanchMausam",
+      tagline: "बेहतर मौसम, उन्नत खेती",
+      selectTitle: "अपना स्थान चुनें",
+      selectSubtitle: "अपनी पंचायत के लिए सटीक मौसम और कृषि सलाह प्राप्त करें",
+      district: "जिला",
+      block: "ब्लॉक",
+      panchayat: "पंचायत",
+      useCurrent: "मेरा वर्तमान स्थान उपयोग करें",
+      viewForecastBtn: "पूर्वानुमान देखें",
+      home: "होम",
+      forecast: "पूर्वानुमान",
+      map: "नक्शा",
+      advisory: "सलाह",
+      more: "और अधिक",
+      offlineMode: "ऑफ़लाइन मोड",
+      cachedNotice: "कैश्ड डेटा दिखाया जा रहा है",
+      updatedTime: "अपडेट: आज, सुबह 8:30",
+      currentWeather: "वर्तमान मौसम",
+      temp: "तापमान",
+      feelsLike: "महसूस होता है",
+      rainProb: "बारिश की संभावना",
+      rainfall: "वर्षा",
+      humidity: "आर्द्रता",
+      windSpeed: "हवा की गति",
+      airQuality: "वायु गुणवत्ता",
+      agroAdvisory: "कृषि सलाह",
+      listen: "सुनें (Listen)",
+      extraTip: "सलाह: खेत में पानी जमा होने पर खरपतवार हटाएं।",
+      fiveDay: "5-दिन का पूर्वानुमान",
+      viewDetails: "विस्तृत देखें",
+      rainAlertBanner: "आपके क्षेत्र में हल्की से मध्यम बारिश की संभावना है। बाहर जाते समय छाता साथ रखें।",
+      mapTitle: "पूर्वानुमान तुलना नक्शा",
+      mapSubtitle: "देखें कि एक ब्लॉक के भीतर विभिन्न पंचायतों में पूर्वानुमान कैसे भिन्न होता है।",
+      riskLow: "कम",
+      riskMod: "मध्यम",
+      riskHigh: "अधिक",
+      riskVHigh: "बहुत अधिक",
+      officerDashboard: "अधिकारी और प्रशासनिक समीक्षा डैशबोर्ड",
+      officerNotice: "यह उच्च जोखिम वाला मौसम अलर्ट है, कृषि विभाग की समीक्षा आवश्यक है।"
     }
-  };
+  }[lang];
 
-
-  // ==========================================================
-  // BENGALI VOICE (TTS) & WHATSAPP BULLETIN DISSEMINATION
-  // ==========================================================
-
-  const speakAdvisory = (text, id) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      alert("আপনার ব্রাউজারে স্পিচ সাপোর্ট নেই (Speech synthesis not supported in this browser).");
-      return;
-    }
-
-    if (speakingId === id) {
-      window.speechSynthesis.cancel();
-      setSpeakingId(null);
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "bn-IN";
-    utterance.rate = 0.88;
-
-    const voices = window.speechSynthesis.getVoices();
-    const bnVoice = voices.find(
-      (v) => v.lang.startsWith("bn") || v.name.toLowerCase().includes("bengali")
-    );
-    if (bnVoice) {
-      utterance.voice = bnVoice;
-    }
-
-    utterance.onend = () => setSpeakingId(null);
-    utterance.onerror = () => setSpeakingId(null);
-
-    setSpeakingId(id);
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const shareOnWhatsApp = ({ panchayatName, date, rainMm, tempC, advisoryText }) => {
-    const lines = [
-      "🌾 *টেরামাইন্ড পঞ্চায়েত কৃষি আবহাওয়া বার্তা* 🌾",
-      `📍 *পঞ্চায়েত:* ${panchayatName}`,
-      date ? `📅 *তারিখ:* ${formatDate(date)} (${date})` : null,
-      rainMm !== undefined && rainMm !== null ? `🌧️ *পূর্বাভাস বৃষ্টি:* ${rainMm} মিমি` : null,
-      tempC !== undefined && tempC !== null ? `🌡️ *সর্বোচ্চ তাপমাত্রা:* ${tempC}°C` : null,
-      advisoryText ? `📢 *পরামর্শ:* ${advisoryText}` : null,
-      "",
-      "🔗 _টেরামাইন্ড — হাইপারলোকাল আবহাওয়া সেবা_",
-    ].filter(Boolean).join("\n");
-
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(lines)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-
-
-  // ==========================================================
-  // FETCH FORECAST
-  // ==========================================================
-
-  useEffect(() => {
-    async function fetchForecast() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const apiBase =
-          import.meta.env.VITE_API_BASE_URL ||
-          "http://127.0.0.1:8000";
-
-        const url =
-          `${apiBase}/v1/forecast` +
-          `?panchayat_id=${selectedId}` +
-          `&days=5` +
-          `&lang=bn` +
-          `&crop=${encodeURIComponent(selectedCrop)}`;
-
-
-        const response = await fetch(url);
-
-
-        if (!response.ok) {
-          throw new Error(
-            "Failed to fetch forecast"
-          );
-        }
-
-
-        const result = await response.json();
-
-
-        setMapDate(
-          result.forecast?.[0]?.date || ""
-        );
-
-
-        setData(result);
-
-      } catch (err) {
-        console.error(err);
-
-        setError(
-          "Unable to connect to the forecast server."
-        );
-
-      } finally {
-        setLoading(false);
-      }
-    }
-
-
-    fetchForecast();
-
-  }, [selectedId, selectedCrop]);
-
-
-  // ==========================================================
-  // DERIVED DATA
-  // ==========================================================
-
-  const forecastDays =
-    data?.forecast || [];
-
-
-  const activeAdvisories =
-    data?.advisories?.filter(
-      (item) =>
-        item?.priority?.toLowerCase() === "high"
-    ) || [];
-
-
-  // ==========================================================
-  // RENDER
-  // ==========================================================
-
-  return (
-    <div className="app">
-
-      {/* ======================================================
-          HEADER
-      ====================================================== */}
-
-      <header className="header">
-
-        <div className="header-inner">
-
-          <div className="brand-block">
-
-            <h1>
-              TerraMind
-            </h1>
-
-            <p>
-              Panchayat-Level Weather Intelligence
-            </p>
-
+  // SCREEN 1: LANDING & LOCATION SELECTOR (Matches Image 1)
+  if (!locationData) {
+    return (
+      <div className="min-h-screen w-full relative flex flex-col justify-between overflow-x-hidden font-sans bg-gradient-to-br from-[#e4f1ea] to-[#c1e2d1]">
+        {/* Header */}
+        <header className="w-full py-6 px-10 md:px-16 flex justify-between items-center relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-xl shadow">⛅</div>
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-[#163A32]">{t.brand}</h1>
+              <p className="text-xs font-bold text-emerald-700">{t.tagline}</p>
+            </div>
           </div>
-
-
-          <div className="location">
-
-            AMDANGA BLOCK
-            <span>•</span>
-            NORTH 24 PARGANAS
-
-          </div>
-
-        </div>
-
-      </header>
-
-
-      <main className="container">
-
-
-        {/* ====================================================
-            PANCHAYAT + CROP SELECTOR
-        ==================================================== */}
-
-        <section className="selector-card">
-
-
-          {/* Panchayat */}
-
-          <div className="selector-left">
-
-            <label
-              htmlFor="panchayat-select"
+          <div className="flex items-center gap-4">
+            <select 
+              value={lang} 
+              onChange={(e) => setLang(e.target.value)}
+              className="bg-white/90 px-4 py-2 rounded-full text-sm font-bold border border-emerald-300 outline-none cursor-pointer shadow-xs"
             >
-              PANCHAYAT
-            </label>
-
-
-            <select
-              id="panchayat-select"
-              value={selectedId}
-              onChange={(e) => {
-                setSelectedId(e.target.value);
-                setActiveStatewideGP(null);
-                setSearchTerm("");
-              }}
-            >
-
-              {PANCHAYATS.map(
-                (panchayat) => (
-
-                  <option
-                    key={panchayat.id}
-                    value={panchayat.id}
-                  >
-                    {panchayat.name}
-                  </option>
-
-                )
-              )}
-
+              <option value="en">English</option>
+              <option value="bn">বাংলা</option>
+              <option value="hi">हिंदी</option>
             </select>
-
+            <span className="text-sm font-bold text-emerald-900 cursor-pointer">About</span>
           </div>
+        </header>
 
-
-          {/* Crop */}
-
-          <div className="selector-left">
-
-            <label
-              htmlFor="crop-select"
-            >
-              CROP
-            </label>
-
-
-            <select
-              id="crop-select"
-              value={selectedCrop}
-              onChange={(e) =>
-                setSelectedCrop(
-                  e.target.value
-                )
-              }
-            >
-
-              {CROPS.map(
-                (crop) => (
-
-                  <option
-                    key={crop.id}
-                    value={crop.id}
-                  >
-                    {crop.name}
-                  </option>
-
-                )
-              )}
-
-            </select>
-
-          </div>
-
-
-          {/* Statewide Search */}
-
-          <div className="selector-left statewide-search-box">
-
-            <label
-              htmlFor="statewide-search"
-            >
-              STATEWIDE SEARCH (3,339 GPs)
-            </label>
-
-
-            <input
-              id="statewide-search"
-              type="text"
-              placeholder="Search GP e.g. Banchukamari, Falakata..."
-              value={searchTerm}
-              onChange={(e) =>
-                handleSearchChange(
-                  e.target.value
-                )
-              }
-              className="statewide-input"
-            />
-
-            {searchResults.length > 0 && (
-              <ul className="search-dropdown">
-                {searchResults.map(
-                  (gp) => (
-                    <li
-                      key={gp.gp_code}
-                      onClick={() =>
-                        handleSelectStatewide(
-                          gp
-                        )
-                      }
-                      className="search-result-item"
-                    >
-                      <strong>
-                        {gp.panchayat_name}
-                      </strong>
-                      <span>
-                        {gp.block_name} • {gp.district_name}
-                      </span>
-                    </li>
-                  )
-                )}
-              </ul>
-            )}
-
-          </div>
-
-
-          {/* Model status */}
-
-          <div className="model-status">
-
-            <span className="status-dot"></span>
-
-
-            <div className="model-status-text">
-              <span>
-                {data?.is_live_dynamic
-                  ? "LIVE DYNAMIC WEATHER"
-                  : data?.degraded
-                  ? "V2 FALLBACK ACTIVE"
-                  : "V2 MODEL ACTIVE"}
-              </span>
-
-              <small>
-                {data?.is_live_dynamic
-                  ? "AI Downscaled (Open-Meteo ECMWF/GFS)"
-                  : data?.degraded
-                  ? "Coarse 5-day forecast"
-                  : "AI Downscaled (P10/P50/P90)"}
-              </small>
+        {/* Center Card Container */}
+        <main className="flex-1 flex items-center justify-center p-4 relative z-10">
+          <div className="bg-white/85 backdrop-blur-md border border-white/60 rounded-3xl p-8 max-w-lg w-full shadow-2xl flex flex-col gap-6">
+            <div>
+              <h2 className="text-2xl font-extrabold text-[#082b20]">{t.selectTitle}</h2>
+              <p className="text-xs font-bold text-[#54786b] mt-1">{t.selectSubtitle}</p>
             </div>
 
-          </div>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs font-bold text-[#082b20] mb-1 block">{t.district}</label>
+                <select 
+                  value={selectedDistrict}
+                  onChange={(e) => setSelectedDistrict(e.target.value)}
+                  className="w-full bg-[#f4f7f5] border border-[#d7e2dc] p-3 rounded-xl font-bold text-sm outline-none"
+                >
+                  <option value="North 24 Parganas">North 24 Parganas</option>
+                  <option value="Nadia">Nadia</option>
+                  <option value="Hooghly">Hooghly</option>
+                </select>
+              </div>
 
-        </section>
+              <div>
+                <label className="text-xs font-bold text-[#082b20] mb-1 block">{t.block}</label>
+                <select 
+                  value={selectedBlock}
+                  onChange={(e) => setSelectedBlock(e.target.value)}
+                  className="w-full bg-[#f4f7f5] border border-[#d7e2dc] p-3 rounded-xl font-bold text-sm outline-none"
+                >
+                  <option value="Amdanga">Amdanga</option>
+                  <option value="Barasat I">Barasat I</option>
+                  <option value="Habra I">Habra I</option>
+                </select>
+              </div>
 
-        {activeStatewideGP && (
-          <div className="statewide-badge">
-            <span className="badge-pin">📍</span>
-            <div style={{ flex: 1 }}>
-              <strong>{activeStatewideGP.panchayat_name} Gram Panchayat</strong>
-              <div style={{ fontSize: "12px", color: "#54786b", marginTop: "2px" }}>
-                Block: {activeStatewideGP.block_name} • District: {activeStatewideGP.district_name} • LGD: {activeStatewideGP.gp_code} ({Number(activeStatewideGP.latitude).toFixed(4)}°N, {Number(activeStatewideGP.longitude).toFixed(4)}°E)
+              <div>
+                <label className="text-xs font-bold text-[#082b20] mb-1 block">{t.panchayat}</label>
+                <select 
+                  value={selectedPanchayat}
+                  onChange={(e) => setSelectedPanchayat(e.target.value)}
+                  className="w-full bg-[#f4f7f5] border border-[#d7e2dc] p-3 rounded-xl font-bold text-sm outline-none"
+                >
+                  <option value="AMDANGA">AMDANGA</option>
+                  <option value="Haripur">Haripur</option>
+                  <option value="Kalyanpur">Kalyanpur</option>
+                  <option value="Chanditala">Chanditala</option>
+                </select>
               </div>
             </div>
-            <button
-              className="badge-close"
-              onClick={() => {
-                setActiveStatewideGP(null);
-                setSelectedId("A2");
-                setSearchTerm("");
-              }}
-              style={{
-                background: "transparent",
-                border: "none",
-                fontSize: "16px",
-                cursor: "pointer",
-                color: "#54786b"
-              }}
-              title="Close"
+
+            <button className="text-xs font-bold text-emerald-800 flex items-center gap-2 hover:underline cursor-pointer">
+              <span>📍</span> {t.useCurrent}
+            </button>
+
+            <button 
+              onClick={handleViewForecast}
+              className="w-full py-4 bg-[#0095ff] hover:bg-[#0080e6] text-white font-extrabold rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer text-sm tracking-wider"
             >
-              ✕
+              <span>{t.viewForecastBtn}</span>
+              <span>→</span>
             </button>
           </div>
-        )}
+        </main>
+      </div>
+    );
+  }
 
+  // SCREEN 2: MAIN DASHBOARD (Matches Images 2, 3, and 4)
+  return (
+    <div className="min-h-screen w-full flex flex-col bg-[#f4f7f5] text-[#082b20] font-sans">
+      {/* Top Header */}
+      <header className="w-full bg-white border-b border-[#d7e2dc] py-3.5 px-6 md:px-10 flex justify-between items-center shadow-xs sticky top-0 z-30">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center text-lg text-white shadow">⛅</div>
+          <div>
+            <h1 className="text-xl font-extrabold text-[#163A32]">{t.brand}</h1>
+            <p className="text-[11px] font-bold text-emerald-700">{t.tagline}</p>
+          </div>
+        </div>
 
-        {/* ====================================================
-            LOADING
-        ==================================================== */}
+        <div className="flex items-center gap-4">
+          <select 
+            value={lang} 
+            onChange={(e) => setLang(e.target.value)}
+            className="bg-[#f4f7f5] border border-[#d7e2dc] px-3.5 py-2 rounded-full text-xs font-bold cursor-pointer outline-none"
+          >
+            <option value="en">English</option>
+            <option value="bn">বাংলা</option>
+            <option value="hi">हिंदी</option>
+          </select>
+          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-800">
+            <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
+            <span>{t.online} Online</span>
+          </div>
+        </div>
+      </header>
 
-        {loading && (
-
-          <div className="loading">
-
-            <div className="loading-spinner"></div>
-
-            <span>
-              Loading 5-day forecast...
-            </span>
-
+      {/* App Body Container */}
+      <div className="flex-1 flex flex-col md:flex-row p-6 gap-6 max-w-[1600px] w-full mx-auto">
+        
+        {/* Sidebar Navigation */}
+        <aside className="w-full md:w-64 flex flex-col gap-4 shrink-0">
+          <div className="bg-white border border-[#d7e2dc] rounded-3xl p-3 flex flex-col gap-1 shadow-xs">
+            {[
+              { id: 'home', label: t.home, icon: '🏠' },
+              { id: 'forecast', label: t.forecast, icon: '📅' },
+              { id: 'map', label: t.map, icon: '🗺️' },
+              { id: 'advisory', label: t.advisory, icon: '🍃' },
+              { id: 'more', label: t.more, icon: '⋯' },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm transition cursor-pointer ${
+                  activeTab === item.id ? 'bg-[#e2f2e7] text-[#082b20]' : 'text-[#54786b] hover:bg-slate-50'
+                }`}
+              >
+                <span className="text-lg">{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
           </div>
 
-        )}
-
-
-        {/* ====================================================
-            ERROR
-        ==================================================== */}
-
-        {error && (
-
-          <div className="error">
-
-            <strong>
-              Forecast unavailable
-            </strong>
-
-            <span>
-              {error}
-            </span>
-
-          </div>
-
-        )}
-
-
-        {/* ====================================================
-            DASHBOARD
-        ==================================================== */}
-
-        {!loading &&
-          !error &&
-          data && (
-
-            <div className="dashboard">
-
-
-              {/* ==============================================
-                  FORECAST HEADER
-              ============================================== */}
-
-              <section className="forecast-heading">
-
-                <div>
-
-                  <p className="eyebrow">
-                    NEXT 5 DAYS
-                  </p>
-
-
-                  <h2>
-                    {data.panchayat_name}
-                    {data.district_name && (
-                      <span style={{ fontSize: "0.5em", fontWeight: 400, color: "#54786b", marginLeft: "10px", display: "inline-block" }}>
-                        ({data.block_name ? `${data.block_name} Block, ` : ""}{data.district_name})
-                      </span>
-                    )}
-                  </h2>
-
-                </div>
-
-
-                <div className="forecast-meta">
-
-                  <span>
-                    ISSUED
-                  </span>
-
-
-                  <strong>
-
-                    {data.issued_at
-                      ? new Date(
-                          data.issued_at
-                        ).toLocaleString(
-                          "en-IN",
-                          {
-                            dateStyle:
-                              "medium",
-
-                            timeStyle:
-                              "short",
-                          }
-                        )
-                      : "—"}
-
-                  </strong>
-
-                </div>
-
-              </section>
-
-
-              {/* ==============================================
-                  CROP INFORMATION
-              ============================================== */}
-
-              <section className="degraded-banner">
-
-                <strong>
-                  Selected crop:{" "}
-                  {CROPS.find(
-                    (crop) =>
-                      crop.id === selectedCrop
-                  )?.name ||
-                    selectedCrop}
-                </strong>
-
-                <span>
-                  Crop-aware advisory rules are being
-                  evaluated for the selected crop.
-                </span>
-
-              </section>
-
-
-              {/* ==============================================
-                  DEGRADED NOTICE
-              ============================================== */}
-
-              {data.degraded && (
-
-                <section className="degraded-banner">
-
-                  <strong>
-                    Prototype forecast mode
-                  </strong>
-
-
-                  <span>
-                    {data.degraded_reason}
-                  </span>
-
-                </section>
-
-              )}
-
-
-              {/* ==============================================
-                  5-DAY FORECAST
-              ============================================== */}
-
-              <section className="five-day-grid">
-
-                {forecastDays.map(
-                  (day) => {
-
-                    const priority =
-                      getAdvisoryClass(
-                        day.advisory?.priority
-                      );
-
-
-                    const probability =
-                      Math.round(
-                        (day.rain_probability || 0) *
-                        100
-                      );
-
-
-                    return (
-
-                      <article
-                        className="day-card"
-                        key={day.date}
-                      >
-
-
-                        {/* Day header */}
-
-                        <div className="day-card-header">
-
-                          <div>
-
-                            <p className="day-name">
-                              {formatDate(
-                                day.date
-                              )}
-                            </p>
-
-
-                            <span className="day-date">
-                              {day.date}
-                            </span>
-
-                          </div>
-
-
-                          <div className="day-rain-symbol">
-
-                            {day.rain_mm?.p50 > 0
-                              ? "↘"
-                              : "—"}
-
-                          </div>
-
-                        </div>
-
-
-                        {/* Rain */}
-
-                        <div className="day-main-weather">
-
-                          <div className="rain-value">
-
-                            <strong>
-                              {day.rain_mm?.p50 ??
-                                "—"}
-                            </strong>
-
-                            <span>
-                              mm
-                            </span>
-
-                          </div>
-
-
-                          <p>
-                            Expected rainfall
-                          </p>
-
-                        </div>
-
-
-                        {/* Statistics */}
-
-                        <div className="day-stats">
-
-
-                          <div>
-
-                            <span>
-                              RAIN PROB.
-                            </span>
-
-                            <strong>
-                              {probability}%
-                            </strong>
-
-                          </div>
-
-
-                          <div>
-
-                            <span>
-                              TEMP.
-                            </span>
-
-                            <strong>
-                              {day.tmax_c?.p50 ??
-                                "—"}°C
-                            </strong>
-
-                          </div>
-
-
-                          <div>
-
-                            <span>
-                              MIN.
-                            </span>
-
-                            <strong>
-                              {day.tmin_c ??
-                                "—"}°C
-                            </strong>
-
-                          </div>
-
-                        </div>
-
-
-                        {/* Probability */}
-
-                        <div className="probability-bar">
-
-                          <div
-                            className="probability-fill"
-                            style={{
-                              width:
-                                `${probability}%`,
-                            }}
-                          ></div>
-
-                        </div>
-
-
-                        {/* Advisory */}
-
-                        <div
-                          className={
-                            `day-advisory ` +
-                            `day-advisory-${priority}`
-                          }
-                        >
-
-                          <span className="day-advisory-label">
-                            ADVISORY
-                          </span>
-
-
-                          {day.advisory?.text_bn ? (
-
-                            <p>
-                              {day.advisory.text_bn}
-                            </p>
-
-                          ) : day.advisory?.text_en ? (
-
-                            <p>
-                              {day.advisory.text_en}
-                            </p>
-
-                          ) : (
-
-                            <p>
-                              No special advisory.
-                            </p>
-
-                          )}
-
-                        </div>
-
-                        {/* Farmer Action Buttons: Voice (TTS) & WhatsApp */}
-                        <div className="card-farmer-actions">
-                          <button
-                            type="button"
-                            className={`btn-action btn-voice ${speakingId === day.date ? "is-speaking" : ""}`}
-                            onClick={() =>
-                              speakAdvisory(
-                                day.advisory?.text_bn ||
-                                  day.advisory?.text_en ||
-                                  "কোনো বিশেষ কৃষি পরামর্শ নেই।",
-                                day.date
-                              )
-                            }
-                            title="বাংলায় শুনুন"
-                          >
-                            <span className="action-icon">
-                              {speakingId === day.date ? "⏹️" : "🔊"}
-                            </span>
-                            <span>
-                              {speakingId === day.date
-                                ? "থামান"
-                                : "বাংলায় শুনুন"}
-                            </span>
-                          </button>
-
-                          <button
-                            type="button"
-                            className="btn-action btn-whatsapp"
-                            onClick={() =>
-                              shareOnWhatsApp({
-                                panchayatName: data.panchayat_name,
-                                date: day.date,
-                                rainMm: day.rain_mm?.p50,
-                                tempC: day.tmax_c?.p50,
-                                advisoryText:
-                                  day.advisory?.text_bn ||
-                                  day.advisory?.text_en,
-                              })
-                            }
-                            title="হোয়াটসঅ্যাপে শেয়ার"
-                          >
-                            <span className="action-icon">💬</span>
-                            <span>শেয়ার</span>
-                          </button>
-                        </div>
-
-                      </article>
-
-                    );
-
-                  }
-                )}
-
-              </section>
-
-
-              {/* ==============================================
-                  MAP
-              ============================================== */}
-
-              <ComparisonMap
-                forecastDays={
-                  forecastDays
-                }
-
-                selectedId={
-                  selectedId
-                }
-
-                selectedDate={
-                  mapDate
-                }
-
-                onDateChange={
-                  setMapDate
-                }
-              />
-
-
-              {/* ==============================================
-                  AGRICULTURAL ADVISORY
-              ============================================== */}
-
-              <section className="advisory">
-
-
-                <div className="advisory-top">
-
-                  <div>
-
-                    <p className="eyebrow">
-                      AGRICULTURAL ADVISORY
-                    </p>
-
-
-                    <h3>
-                      Action Recommendation
-                    </h3>
-
-                  </div>
-
-
-                  <div className="advisory-top-right">
-                    <span
-                      className={
-                        `priority priority-${
-                          activeAdvisories.length > 0
-                            ? "high"
-                            : "low"
-                        }`
-                      }
-                    >
-                      {activeAdvisories.length > 0
-                        ? "ATTENTION"
-                        : "LOW"}
-                    </span>
-
-                    {data.advisories?.length > 0 && (
-                      <button
-                        type="button"
-                        className={`btn-action btn-voice-all ${speakingId === "all-advisories" ? "is-speaking" : ""}`}
-                        onClick={() => {
-                          const allText = data.advisories
-                            .map(
-                              (a) =>
-                                `${formatDate(a.date)}: ${a.text_bn || a.text_en}`
-                            )
-                            .join("। ");
-                          speakAdvisory(allText, "all-advisories");
-                        }}
-                        title="সব পরামর্শ বাংলায় শুনুন"
-                      >
-                        <span className="action-icon">
-                          {speakingId === "all-advisories" ? "⏹️" : "🔊"}
-                        </span>
-                        <span>
-                          {speakingId === "all-advisories"
-                            ? "থামান"
-                            : "সব পরামর্শ শুনুন"}
-                        </span>
-                      </button>
-                    )}
-                  </div>
-
-                </div>
-
-
-                {data.advisories?.length > 0 ? (
-
-                  <div className="advisory-list">
-
-                    {data.advisories.map(
-                      (item) => (
-
-                        <div
-                          className={
-                            `advisory-item ` +
-                            `advisory-item-${getAdvisoryClass(
-                              item.priority
-                            )}`
-                          }
-
-                          key={
-                            `${item.date}-${item.rule_id}`
-                          }
-                        >
-
-                          <div className="advisory-item-date">
-
-                            {formatDate(
-                              item.date
-                            )}
-
-                          </div>
-
-
-                          <div className="advisory-item-body">
-
-                            <strong>
-
-                              {item.text_bn ||
-                                item.text_en}
-
-                            </strong>
-
-
-                            <small>
-                              {item.text_en}
-                            </small>
-
-                            <div className="advisory-item-actions">
-                              <button
-                                type="button"
-                                className={`btn-mini btn-mini-voice ${speakingId === `summary-${item.date}-${item.rule_id}` ? "is-speaking" : ""}`}
-                                onClick={() =>
-                                  speakAdvisory(
-                                    item.text_bn || item.text_en,
-                                    `summary-${item.date}-${item.rule_id}`
-                                  )
-                                }
-                                title="বাংলায় শুনুন"
-                              >
-                                {speakingId === `summary-${item.date}-${item.rule_id}`
-                                  ? "⏹️ থামান"
-                                  : "🔊 শুনুন"}
-                              </button>
-
-                              <button
-                                type="button"
-                                className="btn-mini btn-mini-whatsapp"
-                                onClick={() =>
-                                  shareOnWhatsApp({
-                                    panchayatName: data.panchayat_name,
-                                    date: item.date,
-                                    advisoryText: item.text_bn || item.text_en,
-                                  })
-                                }
-                                title="হোয়াটসঅ্যাপে শেয়ার"
-                              >
-                                💬 শেয়ার
-                              </button>
-                            </div>
-
-                          </div>
-
-                        </div>
-
-                      )
-                    )}
-
-                  </div>
-
-                ) : (
-
-                  <div className="advisory-content">
-
-                    <p className="advisory-en">
-                      No special agricultural advisory
-                      for the next five days.
-                    </p>
-
-
-                    <p className="advisory-note">
-                      Continue normal agricultural
-                      operations while monitoring local
-                      weather conditions.
-                    </p>
-
-                  </div>
-
-                )}
-
-              </section>
-
-
-              {/* ==============================================
-                  SYSTEM INFORMATION
-              ============================================== */}
-
-              <section className="info-grid">
-
-
-                <div className="info-card">
-
-                  <span>
-                    MODEL VERSION
-                  </span>
-
-                  <strong>
-                    {data.model_version}
-                  </strong>
-
-                </div>
-
-
-                <div className="info-card">
-
-                  <span>
-                    RAINFALL MODEL
-                  </span>
-
-                  <strong>
-                    {data.rainfall_model}
-                  </strong>
-
-                </div>
-
-
-                <div className="info-card">
-
-                  <span>
-                    DATA SOURCE
-                  </span>
-
-                  <strong>
-                    {data.source}
-                  </strong>
-
-                </div>
-
-
-                <div className="info-card">
-
-                  <span>
-                    PANCHAYAT ID
-                  </span>
-
-                  <strong>
-                    {data.panchayat_id}
-                  </strong>
-
-                </div>
-
-
-                <div className="info-card">
-
-                  <span>
-                    CROP
-                  </span>
-
-                  <strong>
-                    {data.crop}
-                  </strong>
-
-                </div>
-
-
-                <div className="info-card">
-
-                  <span>
-                    BLOCK LATITUDE
-                  </span>
-
-                  <strong>
-                    {data.coarse_coordinate?.latitude}
-                  </strong>
-
-                </div>
-
-
-                <div className="info-card">
-
-                  <span>
-                    BLOCK LONGITUDE
-                  </span>
-
-                  <strong>
-                    {data.coarse_coordinate?.longitude}
-                  </strong>
-
-                </div>
-
-
-              </section>
-
+          {/* Offline Box */}
+          <div className="bg-[#fff9e6] border border-[#ffe099] rounded-3xl p-4 flex flex-col gap-2 shadow-xs">
+            <div className="flex items-center gap-2 text-amber-800 font-extrabold text-xs">
+              <span>⚡</span> {t.offlineMode}
             </div>
+            <p className="text-[11px] font-bold text-amber-900">{t.cachedNotice}</p>
+            <p className="text-[10px] text-amber-700 font-medium">{t.updatedTime}</p>
+          </div>
 
+          {/* Mini Village Art Box */}
+          <div className="bg-gradient-to-t from-emerald-200 to-emerald-100 rounded-3xl p-4 h-40 flex items-end justify-center border border-emerald-300 shadow-xs relative overflow-hidden">
+            <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            <span className="text-xs font-extrabold text-emerald-900 z-10 bg-white/80 px-3 py-1 rounded-full shadow-xs">
+              {locationData.panchayat} Village View
+            </span>
+          </div>
+
+          <button 
+            onClick={handleResetLocation} 
+            className="text-xs font-bold bg-emerald-100 hover:bg-emerald-200 text-emerald-900 p-3 rounded-2xl shadow-xs transition cursor-pointer text-center"
+          >
+            📍 Change Panchayat Location
+          </button>
+        </aside>
+
+        {/* Dynamic Main Content Window based on active tab */}
+        <main className="flex-1 flex flex-col gap-6">
+          
+          {/* TAB 1: HOME (Matches Image 2) */}
+          {activeTab === 'home' && (
+            <>
+              {/* Top Banner Bar */}
+              <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-600 text-xl">📍</span>
+                    <h2 className="text-2xl font-extrabold uppercase text-[#082b20]">
+                      {locationData.panchayat}, {locationData.block} Block
+                    </h2>
+                  </div>
+                  <p className="text-xs font-bold text-[#54786b] mt-0.5">{locationData.district}, West Bengal</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-bold text-[#54786b]">{t.updatedTime}</span>
+                  <button onClick={() => window.location.reload()} className="p-2 bg-emerald-50 rounded-full hover:bg-emerald-100 cursor-pointer">🔄</button>
+                </div>
+              </div>
+
+              {/* Weather & Advisory Split Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Weather Card */}
+                <div className="lg:col-span-7 bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col justify-between">
+                  <h3 className="text-xs font-extrabold text-[#54786b] uppercase tracking-wider mb-4">{t.currentWeather}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                    <div className="md:col-span-5 flex flex-col items-center justify-center p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                      <span className="text-6xl mb-2">⛅</span>
+                      <h4 className="text-xl font-extrabold text-[#082b20]">Partly Cloudy</h4>
+                      <p className="text-xs font-bold text-[#54786b] mt-1">{t.feelsLike}: 31°C</p>
+                    </div>
+                    <div className="md:col-span-7 grid grid-cols-2 gap-3">
+                      <div className="bg-[#f4f7f5] p-3.5 rounded-2xl border border-[#d7e2dc]">
+                        <span className="text-xs font-bold text-[#54786b]">{t.temp}</span>
+                        <p className="text-xl font-extrabold text-[#082b20] mt-1">28°C</p>
+                        <span className="text-[10px] text-emerald-700 font-bold">{t.feelsLike} 31°C</span>
+                      </div>
+                      <div className="bg-[#f4f7f5] p-3.5 rounded-2xl border border-[#d7e2dc]">
+                        <span className="text-xs font-bold text-[#54786b]">{t.rainProb}</span>
+                        <p className="text-xl font-extrabold text-[#082b20] mt-1">40%</p>
+                        <span className="text-[10px] text-emerald-700 font-bold">Moderate</span>
+                      </div>
+                      <div className="bg-[#f4f7f5] p-3.5 rounded-2xl border border-[#d7e2dc]">
+                        <span className="text-xs font-bold text-[#54786b]">{t.rainfall}</span>
+                        <p className="text-xl font-extrabold text-[#082b20] mt-1">2.4 mm</p>
+                        <span className="text-[10px] text-[#54786b]">Past 24 hrs</span>
+                      </div>
+                      <div className="bg-[#f4f7f5] p-3.5 rounded-2xl border border-[#d7e2dc]">
+                        <span className="text-xs font-bold text-[#54786b]">{t.humidity}</span>
+                        <p className="text-xl font-extrabold text-[#082b20] mt-1">78%</p>
+                        <span className="text-[10px] text-emerald-700 font-bold">Humid</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Advisory Card */}
+                <div className="lg:col-span-5 bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col justify-between bg-gradient-to-br from-white to-emerald-50/40">
+                  <div>
+                    <div className="flex items-center gap-2 text-emerald-700 font-extrabold text-xs mb-3">
+                      <span>🍃</span> {t.agroAdvisory}
+                    </div>
+                    <p className="text-sm font-bold text-[#082b20] leading-relaxed">
+                      Light rain expected in next 2-3 days. Ensure proper drainage for paddy fields. Apply fertilizer after rain stops.
+                    </p>
+                  </div>
+                  <div className="mt-6 flex flex-col gap-3">
+                    <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl shadow-sm text-xs flex items-center justify-center gap-2 cursor-pointer transition">
+                      <span>🔊</span> {t.listen}
+                    </button>
+                    <div className="bg-[#fff9e6] border border-[#ffe099] p-2.5 rounded-xl text-xs font-bold text-amber-900 flex items-center gap-2">
+                      <span>💡</span> {t.extraTip}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5-Day Forecast Row */}
+              <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-extrabold uppercase text-[#082b20] tracking-wider">{t.fiveDay}</h3>
+                  <button onClick={() => setActiveTab('forecast')} className="text-xs font-extrabold text-emerald-700 hover:underline cursor-pointer">{t.viewDetails} →</button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                  {[
+                    { day: 'Today', date: '29 May', icon: '⛅', max: 29, min: 24, rain: '40%' },
+                    { day: 'Fri', date: '30 May', icon: '🌧️', max: 30, min: 24, rain: '60%' },
+                    { day: 'Sat', date: '31 May', icon: '🌧️', max: 30, min: 25, rain: '70%' },
+                    { day: 'Sun', date: '01 Jun', icon: '⛅', max: 31, min: 25, rain: '40%' },
+                    { day: 'Mon', date: '02 Jun', icon: '☀️', max: 32, min: 26, rain: '20%' },
+                  ].map((d, i) => (
+                    <div key={i} className="bg-[#f4f7f5] border border-[#d7e2dc] rounded-2xl p-4 flex flex-col items-center text-center">
+                      <span className="text-xs font-bold text-emerald-800">{d.day}</span>
+                      <span className="text-[11px] text-[#54786b] mb-2">{d.date}</span>
+                      <span className="text-3xl my-1">{d.icon}</span>
+                      <span className="text-sm font-extrabold text-[#082b20] mt-1">{d.max}°C / {d.min}°C</span>
+                      <span className="text-[11px] font-bold text-blue-600 mt-1">💧 {d.rain}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom Notice Bar */}
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-xs font-bold text-blue-900 flex items-center gap-3">
+                <span className="text-lg">ℹ️</span>
+                <span>{t.rainAlertBanner}</span>
+              </div>
+            </>
           )}
 
-      </main>
+          {/* TAB 2: FORECAST (Matches Image 3 Detail View) */}
+          {activeTab === 'forecast' && (
+            <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col gap-6">
+              <div className="flex justify-between items-center border-b border-[#d7e2dc] pb-4">
+                <div>
+                  <h2 className="text-xl font-extrabold text-[#082b20]">Detailed Weather & Forecast Suite</h2>
+                  <p className="text-xs font-bold text-[#54786b]">Comprehensive meteorological breakdown for {locationData.panchayat}</p>
+                </div>
+                <button onClick={() => setActiveTab('home')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Back to Home</button>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl">
+                  <h4 className="text-xs font-extrabold text-emerald-800 uppercase">Hourly Trend</h4>
+                  <p className="text-2xl font-extrabold text-[#082b20] mt-2">Stable (28°C)</p>
+                  <p className="text-xs text-emerald-700 mt-1">No sudden wind gusts expected until evening.</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 p-5 rounded-2xl">
+                  <h4 className="text-xs font-extrabold text-blue-800 uppercase">Precipitation Accumulation</h4>
+                  <p className="text-2xl font-extrabold text-[#082b20] mt-2">12.4 mm</p>
+                  <p className="text-xs text-blue-700 mt-1">Expected over the next 48 hours.</p>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl">
+                  <h4 className="text-xs font-extrabold text-amber-800 uppercase">Soil Moisture Status</h4>
+                  <p className="text-2xl font-extrabold text-[#082b20] mt-2">Optimal (74%)</p>
+                  <p className="text-xs text-amber-700 mt-1">Good condition for vegetative crop stage.</p>
+                </div>
+              </div>
+            </div>
+          )}
 
-      {/* ======================================================
-          FOOTER
-      ====================================================== */}
+          {/* TAB 3: MAP (Matches Image 4) */}
+          {activeTab === 'map' && (
+            <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col gap-6">
+              <div>
+                <h2 className="text-2xl font-extrabold text-[#082b20]">{t.mapTitle}</h2>
+                <p className="text-xs font-bold text-[#54786b]">{t.mapSubtitle}</p>
+              </div>
 
-      <footer>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8 bg-[#e4f1ea] border border-[#d7e2dc] rounded-3xl h-[400px] flex items-center justify-center relative overflow-hidden shadow-inner">
+                  <div className="absolute inset-0 bg-emerald-200/40 flex flex-col items-center justify-center gap-3">
+                    <span className="text-4xl">🗺️</span>
+                    <p className="text-sm font-extrabold text-emerald-900">Interactive Panchayat Risk Heatmap Active</p>
+                    <div className="flex gap-2">
+                      <span className="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold">Barasat (Low)</span>
+                      <span className="px-3 py-1 bg-yellow-400 text-slate-900 rounded-full text-xs font-bold">{locationData.panchayat} (Moderate)</span>
+                      <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-bold">Haripur (High)</span>
+                    </div>
+                  </div>
+                </div>
 
-        TerraMind
-        <span>•</span>
-        Panchayat Weather Intelligence
-        <span>•</span>
-        V2 Prototype
+                <div className="lg:col-span-4 flex flex-col gap-4">
+                  <div className="bg-[#f4f7f5] border border-[#d7e2dc] rounded-3xl p-5 flex flex-col gap-3">
+                    <h4 className="text-xs font-extrabold uppercase text-[#082b20]">Risk Level Index</h4>
+                    <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-full bg-green-500"></span><span className="text-xs font-bold">{t.riskLow} (0-5 mm)</span></div>
+                    <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-full bg-yellow-400"></span><span className="text-xs font-bold">{t.riskMod} (6-15 mm)</span></div>
+                    <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-full bg-orange-500"></span><span className="text-xs font-bold">{t.riskHigh} (16-30 mm)</span></div>
+                    <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-full bg-purple-600"></span><span className="text-xs font-bold">{t.riskVHigh} (&gt;30 mm)</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-      </footer>
+          {/* TAB 4: ADVISORY */}
+          {activeTab === 'advisory' && (
+            <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col gap-6">
+              <h2 className="text-2xl font-extrabold text-[#082b20]">{t.agroAdvisory} Dashboard</h2>
+              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                <h4 className="text-lg font-extrabold text-emerald-900 mb-2">Paddy Crop Advisory (Vegetative Stage)</h4>
+                <p className="text-sm font-bold text-[#082b20] leading-relaxed">
+                  Due to high humidity and expected rainfall, farmers are advised to avoid heavy nitrogen fertilizer application. Keep field drainage channels open to prevent root rot.
+                </p>
+              </div>
+            </div>
+          )}
 
+          {/* TAB 5: MORE (Officer Dashboard) */}
+          {activeTab === 'more' && (
+            <div className="bg-white border border-[#d7e2dc] rounded-3xl p-6 shadow-xs flex flex-col gap-6">
+              <h2 className="text-2xl font-extrabold text-[#082b20]">{t.officerDashboard}</h2>
+              <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col gap-3">
+                <span className="text-xs font-extrabold uppercase text-amber-900">🔒 Restricted Admin View</span>
+                <p className="text-sm font-bold text-amber-950">{t.officerNotice}</p>
+                <button className="self-start px-5 py-2.5 bg-amber-600 text-white rounded-xl text-xs font-extrabold shadow">Approve Block Bulletin</button>
+              </div>
+            </div>
+          )}
+
+        </main>
+      </div>
     </div>
   );
 }
-
-
-export default App;
