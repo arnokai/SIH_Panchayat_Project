@@ -1,5 +1,6 @@
 import { useState } from "react";
 import WeatherIcon from "./WeatherIcon";
+import { formatForecastDate } from "../utils/formatters";
 
 /**
  * Maps spray safety code to badge styling and label.
@@ -40,25 +41,110 @@ function getSprayBadgeInfo(safety) {
 }
 
 /**
- * Returns effective 24-hour records with guaranteed non-null fallback.
+ * Dynamically synthesizes the operational spray window from 24-hour records.
  */
-function getEffectiveRecords(data) {
-  const liveRecords = data?.live_weather?.hourly?.records;
-  if (Array.isArray(liveRecords) && liveRecords.length > 0) {
+function computeOperationalInsight(records, isToday, defaultInsight) {
+  if (isToday && defaultInsight) {
+    return defaultInsight;
+  }
+  if (!records || records.length === 0) {
+    return "No hourly records available for this date.";
+  }
+
+  const daylightRecords = records.filter((r) => r.is_daylight);
+  let bestStart = null;
+  let bestEnd = null;
+  let bestLen = 0;
+  let curStart = null;
+  let curLen = 0;
+
+  for (const r of daylightRecords) {
+    if (r.spray_safety === "optimal") {
+      if (curStart === null) {
+        curStart = r.display_time;
+      }
+      curLen += 1;
+      if (curLen > bestLen) {
+        bestLen = curLen;
+        bestStart = curStart;
+        bestEnd = r.display_time;
+      }
+    } else {
+      curStart = null;
+      curLen = 0;
+    }
+  }
+
+  if (bestLen >= 2) {
+    return `Optimal spraying window: ${bestStart} – ${bestEnd} (Low drift <10 km/h, Rain probability <30%).`;
+  }
+  if (bestLen === 1) {
+    return `Narrow spraying window around ${bestStart}. Verify wind and rain conditions before application.`;
+  }
+
+  const rainUnsafe = daylightRecords.some((r) => r.spray_safety === "unsafe_rain");
+  const windUnsafe = daylightRecords.some((r) => r.spray_safety === "unsafe_wind");
+  if (rainUnsafe && windUnsafe) {
+    return "Unfavorable spraying conditions: Rain wash-off and high wind drift expected.";
+  }
+  if (rainUnsafe) {
+    return "Unfavorable spraying conditions: High rain wash-off risk expected.";
+  }
+  if (windUnsafe) {
+    return "Chemical drift hazard: High wind speeds (>15 km/h) make daytime spraying unsafe.";
+  }
+  return "Marginal spraying conditions: Caution advised due to moderate wind or drizzle.";
+}
+
+/**
+ * Returns effective 24-hour records for the target day with guaranteed non-null fallback.
+ */
+function getEffectiveRecords(data, selectedDate) {
+  const forecastDays = data?.forecast || [];
+  const todayDate = forecastDays[0]?.date;
+  const targetDate = selectedDate || todayDate;
+  const isToday = !targetDate || targetDate === todayDate;
+
+  const liveHourly = data?.live_weather?.hourly;
+  const liveRecords = liveHourly?.records;
+  const allRecords = liveHourly?.all_records;
+
+  // 1. If today and live rolling records starting at current hour are available
+  if (isToday && Array.isArray(liveRecords) && liveRecords.length > 0) {
     return liveRecords.slice(0, 24);
   }
 
-  // Fallback 1: Parallel arrays present without records list
-  const hourly = data?.live_weather?.hourly;
-  if (hourly?.time && Array.isArray(hourly.time) && hourly.time.length > 0) {
-    return hourly.time.slice(0, 24).map((tStr, idx) => {
+  // 2. If future day (or fallback today) and full 120h records are available
+  if (Array.isArray(allRecords) && allRecords.length > 0) {
+    const dayRecords = allRecords.filter((r) => r.time && r.time.startsWith(targetDate));
+    if (dayRecords.length > 0) {
+      return dayRecords.slice(0, 24);
+    }
+  }
+
+  // 3. Fallback 1: Parallel arrays present without pre-formatted records
+  if (liveHourly?.time && Array.isArray(liveHourly.time) && liveHourly.time.length > 0) {
+    const matchingIndices = [];
+    liveHourly.time.forEach((tStr, idx) => {
+      if (!targetDate || tStr.startsWith(targetDate)) {
+        matchingIndices.push(idx);
+      }
+    });
+
+    const indicesToUse =
+      matchingIndices.length > 0
+        ? matchingIndices.slice(0, 24)
+        : liveHourly.time.slice(0, 24).map((_, i) => i);
+
+    return indicesToUse.map((idx) => {
+      const tStr = liveHourly.time[idx];
       const dtHour = parseInt(tStr.split("T")[1]?.split(":")[0] || "12", 10);
       const displayTime = `${dtHour % 12 || 12} ${dtHour < 12 ? "AM" : "PM"}`;
-      const tempVal = hourly.temperature_2m?.[idx] ?? 28;
-      const probVal = hourly.precipitation_probability?.[idx] ?? 0;
-      const rainVal = hourly.precipitation?.[idx] ?? 0;
-      const windVal = hourly.wind_speed_10m?.[idx] ?? 5;
-      const codeVal = hourly.weather_code?.[idx] ?? 1;
+      const tempVal = liveHourly.temperature_2m?.[idx] ?? 28;
+      const probVal = liveHourly.precipitation_probability?.[idx] ?? 0;
+      const rainVal = liveHourly.precipitation?.[idx] ?? 0;
+      const windVal = liveHourly.wind_speed_10m?.[idx] ?? 5;
+      const codeVal = liveHourly.weather_code?.[idx] ?? 1;
 
       let safety = "optimal";
       let label = "Optimal: Safe for Spraying";
@@ -89,12 +175,13 @@ function getEffectiveRecords(data) {
     });
   }
 
-  // Fallback 2: Synthesize diurnal curve from Day 1 forecast
-  const day0 = data?.forecast?.[0];
-  const tmax = day0?.tmax_c?.p50 ?? 32;
-  const tmin = day0?.tmin_c ?? 24;
-  const probVal = Math.round((day0?.rain_probability ?? 0) * 100);
-  const rainMm = day0?.rain_mm?.p50 ?? 0;
+  // 4. Fallback 2: Synthesize diurnal curve from the selected day's baseline forecast
+  const activeDay = forecastDays.find((d) => d.date === targetDate) || forecastDays[0];
+  const tmax = activeDay?.tmax_c?.p50 ?? (typeof activeDay?.tmax_c === "number" ? activeDay?.tmax_c : 32);
+  const tmin = activeDay?.tmin_c ?? 24;
+  const probVal = Math.round((activeDay?.rain_probability ?? 0) * 100);
+  const rainMm = activeDay?.rain_mm?.p50 ?? (typeof activeDay?.rain_mm === "number" ? activeDay?.rain_mm : 0);
+  const datePrefix = targetDate || "2026-09-11";
 
   const records = [];
   for (let h = 0; h < 24; h++) {
@@ -122,7 +209,7 @@ function getEffectiveRecords(data) {
     }
 
     records.push({
-      time: `T${String(h).padStart(2, "0")}:00`,
+      time: `${datePrefix}T${String(h).padStart(2, "0")}:00`,
       hour: `${String(h).padStart(2, "0")}:00`,
       display_time: displayTime,
       temperature_c: tempH,
@@ -139,15 +226,39 @@ function getEffectiveRecords(data) {
   return records;
 }
 
-export default function HourlyWeatherSlider({ data, onToggleLive }) {
+export default function HourlyWeatherSlider({
+  data,
+  selectedDate,
+  onSelectDate,
+  onToggleLive,
+}) {
   const [activeTab, setActiveTab] = useState("temperature");
 
-  const records = getEffectiveRecords(data);
+  const forecastDays = data?.forecast || [];
+  const todayDate = forecastDays[0]?.date;
+  const effectiveDate = selectedDate || todayDate;
+  const selectedDayIndex = forecastDays.findIndex((d) => d.date === effectiveDate);
+  const isToday = selectedDayIndex <= 0;
+
+  const dayLabel =
+    selectedDayIndex === 0
+      ? "Today"
+      : selectedDayIndex === 1
+      ? "Tomorrow"
+      : selectedDayIndex > 1
+      ? `Day +${selectedDayIndex}`
+      : "Selected Day";
+
+  const formattedSelectedDate = formatForecastDate(effectiveDate);
+
+  const records = getEffectiveRecords(data, effectiveDate);
   const liveWeather = data?.live_weather;
   const isDynamic = data?.is_live_dynamic ?? false;
-  const operationalInsight =
-    liveWeather?.operational_insight ||
-    "Safe spraying conditions anticipated in early morning daylight hours (07:00 – 10:00). Check local wind drift before application.";
+  const operationalInsight = computeOperationalInsight(
+    records,
+    isToday,
+    liveWeather?.operational_insight
+  );
   const refinement = liveWeather?.operational_refinement;
 
   return (
@@ -163,7 +274,9 @@ export default function HourlyWeatherSlider({ data, onToggleLive }) {
             </span>
           </div>
           <p className="hourly-subtitle">
-            24-hour hour-by-hour forecast and farmer spraying recommendations
+            24-hour hour-by-hour forecast and spraying recommendations for{" "}
+            <strong>{dayLabel}</strong>
+            {formattedSelectedDate ? ` (${formattedSelectedDate})` : ""}
           </p>
         </div>
 
@@ -180,7 +293,7 @@ export default function HourlyWeatherSlider({ data, onToggleLive }) {
             </button>
           )}
 
-          <div className="hourly-tabs" role="tablist">
+          <div className="hourly-tabs" role="tablist" aria-label="Metric Views">
             <button
               type="button"
               role="tab"
@@ -212,18 +325,49 @@ export default function HourlyWeatherSlider({ data, onToggleLive }) {
         </div>
       </div>
 
+      {/* Forecast Day Selector Navigation Bar */}
+      {forecastDays.length > 1 && (
+        <div className="hourly-day-bar">
+          <div className="hourly-day-bar-title">
+            <span className="day-bar-icon">📅</span>
+            <span>Select Day:</span>
+          </div>
+          <div className="hourly-day-pills" role="tablist" aria-label="Select Forecast Day">
+            {forecastDays.map((day, idx) => {
+              const isSelected = effectiveDate === day.date;
+              const title = idx === 0 ? "Today" : idx === 1 ? "Tomorrow" : `Day +${idx}`;
+              const dateText = formatForecastDate(day.date);
+              return (
+                <button
+                  key={day.date}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  className={`hourly-day-pill ${isSelected ? "active" : ""}`}
+                  onClick={() => onSelectDate && onSelectDate(day.date)}
+                  title={`View hourly forecast for ${title} (${dateText})`}
+                >
+                  <span className="pill-title">{title}</span>
+                  <span className="pill-date">{dateText}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Horizontal Scrollable Slider */}
       <div className="hourly-scroll-container">
         <div className="hourly-track">
           {records.map((rec, idx) => {
-            const isFirst = idx === 0;
-            const timeLabel = isFirst ? "Now" : rec.display_time;
+            const isNow = isToday && idx === 0;
+            const timeLabel = isNow ? "Now" : rec.display_time;
             const badge = getSprayBadgeInfo(rec.spray_safety);
 
             return (
               <div
                 key={rec.time || idx}
-                className={`hourly-cell ${isFirst ? "current-hour" : ""} ${
+                className={`hourly-cell ${isNow ? "current-hour" : ""} ${
                   rec.is_daylight ? "daylight" : "nighttime"
                 }`}
               >
@@ -299,7 +443,7 @@ export default function HourlyWeatherSlider({ data, onToggleLive }) {
           <span className="advisory-icon">🚜</span>
           <div>
             <div className="advisory-heading">
-              <strong>🚜 TODAY'S FARM WORK ADVICE</strong>
+              <strong>🚜 {dayLabel.toUpperCase()}&apos;S FARM WORK ADVICE</strong>
               {refinement?.status === "applied" && (
                 <span className="dem-lapse-pill">
                   Terrain: {Math.round(refinement.relative_elevation_m)}m elevation ({refinement.lapse_rate_c > 0 ? "+" : ""}

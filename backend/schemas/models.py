@@ -165,6 +165,7 @@ class HourlyWeather(BaseModel):
     precipitation: Optional[List[float]] = None
     weather_code: Optional[List[int]] = None
     records: Optional[List[HourlyRecord]] = None
+    all_records: Optional[List[HourlyRecord]] = None
 
 
 class OperationalRefinement(BaseModel):

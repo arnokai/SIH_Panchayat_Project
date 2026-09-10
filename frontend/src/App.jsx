@@ -177,6 +177,8 @@ export default function App() {
             {/* 24-Hour Weather & Spray Safety Slider */}
             <HourlyWeatherSlider
               data={data}
+              selectedDate={selectedDate}
+              onSelectDate={handleDateChange}
               onToggleLive={handleToggleLive}
             />
 

@@ -3251,6 +3251,78 @@ footer span {
   box-shadow: 0 2px 6px rgba(6, 55, 43, 0.2);
 }
 
+/* Forecast Day Selector Navigation Bar */
+.hourly-day-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-top: 14px;
+  background: #f7faf8;
+  border: 1px solid #e1ebe5;
+  border-radius: 12px;
+}
+
+.hourly-day-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2e594b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.hourly-day-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hourly-day-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #d5e4dc;
+  background: #ffffff;
+  color: #274c3d;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.hourly-day-pill:hover {
+  background: #ebf5ef;
+  border-color: #0b5e42;
+  color: #06372b;
+}
+
+.hourly-day-pill.active {
+  background: #06372b;
+  border-color: #06372b;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(6, 55, 43, 0.25);
+}
+
+.hourly-day-pill .pill-title {
+  font-weight: 700;
+}
+
+.hourly-day-pill .pill-date {
+  font-size: 11px;
+  opacity: 0.82;
+}
+
+.hourly-day-pill.active .pill-date {
+  color: #d1fae5;
+}
+
 /* Horizontal Scrollable Slider */
 .hourly-scroll-container {
   overflow-x: auto;
