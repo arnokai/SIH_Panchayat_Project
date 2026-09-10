@@ -111,14 +111,16 @@ def fetch_live_block_weather(lat: float, lon: float, days: int = 5):
     now = time.time()
 
     if cache_key in _LIVE_WEATHER_CACHE:
-        cached_time, cached_df = _LIVE_WEATHER_CACHE[cache_key]
+        cached_time, cached_df, cached_live_data = _LIVE_WEATHER_CACHE[cache_key]
         if now - cached_time < _LIVE_WEATHER_TTL_SECONDS:
-            return cached_df.copy()
+            return cached_df.copy(), cached_live_data
 
     url = (
         f"https://api.open-meteo.com/v1/forecast?"
         f"latitude={lat}&longitude={lon}"
         f"&daily=precipitation_sum,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+        f"&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m"
+        f"&hourly=temperature_2m,precipitation_probability,weather_code"
         f"&timezone=Asia%2FKolkata&forecast_days={days}"
     )
 
@@ -131,7 +133,7 @@ def fetch_live_block_weather(lat: float, lon: float, days: int = 5):
             data = json.loads(resp.read().decode("utf-8"))
             daily = data.get("daily", {})
             if not daily or "time" not in daily:
-                return None
+                return None, None
 
             df = pd.DataFrame({
                 "date": pd.to_datetime(daily["time"]),
@@ -143,12 +145,17 @@ def fetch_live_block_weather(lat: float, lon: float, days: int = 5):
                 "coarse_latitude": float(lat),
                 "coarse_longitude": float(lon),
             })
+            
+            live_data = {
+                "current": data.get("current", {}),
+                "hourly": data.get("hourly", {})
+            }
 
-            _LIVE_WEATHER_CACHE[cache_key] = (now, df)
-            return df.copy()
+            _LIVE_WEATHER_CACHE[cache_key] = (now, df, live_data)
+            return df.copy(), live_data
     except Exception:
         # Fall back gracefully to offline coarse forecast on network timeout or failure
-        return None
+        return None, None
 
 
 def _get_model_artifact():
@@ -488,12 +495,17 @@ def forecast_panchayat_v2(
     is_live_dynamic = False
 
     if live:
+        live_weather_data = None
         try:
-            coarse = fetch_live_block_weather(
+            res = fetch_live_block_weather(
                 lat=meta["latitude"],
                 lon=meta["longitude"],
                 days=days,
             )
+            if res is not None:
+                coarse, live_weather_data = res
+            else:
+                coarse = None
             if coarse is not None and not coarse.empty:
                 is_live_dynamic = True
         except Exception:
@@ -667,6 +679,7 @@ def forecast_panchayat_v2(
     return {
         "panchayat_id": meta["panchayat_id"],
         "panchayat_name": meta["panchayat_name"],
+        "live_weather": live_weather_data if live else None,
         "block_name": meta.get("block_name"),
         "district_name": meta.get("district_name"),
         "crop": crop,

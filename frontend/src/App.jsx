@@ -3,18 +3,6 @@ import "./App.css";
 import ComparisonMap from "./ComparisonMap";
 
 
-const PANCHAYATS = [
-  { id: "A1", name: "ADHATA" },
-  { id: "A2", name: "AMDANGA" },
-  { id: "A3", name: "BERABERIA" },
-  { id: "A4", name: "BODAI" },
-  { id: "A5", name: "CHANDIGARH" },
-  { id: "A6", name: "MARICHA" },
-  { id: "A7", name: "SADHANPUR" },
-  { id: "A8", name: "TARABERIA" },
-];
-
-
 const CROPS = [
   { id: "paddy", name: "Paddy" },
   { id: "vegetables", name: "Vegetables" },
@@ -43,7 +31,7 @@ function getAdvisoryClass(priority) {
 
 
 function App() {
-  const [selectedId, setSelectedId] = useState("A2");
+  const [selectedId, setSelectedId] = useState("WB_107001");
 
   const [selectedCrop, setSelectedCrop] = useState("paddy");
 
@@ -275,6 +263,40 @@ function App() {
       <main className="container">
 
 
+
+        {/* ====================================================
+            GOOGLE WEATHER HERO
+        ==================================================== */}
+        {data && data.live_weather && (
+          <section className="live-weather-hero">
+            <div className="current-weather">
+              <div className="current-temp-large">
+                {Math.round(data.live_weather.current.temperature_2m)}°C
+              </div>
+              <div className="current-details">
+                <div>Rain: {data.live_weather.current.precipitation} mm</div>
+                <div>Humidity: {data.live_weather.current.relative_humidity_2m}%</div>
+                <div>Wind: {data.live_weather.current.wind_speed_10m} km/h</div>
+                <div>Apparent Temp: {data.live_weather.current.apparent_temperature}°C</div>
+              </div>
+            </div>
+            
+            <div className="hourly-slider">
+              {data.live_weather.hourly.time.slice(0, 24).map((timeStr, idx) => {
+                 const d = new Date(timeStr);
+                 const now = new Date();
+                 if (d < now && idx !== 0 && now - d > 3600000) return null; // Hide past hours except recent
+                 return (
+                   <div key={timeStr} className="hourly-item">
+                     <div className="hourly-time">{d.getHours()}:00</div>
+                     <div className="hourly-temp">{Math.round(data.live_weather.hourly.temperature_2m[idx])}°</div>
+                     <div className="hourly-rain">{data.live_weather.hourly.precipitation_probability[idx]}% rain</div>
+                   </div>
+                 );
+              })}
+            </div>
+          </section>
+        )}
         {/* ====================================================
             PANCHAYAT + CROP SELECTOR
         ==================================================== */}
@@ -282,43 +304,7 @@ function App() {
         <section className="selector-card">
 
 
-          {/* Panchayat */}
 
-          <div className="selector-left">
-
-            <label
-              htmlFor="panchayat-select"
-            >
-              PANCHAYAT
-            </label>
-
-
-            <select
-              id="panchayat-select"
-              value={selectedId}
-              onChange={(e) => {
-                setSelectedId(e.target.value);
-                setActiveStatewideGP(null);
-                setSearchTerm("");
-              }}
-            >
-
-              {PANCHAYATS.map(
-                (panchayat) => (
-
-                  <option
-                    key={panchayat.id}
-                    value={panchayat.id}
-                  >
-                    {panchayat.name}
-                  </option>
-
-                )
-              )}
-
-            </select>
-
-          </div>
 
 
           {/* Crop */}
@@ -367,7 +353,7 @@ function App() {
             <label
               htmlFor="statewide-search"
             >
-              STATEWIDE SEARCH (3,339 GPs)
+              SEARCH PANCHAYAT (3,339 GPs)
             </label>
 
 

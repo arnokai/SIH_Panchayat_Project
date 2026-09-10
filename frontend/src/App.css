@@ -1787,3 +1787,81 @@ footer span {
 .statewide-badge .badge-pin {
   font-size: 20px;
 }
+.live-weather-hero {
+  background: linear-gradient(135deg, #4A90E2 0%, #1a5276 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.current-weather {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.current-temp-large {
+  font-size: 4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.current-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 1.1rem;
+  opacity: 0.9;
+  text-align: right;
+}
+
+.hourly-slider {
+  display: flex;
+  overflow-x: auto;
+  gap: 16px;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.4) transparent;
+}
+
+.hourly-slider::-webkit-scrollbar {
+  height: 6px;
+}
+.hourly-slider::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hourly-slider::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+}
+
+.hourly-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  gap: 8px;
+  padding: 12px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.hourly-time {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.hourly-temp {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.hourly-rain {
+  font-size: 0.8rem;
+  color: #a0d8ff;
+}
