@@ -248,11 +248,19 @@ function App() {
 
 
           <div className="location">
-
-            AMDANGA BLOCK
-            <span>•</span>
-            NORTH 24 PARGANAS
-
+            {data ? (
+              <>
+                {(data.block_name || "UNKNOWN BLOCK").toUpperCase()}
+                <span>•</span>
+                {(data.district_name || "UNKNOWN DISTRICT").toUpperCase()}
+              </>
+            ) : (
+              <>
+                FETCHING DATA
+                <span>•</span>
+                PLEASE WAIT
+              </>
+            )}
           </div>
 
         </div>
