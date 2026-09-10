@@ -2140,6 +2140,115 @@ footer span {
   color: #082b20;
 }
 
+.gp-distance-tag {
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+}
+
+/* GPS Geolocation Controls */
+.gps-location-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.gps-location-btn {
+  height: 52px;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #e8f3ec;
+  color: #06372b;
+  border: 2px solid #b8d9c5;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.gps-location-btn:hover:not(:disabled) {
+  background: #06372b;
+  color: #ffffff;
+  border-color: #06372b;
+  box-shadow: 0 4px 14px rgba(6, 55, 43, 0.16);
+  transform: translateY(-1px);
+}
+
+.gps-location-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.gps-location-btn.locating {
+  background: #fdf5e6;
+  border-color: #f1cf8a;
+  color: #8c5b00;
+}
+
+.gps-btn-icon {
+  font-size: 16px;
+}
+
+.gps-btn-text {
+  letter-spacing: 0.2px;
+}
+
+.gps-status-banner {
+  margin-top: 14px;
+  padding: 11px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.gps-status-banner.error {
+  background: #fdf2f2;
+  border: 1px solid #f8b4b4;
+  color: #9b1c1c;
+}
+
+.gps-status-banner.success {
+  background: #def7ec;
+  border: 1px solid #84e1bc;
+  color: #03543f;
+}
+
+.gps-status-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gps-status-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: inherit;
+  opacity: 0.7;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.gps-status-close:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
 
 /* =========================================================
    WEATHER HERO CARD
@@ -3399,6 +3508,18 @@ footer span {
 }
 
 @media (max-width: 768px) {
+  .district-filter-select,
+  .search-input-container,
+  .gps-location-container {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .gps-location-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .hourly-slider-card {
     padding: 20px 18px;
   }

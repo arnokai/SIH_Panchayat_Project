@@ -79,6 +79,11 @@ class StatewideStatsResponse(BaseModel):
     memory_optimization: str = Field(..., description="Performance profile")
 
 
+class NearestPanchayatResponse(BaseModel):
+    status: str = Field("ok", description="Status string")
+    nearest_panchayat: Dict[str, Any] = Field(..., description="Closest Gram Panchayat record with distance_km")
+
+
 # ============================================================
 # FORECAST & AGRONOMIC SCHEMAS
 # ============================================================

@@ -11,11 +11,34 @@ import AgronomicAlerts from "./components/AgronomicAlerts";
 import SystemStatsFooter from "./components/SystemStatsFooter";
 
 export default function App() {
-  // Default Gram Panchayat: Amdanga (WB_107778, North 24 Parganas)
-  const [selectedId, setSelectedId] = useState("WB_107778");
-  const [selectedCrop, setSelectedCrop] = useState("paddy");
+  // Default Gram Panchayat: Amdanga (WB_107778, North 24 Parganas) or cached user preference
+  const [selectedId, setSelectedId] = useState(() => {
+    try {
+      return localStorage.getItem("terramind_panchayat_id") || "WB_107778";
+    } catch {
+      return "WB_107778";
+    }
+  });
+
+  const [selectedCrop, setSelectedCrop] = useState(() => {
+    try {
+      return localStorage.getItem("terramind_crop") || "paddy";
+    } catch {
+      return "paddy";
+    }
+  });
+
   const [isLive, setIsLive] = useState(true);
-  const [activePanchayat, setActivePanchayat] = useState(null);
+
+  const [activePanchayat, setActivePanchayat] = useState(() => {
+    try {
+      const saved = localStorage.getItem("terramind_panchayat_meta");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -59,18 +82,36 @@ export default function App() {
   const handleSelectPanchayat = (gp) => {
     setLoading(true);
     setActivePanchayat(gp);
-    setSelectedId(gp.panchayat_id || `WB_${gp.gp_code}`);
+    const pid = gp.panchayat_id || `WB_${gp.gp_code}`;
+    setSelectedId(pid);
+    try {
+      localStorage.setItem("terramind_panchayat_id", pid);
+      localStorage.setItem("terramind_panchayat_meta", JSON.stringify(gp));
+    } catch (e) {
+      console.warn("Could not save to localStorage:", e);
+    }
   };
 
   const handleClearPanchayat = () => {
     setLoading(true);
     setActivePanchayat(null);
     setSelectedId("WB_107778");
+    try {
+      localStorage.removeItem("terramind_panchayat_id");
+      localStorage.removeItem("terramind_panchayat_meta");
+    } catch (e) {
+      console.warn("Could not clear localStorage:", e);
+    }
   };
 
   const handleCropChange = (crop) => {
     setLoading(true);
     setSelectedCrop(crop);
+    try {
+      localStorage.setItem("terramind_crop", crop);
+    } catch (e) {
+      console.warn("Could not save crop to localStorage:", e);
+    }
   };
 
   const handleToggleLive = () => {

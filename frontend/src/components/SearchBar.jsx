@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { searchPanchayats, fetchDistricts } from "../services/api";
+import { searchPanchayats, fetchDistricts, fetchNearestPanchayat } from "../services/api";
 
 export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -9,6 +9,8 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
   const [isSearching, setIsSearching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationStatus, setLocationStatus] = useState(null);
 
   const containerRef = useRef(null);
   const debounceTimerRef = useRef(null);
@@ -113,6 +115,69 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
     if (onClear) onClear();
   };
 
+  const handleUseLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus({
+        type: "error",
+        message: "Geolocation is not supported by your browser.",
+      });
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationStatus(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const nearest = await fetchNearestPanchayat(latitude, longitude);
+          if (nearest && nearest.panchayat_name) {
+            setLocationStatus({
+              type: "success",
+              message: `Detected nearest GP: ${nearest.panchayat_name} (${nearest.district_name}) ~${nearest.distance_km} km away`,
+            });
+            handleSelect(nearest);
+          } else {
+            setLocationStatus({
+              type: "error",
+              message: "No Gram Panchayat found near your coordinates.",
+            });
+          }
+        } catch (err) {
+          console.error("GPS nearest GP lookup error:", err);
+          setLocationStatus({
+            type: "error",
+            message: "Could not find nearest Gram Panchayat for your location.",
+          });
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (err) => {
+        console.warn("Geolocation error:", err);
+        setIsLocating(false);
+        if (err.code === 1) {
+          setLocationStatus({
+            type: "error",
+            message: "Location permission denied. Please enable GPS permissions or search manually.",
+          });
+        } else if (err.code === 2) {
+          setLocationStatus({
+            type: "error",
+            message: "Location position unavailable. Please search manually.",
+          });
+        } else {
+          setLocationStatus({
+            type: "error",
+            message: "Location request timed out. Please try again or search manually.",
+          });
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
   return (
     <div className="search-bar-wrapper" ref={containerRef}>
       <div className="search-inputs-row">
@@ -198,7 +263,41 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
             </ul>
           )}
         </div>
+
+        {/* GPS Auto-Detect Button */}
+        <div className="gps-location-container">
+          <label className="search-label">GPS AUTO-DETECT</label>
+          <button
+            type="button"
+            className={`gps-location-btn ${isLocating ? "locating" : ""}`}
+            onClick={handleUseLocation}
+            disabled={isLocating}
+            title="Auto-detect nearest Gram Panchayat using device GPS"
+          >
+            <span className="gps-btn-icon">{isLocating ? "⏳" : "📍"}</span>
+            <span className="gps-btn-text">
+              {isLocating ? "Detecting Location..." : "Use My Location"}
+            </span>
+          </button>
+        </div>
       </div>
+
+      {/* GPS Location Status Banner */}
+      {locationStatus && (
+        <div className={`gps-status-banner ${locationStatus.type}`}>
+          <span className="gps-status-text">
+            {locationStatus.type === "error" ? "⚠️" : "✓"} {locationStatus.message}
+          </span>
+          <button
+            type="button"
+            className="gps-status-close"
+            onClick={() => setLocationStatus(null)}
+            title="Dismiss notice"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Active GP Breadcrumb Badge */}
       {activePanchayat && (
@@ -217,6 +316,11 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
               )}
               {activePanchayat.soil_type && (
                 <span>Soil: <strong>{activePanchayat.soil_type.replace("_", " ")}</strong></span>
+              )}
+              {activePanchayat.distance_km !== undefined && activePanchayat.distance_km !== null && (
+                <span className="gp-distance-tag">
+                  GPS Distance: <strong>{activePanchayat.distance_km} km away</strong>
+                </span>
               )}
             </div>
           </div>

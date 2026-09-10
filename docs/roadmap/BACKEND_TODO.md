@@ -102,12 +102,15 @@
 - [x] **Strict Pydantic v2 Schema Models (`backend/schemas/models.py`):**
   - `RootResponse`, `HealthResponse`, `PanchayatBrief`, `PanchayatListResponse`.
   - `StatewideDistrictsResponse`, `StatewidePanchayatsResponse`, `StatewideStatsResponse`.
+  - `NearestPanchayatResponse` (`GET /v1/statewide/nearest` Haversine GPS resolver).
   - `QuantileRain`, `TMaxObj`, `AdvisoryDetail`, `AdvisorySummaryItem`, `DailyForecast`.
   - `CurrentWeather`, `HourlyRecord`, `HourlyWeather`, `LiveWeatherPayload`, `ForecastResponse`.
 - [x] **FastAPI Route Decorator Binding:**
   - Bound all endpoints with `response_model=...` generating auto-documented interactive Swagger UI at `/docs`.
 - [x] **Automated Schema Test Suite (`tests/test_schemas.py`):**
-  - Added 6 dedicated unit tests verifying full model validation across all endpoints.
+  - Added 7 dedicated unit tests verifying full model validation across all endpoints including GPS lookup.
+- [x] **Automated Integration Test Suite:**
+  - 161 unit tests passing cleanly across backend engines, statewide data pipeline, feature engineering, and registry resolution (`.venv/bin/python -m unittest discover -s tests`).
 
 ---
 

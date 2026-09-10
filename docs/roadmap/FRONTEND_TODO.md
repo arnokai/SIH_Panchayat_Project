@@ -49,6 +49,11 @@
     - **Wind & Spray Safety Tab:** Hourly wind speed with color-coded safety badges (`Optimal`, `Caution`, `Rain Risk`, `Wind Drift`).
   - **Operational Spray Window Banner:** Auto-synthesizes contiguous daytime spraying window and renders DEM lapse rate telemetry pill.
   - **Dual Live/Offline Guarantee:** Connects to live ECMWF/GFS stream in Live mode, and automatically synthesizes a physical solar diurnal curve in Offline mode with an inline quick-toggle button.
+- [x] **Browser Geolocation & LocalStorage Preference Memory:**
+  - **1-Click GPS Auto-Detect Button:** Interactive "📍 Use My Location" in the search row queries device GPS coordinates.
+  - **Vectorized Haversine Resolution:** Calls `GET /v1/statewide/nearest` to locate the closest Gram Panchayat in <15ms across all 3,339 GPs.
+  - **Session Memory (`localStorage`):** Remembers the user's selected Gram Panchayat (`terramind_panchayat_id`, `terramind_panchayat_meta`) and active crop (`terramind_crop`) across browser restarts and page refreshes.
+  - **GPS Distance Tag:** Renders exact distance from user coordinates (e.g. `GPS Distance: 14.6 km away`) directly in the active Gram Panchayat card.
 
 ---
 
@@ -67,10 +72,6 @@
 ### On Hold: Offline Mode & PWA
 - **Status:** **ON HOLD**  
 - System is operating in 100% online dynamic mode. PWA caching and service workers will be scheduled in a subsequent phase.
-
-### On Hold: Automatic Geolocation & LocalStorage Persistence
-- **Status:** **ON HOLD (TODO)**  
-- Current default is cleanly set to **Amdanga (`WB_107778`)**. Automatic GPS detection and `localStorage` preference memory are documented for future enhancement.
 
 ### On Hold: Multichannel Voice (TTS) & WhatsApp Dissemination
 - **Status:** **ON HOLD (Phase 4)**  

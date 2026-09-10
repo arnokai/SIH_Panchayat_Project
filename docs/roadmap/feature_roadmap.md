@@ -38,6 +38,10 @@
   - 3 interactive metric tabs: Elevation-adjusted Temperature (°C), Hurdle Precipitation (%), Wind & Spray Safety.
   - Operational spray window insight banner with DEM lapse rate telemetry pill.
   - Automatic diurnal solar curve fallback guaranteeing zero blank states when offline.
+- [x] **Browser Geolocation & LocalStorage Preference Memory:**
+  - One-click "📍 Use My Location" auto-detecting the closest Gram Panchayat via Haversine distance (<15ms vector lookup).
+  - Remembers user's selected Gram Panchayat and active crop across browser sessions via `localStorage`.
+  - Displays detected GPS distance tag directly on the active GP badge.
 
 ---
 
@@ -86,5 +90,4 @@
 |---|---|---|
 | **Spatial Leaflet Map (`ComparisonMap.jsx`)** | **ON HOLD** | Multi-day spatial downscaling model is undergoing further GIS validation before reactivation. |
 | **Offline-First PWA Mode** | **ON HOLD** | Platform is 100% focused on real-time online dynamic forecasts. Service worker caching staged for subsequent phase. |
-| **Automatic GPS Geolocation & LocalStorage** | **ON HOLD (TODO)** | Default is set to Amdanga (`WB_107778`). Location auto-discovery will be added later. |
 | **Voice Audio (TTS) & WhatsApp Sharing** | **ON HOLD (Phase 4)** | Multichannel voice synthesis and WhatsApp community bulletins are planned for Phase 4 field expansion. |

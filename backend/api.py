@@ -28,6 +28,7 @@ try:
         StatewideDistrictsResponse,
         StatewidePanchayatsResponse,
         StatewideStatsResponse,
+        NearestPanchayatResponse,
     )
 except ImportError:
     from schemas import (
@@ -38,6 +39,7 @@ except ImportError:
         StatewideDistrictsResponse,
         StatewidePanchayatsResponse,
         StatewideStatsResponse,
+        NearestPanchayatResponse,
     )
 
 
@@ -757,6 +759,40 @@ def get_statewide_stats():
         "qa_status": qa_status,
         "storage_format": "Apache Parquet (District Hive Partitions)",
         "memory_optimization": "Sub-second district loading"
+    }
+
+
+@app.get("/v1/statewide/nearest", response_model=NearestPanchayatResponse)
+def get_nearest_panchayat(
+    lat: float = Query(..., description="User latitude (GPS)"),
+    lon: float = Query(..., description="User longitude (GPS)"),
+):
+    """Find the closest Gram Panchayat to the specified coordinates using Haversine distance."""
+    reg_path = ROOT_DIR / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
+    if not reg_path.exists():
+        raise HTTPException(status_code=503, detail="Statewide registry not yet available.")
+    import pandas as pd
+    import numpy as np
+
+    df = pd.read_parquet(reg_path)
+    lat_r = np.radians(lat)
+    lon_r = np.radians(lon)
+    df_lat_r = np.radians(df["latitude"].values)
+    df_lon_r = np.radians(df["longitude"].values)
+
+    dlat = df_lat_r - lat_r
+    dlon = df_lon_r - lon_r
+    a = np.sin(dlat / 2.0) ** 2 + np.cos(lat_r) * np.cos(df_lat_r) * np.sin(dlon / 2.0) ** 2
+    c = 2 * np.arcsin(np.sqrt(a))
+    dist_km = 6371.0 * c
+
+    closest_idx = int(np.argmin(dist_km))
+    nearest_row = df.iloc[closest_idx].to_dict()
+    nearest_row["distance_km"] = round(float(dist_km[closest_idx]), 2)
+
+    return {
+        "status": "ok",
+        "nearest_panchayat": nearest_row,
     }
 
 

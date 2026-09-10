@@ -4,7 +4,14 @@ Verifies strict validation, schema fidelity, and OpenAPI schema registration.
 """
 
 import unittest
-from backend.api import root, health, get_panchayats, get_statewide_districts, get_statewide_stats
+from backend.api import (
+    root,
+    health,
+    get_panchayats,
+    get_statewide_districts,
+    get_statewide_stats,
+    get_nearest_panchayat,
+)
 from backend.forecast_engine_v2 import forecast_panchayat_v2
 from backend.schemas import (
     RootResponse,
@@ -13,6 +20,7 @@ from backend.schemas import (
     StatewideDistrictsResponse,
     StatewideStatsResponse,
     ForecastResponse,
+    NearestPanchayatResponse,
 )
 
 
@@ -53,6 +61,14 @@ class TestAPISchemas(unittest.TestCase):
         self.assertEqual(model.panchayat_name, "AMDANGA")
         self.assertEqual(len(model.forecast), 3)
         self.assertIsNotNone(model.forecast[0].rain_mm.p50)
+
+    def test_nearest_schema(self):
+        res = get_nearest_panchayat(lat=22.5726, lon=88.3639)
+        model = NearestPanchayatResponse.model_validate(res)
+        self.assertEqual(model.status, "ok")
+        self.assertIn("panchayat_name", model.nearest_panchayat)
+        self.assertIn("distance_km", model.nearest_panchayat)
+        self.assertIsInstance(model.nearest_panchayat["distance_km"], float)
 
 
 if __name__ == "__main__":

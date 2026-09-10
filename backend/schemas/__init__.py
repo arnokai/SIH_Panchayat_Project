@@ -23,6 +23,7 @@ from backend.schemas.models import (
     LiveWeatherPayload,
     CoarseCoordinate,
     ForecastResponse,
+    NearestPanchayatResponse,
 )
 
 __all__ = [
@@ -34,6 +35,7 @@ __all__ = [
     "StatewideDistrictsResponse",
     "StatewidePanchayatsResponse",
     "StatewideStatsResponse",
+    "NearestPanchayatResponse",
     "QuantileRain",
     "TMaxObj",
     "AdvisoryDetail",
