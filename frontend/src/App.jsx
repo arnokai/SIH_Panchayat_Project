@@ -258,37 +258,72 @@ function App() {
 
 
 
-        {/* ====================================================
+{/* ====================================================
             GOOGLE WEATHER HERO
         ==================================================== */}
         {data && data.live_weather && (
-          <section className="live-weather-hero">
-            <div className="current-weather">
-              <div className="current-temp-large">
-                {Math.round(data.live_weather.current.temperature_2m)}°C
+          <section className="google-weather-card">
+            
+            {/* Location Header inside the card */}
+            <div className="gw-location">
+              <h2>{data.panchayat_name}</h2>
+              <p>{(data.block_name || "").toUpperCase()}, {(data.district_name || "").toUpperCase()}</p>
+            </div>
+
+            <div className="gw-current">
+              <div className="gw-temp-main">
+                <img 
+                  src={
+                    data.live_weather.current.precipitation > 0 || data.live_weather.current.weather_code >= 50
+                      ? "https://ssl.gstatic.com/onebox/weather/64/rain.png"
+                      : data.live_weather.current.weather_code > 0
+                        ? "https://ssl.gstatic.com/onebox/weather/64/partly_cloudy.png"
+                        : "https://ssl.gstatic.com/onebox/weather/64/sunny.png"
+                  } 
+                  alt="weather icon" 
+                  className="gw-icon-main"
+                />
+                <span className="gw-temp">{Math.round(data.live_weather.current.temperature_2m)}</span>
+                <span className="gw-unit">°C</span>
               </div>
-              <div className="current-details">
-                <div>Rain: {data.live_weather.current.precipitation} mm</div>
+              
+              <div className="gw-details">
+                <div className="gw-condition">
+                  {data.live_weather.current.precipitation > 0 || data.live_weather.current.weather_code >= 50 ? "Rainy" : data.live_weather.current.weather_code > 0 ? "Partly cloudy" : "Clear"}
+                </div>
+                <div>Precipitation: {data.live_weather.current.precipitation} mm</div>
                 <div>Humidity: {data.live_weather.current.relative_humidity_2m}%</div>
                 <div>Wind: {data.live_weather.current.wind_speed_10m} km/h</div>
-                <div>Apparent Temp: {data.live_weather.current.apparent_temperature}°C</div>
               </div>
             </div>
-            
-            <div className="hero-tabs">
-              <button className="hero-tab active">Hourly</button>
+
+            <div className="gw-tabs">
+              <button className="gw-tab active">Temperature</button>
+              <button className="gw-tab">Precipitation</button>
+              <button className="gw-tab">Wind</button>
             </div>
             
-            <div className="hourly-slider">
+            <div className="gw-hourly-slider">
               {data.live_weather.hourly.time.slice(0, 24).map((timeStr, idx) => {
                  const d = new Date(timeStr);
                  const now = new Date();
-                 if (d < now && idx !== 0 && now - d > 3600000) return null; // Hide past hours except recent
+                 if (d < now && idx !== 0 && now - d > 3600000) return null;
+                 
+                 const hourCode = data.live_weather.hourly.weather_code[idx];
+                 const hourIcon = hourCode >= 50 
+                    ? "https://ssl.gstatic.com/onebox/weather/48/rain.png" 
+                    : hourCode > 0 
+                      ? "https://ssl.gstatic.com/onebox/weather/48/partly_cloudy.png" 
+                      : "https://ssl.gstatic.com/onebox/weather/48/sunny.png";
+                 
                  return (
-                   <div key={timeStr} className="hourly-item">
-                     <div className="hourly-time">{d.getHours()}:00</div>
-                     <div className="hourly-temp">{Math.round(data.live_weather.hourly.temperature_2m[idx])}°</div>
-                     <div className="hourly-rain">{data.live_weather.hourly.precipitation_probability[idx]}% rain</div>
+                   <div key={timeStr} className="gw-hourly-item">
+                     <div className="gw-time">{d.getHours() === now.getHours() ? "Now" : d.getHours() + ":00"}</div>
+                     <img src={hourIcon} alt="icon" className="gw-hourly-icon" />
+                     <div className="gw-temp-small">{Math.round(data.live_weather.hourly.temperature_2m[idx])}°</div>
+                     {data.live_weather.hourly.precipitation_probability[idx] > 0 && (
+                       <div className="gw-rain-prob">{data.live_weather.hourly.precipitation_probability[idx]}%</div>
+                     )}
                    </div>
                  );
               })}

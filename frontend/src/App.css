@@ -1886,3 +1886,145 @@ footer span {
   color: white;
   border-bottom: 3px solid white;
 }
+
+/* GOOGLE WEATHER CLONE */
+.google-weather-card {
+  background-color: #ffffff;
+  border: 1px solid #dfe1e5;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  font-family: "Google Sans", arial, sans-serif;
+  color: #202124;
+  box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
+}
+
+.gw-location {
+  margin-bottom: 20px;
+}
+
+.gw-location h2 {
+  font-size: 24px;
+  font-weight: 400;
+  margin: 0 0 4px 0;
+  color: #202124;
+}
+
+.gw-location p {
+  font-size: 14px;
+  color: #70757a;
+  margin: 0;
+}
+
+.gw-current {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.gw-temp-main {
+  display: flex;
+  align-items: flex-start;
+  margin-right: 32px;
+}
+
+.gw-icon-main {
+  width: 64px;
+  height: 64px;
+  margin-right: 12px;
+}
+
+.gw-temp {
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: -2px;
+  margin-top: -6px;
+}
+
+.gw-unit {
+  font-size: 20px;
+  color: #70757a;
+  margin-top: 4px;
+  margin-left: 4px;
+}
+
+.gw-details {
+  font-size: 14px;
+  color: #70757a;
+  line-height: 1.6;
+  margin-top: 2px;
+}
+
+.gw-condition {
+  font-size: 16px;
+  color: #202124;
+  margin-bottom: 4px;
+}
+
+.gw-tabs {
+  display: flex;
+  border-bottom: 1px solid #ebebeb;
+  margin-bottom: 16px;
+  gap: 24px;
+}
+
+.gw-tab {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #70757a;
+  padding: 0 0 12px 0;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.gw-tab.active {
+  color: #1a73e8;
+  border-bottom: 3px solid #1a73e8;
+  border-radius: 2px;
+}
+
+.gw-hourly-slider {
+  display: flex;
+  overflow-x: auto;
+  gap: 24px;
+  padding-bottom: 12px;
+  scrollbar-width: none;
+}
+
+.gw-hourly-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.gw-hourly-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 48px;
+}
+
+.gw-time {
+  font-size: 14px;
+  color: #70757a;
+  margin-bottom: 8px;
+}
+
+.gw-hourly-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+}
+
+.gw-temp-small {
+  font-size: 16px;
+  color: #202124;
+  font-weight: 400;
+}
+
+.gw-rain-prob {
+  font-size: 12px;
+  color: #1a73e8;
+  margin-top: 4px;
+  font-weight: 500;
+}
