@@ -28,12 +28,12 @@
 
 These features require low effort but have a massive visual and practical impact during jury evaluation.
 
-- [ ] **Voice / Text-to-Speech in Bengali ("অডিও শুনুন"):**
-  - Add an audio playback button on the frontend cards using the browser's native Web Speech API (`SpeechSynthesis`) or an Indian language TTS model (e.g., AI4Bharat / Bhashini API).
-  - Enables illiterate and elderly farmers to listen to advisories in spoken colloquial Bengali.
+- [ ] **Voice / Text-to-Speech:**
+  - Add an audio playback button on the frontend cards using the browser's native Web Speech API (`SpeechSynthesis`).
+  - Enables farmers to listen to advisories in spoken audio format.
 - [ ] **One-Click WhatsApp Share Button:**
-  - Add a button: *"হোয়াটসঅ্যাপে শেয়ার করুন"* (Share on WhatsApp).
-  - Pre-formats today's panchayat forecast and Bengali advisory into a clean WhatsApp message for easy forwarding to local Krishi (farmer) WhatsApp groups.
+  - Add a button: *"Share"* (Share on WhatsApp).
+  - Pre-formats today's panchayat forecast and advisory into a clean WhatsApp message for easy forwarding to local Krishi (farmer) WhatsApp groups.
 - [ ] **Offline-First PWA (Progressive Web App):**
   - Add a Web App Manifest and Service Worker in the Vite frontend.
   - Allows farmers to install TerraMind directly to their Android home screen and view cached advisories even when rural mobile data is patchy.

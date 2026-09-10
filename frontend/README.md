@@ -7,7 +7,7 @@
 > **Backend API (Render):** [https://sih-panchayat-project.onrender.com](https://sih-panchayat-project.onrender.com)  
 > **Problem Statement:** SIH26074 (Ministry of Earth Sciences — Downscaling Weather Forecasts for Agro-Meteorological Advisory Services)  
 > **Coverage:** Statewide West Bengal — 3,339 Gram Panchayats across 22 Rural Districts  
-> **Status:** Live in production on Vercel. Statewide autocomplete search, district selection, live dynamic Open-Meteo downscaling badge, Bengali TTS audio, and WhatsApp dissemination operational.
+> **Status:** Live in production on Vercel. Statewide autocomplete search, district selection, interactive spatial comparison map, and live dynamic Open-Meteo downscaling badge operational.
 
 ---
 
@@ -18,10 +18,9 @@ The **TerraMind Frontend** provides rural farmers, Gram Panchayat agricultural o
 ### Core Implemented Capabilities:
 1. **Statewide 3,339 Gram Panchayat Autocomplete & District Selection:** Real-time debounced search across all 22 rural districts of West Bengal, querying `/v1/statewide/panchayats` to instantly locate and inspect any Gram Panchayat with verified Local Government Directory (LGD) codes and centroid GPS coordinates. Preset dropdown support provides quick navigation for the core surveyed pilot panchayats.
 2. **Live Dynamic Weather Telemetry:** Real-time status indicator evaluating `data.is_live_dynamic` from `/v1/forecast`, displaying dynamic Open-Meteo ECMWF/GFS meteorological ingestion downscaled by the TerraMind Hurdle model with 15-minute TTL caching and graceful offline fallback.
-3. **Bengali Voice / Text-to-Speech ("অডিও শুনুন"):** Zero-barrier accessibility for rural farmers via native browser Web Speech API (`bn-IN`) on every daily card, advisory item, and a sequential audio summary player ("সব পরামর্শ শুনুন").
-4. **Instant WhatsApp Agricultural Bulletins:** One-click sharing of localized weather bulletins formatted with Markdown and emojis (🌾, 📍, 📅, 🌧️, 🌡️, 📢, 🔗) to local farmer groups (*Krishi Dal*).
-5. **Interactive Spatial Map:** React-Leaflet spatial comparison canvas visualizing microclimate variations, block centres, and Gram Panchayat centroids with animated pan-and-focus selection.
-6. **Agronomic Advisory Intelligence:** Rules-driven advisories evaluated against crop type (Paddy, Vegetables) with priority classification (*High Attention* vs *Normal*).
+3. **Interactive Spatial Map:** React-Leaflet spatial comparison canvas visualizing microclimate variations, block centres, and Gram Panchayat centroids with animated pan-and-focus selection.
+4. **Agronomic Advisory Intelligence:** Rules-driven advisories evaluated against crop type (Paddy, Vegetables) with priority classification (*High Attention* vs *Normal*).
+5. **Future Multichannel Integration (Roadmap):** Voice audio playback (TTS) and instant WhatsApp bulletin dissemination scheduled for Phase 4 deployment.
 
 ---
 
@@ -98,7 +97,7 @@ If `VITE_API_BASE_URL` is omitted, the frontend automatically defaults to `http:
 
 | Endpoint | Method | Parameters | Usage in Frontend |
 | :--- | :--- | :--- | :--- |
-| `/v1/forecast` | `GET` | `panchayat_id`, `days=5`, `lang=bn`, `crop`, `live` | Retrieves 5-day downscaled rainfall (P10/P50/P90), temperatures, advisories, and live dynamic weather telemetry (`is_live_dynamic`). |
+| `/v1/forecast` | `GET` | `panchayat_id`, `days=5`, `lang=en`, `crop`, `live` | Retrieves 5-day downscaled rainfall (P10/P50/P90), temperatures, advisories, and live dynamic weather telemetry (`is_live_dynamic`). |
 | `/v1/statewide/panchayats` | `GET` | `search`, `limit=6` | Real-time debounced autocomplete search across all 3,339 Gram Panchayats in West Bengal. |
 | `/v1/statewide/districts` | `GET` | — | *(Planned)* Filter Panchayats by district hierarchy across all 22 rural districts. |
 | `/v1/statewide/stats` | `GET` | — | *(Planned)* Header telemetry counter (3,339 Panchayats, 22 Districts). |
@@ -112,10 +111,9 @@ If `VITE_API_BASE_URL` is omitted, the frontend automatically defaults to `http:
    - Matching Panchayats appear in the dropdown with Block and District context.
    - Selecting a GP loads its 5-day AI forecast and displays an LGD coordinate badge (`📍 {panchayat_name} | Block: {block} • District: {district} • LGD: {code} ({lat}°N, {lon}°E)`).
    - Core surveyed pilot panchayats can also be selected directly via the quick-select dropdown.
-2. **Audio Advisory Playback:**
-   - Tapping "বাংলায় শুনুন" invokes native speech synthesis in Bengali (`bn-IN`) reading the recommendation.
-   - Tapping again immediately halts playback (`⏹️ থামান`).
-3. **WhatsApp Community Dissemination:**
-   - Tapping "শেয়ার" opens WhatsApp with a pre-composed Markdown bulletin ready to forward to farming communities.
-4. **Live Dynamic Weather Badge:**
+2. **Live Dynamic Weather Badge:**
    - Visual telemetry displays `"LIVE DYNAMIC WEATHER"` with `"AI Downscaled (Open-Meteo ECMWF/GFS)"` when real-time feeds are active, or `"V2 MODEL ACTIVE"` / `"V2 FALLBACK ACTIVE"` during offline or degraded conditions.
+3. **Interactive Comparison Map:**
+   - Visualizes localized microclimates and downscaled variances across Gram Panchayats.
+4. **Future Delivery (Roadmap):**
+   - Spoken audio advisory streaming and WhatsApp community sharing buttons will be connected in Phase 4.

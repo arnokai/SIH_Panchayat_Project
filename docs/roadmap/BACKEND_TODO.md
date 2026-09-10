@@ -15,7 +15,7 @@
 | **Phase 2** | Statewide ML Downscaling & Quantile Uncertainty | ✅ COMPLETED | Two-Stage Hurdle model (`statewide_hurdle_v2.pkl`), P10/P50/P90 spreads, `degraded: false` |
 | **Statewide** | Statewide Registry & Data Lake Integration | ✅ COMPLETED | Endpoints for 3,339 Panchayats across 22 districts; pure Parquet storage |
 | **Phase 3** | Agricultural Intelligence & Advisory Rules | 🔄 IN PROGRESS | 10 rules active (`rules.yaml`); multi-crop expansion in progress |
-| **Phase 4** | Multi-Channel Delivery Endpoints | 📋 ROADMAP | WhatsApp bulletin, Bengali TTS audio, printable PDF |
+| **Phase 4** | Multi-Channel Delivery Endpoints | 📋 ROADMAP | WhatsApp bulletin, TTS voice audio, printable PDF |
 | **Phase 5** | Spatial Administration & Disaster Risk | 🔄 IN PROGRESS | Statewide district & GP discovery complete; flood risk scoring in roadmap |
 | **Phase 6** | Schemas, CORS & Automated Testing | 🔄 IN PROGRESS | CORS & 157 unit tests complete; Pydantic v2 schemas in active backlog |
 
@@ -105,9 +105,9 @@
 
 ### Phase 4: Multi-Channel Delivery Endpoints (Layer 5)
 - [ ] **4.1 WhatsApp Bulletin Formatter (`GET /v1/export/whatsapp`):**
-  - Pre-format clean, emoji-formatted bilingual text for forwarding to farmer groups.
-- [ ] **4.2 Spoken Bengali Audio / TTS Streaming Endpoint (`GET /v1/tts/synthesize`):**
-  - Stream synthesized audio (`audio/mpeg`) for illiterate farmers using Indian-language neural TTS.
+  - Pre-format clean, emoji-formatted text for forwarding to farmer groups.
+- [ ] **4.2 Spoken Audio / TTS Streaming Endpoint (`GET /v1/tts/synthesize`):**
+  - Stream synthesized audio (`audio/mpeg`) for farmers using neural TTS.
 - [ ] **4.3 Printable Krishi Bulletin PDF (`GET /v1/bulletin/pdf`):**
   - Generate an official 1-page A4 PDF bulletin for notice boards.
 - [ ] **4.4 SMS Broadcast Message Builder:**

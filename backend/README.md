@@ -13,7 +13,7 @@
 
 As the **Backend Engineer (Member 2)**, you own the computational and decision-support engines of TerraMind. You are responsible for:
 1. **The Fast & Reliable REST API (`backend/api.py`):** Serving high-throughput, low-latency forecasts and agricultural advisories to the React frontend, mobile PWA, KVK dashboard, and external consumers.
-2. **The Agricultural Advisory Rule Engine (`backend/advisory_engine.py` & `rules/rules.yaml`):** Translating raw weather forecasts into actionable, life-saving agronomic instructions in colloquial Bengali and English.
+2. **The Agricultural Advisory Rule Engine (`backend/advisory_engine.py` & `rules/rules.yaml`):** Translating raw weather forecasts into actionable, life-saving agronomic instructions in clear English.
 3. **ML Model Serving & Quantile Uncertainty (`backend/forecast_engine_v2.py`):** Integrating trained downscaling models from `ml/models/statewide_hurdle_v2.pkl` into real-time inference, generating P10/P50/P90 uncertainty spreads, and safely managing fallback state.
 4. **Dynamic Weather Ingestion:** Fetching real-time 5-day forecasts via Open-Meteo ECMWF/GFS models with in-memory TTL caching and offline Parquet fallback.
 5. **Statewide Data Lake Integration:** Querying the pure Apache Parquet data lake covering all 3,339 Gram Panchayats across all 22 rural districts of West Bengal.
@@ -34,7 +34,7 @@ backend/
 └── README.md                       # Backend workspace guide and API reference
 
 rules/
-└── rules.yaml                      # Declarative agricultural rules (10 rules), thresholds, English & Bengali text
+└── rules.yaml                      # Declarative agricultural rules (10 rules), thresholds, English text
 
 data_pipeline/
 ├── metadata/
@@ -85,7 +85,7 @@ data_pipeline/
 [Advisory Engine (backend/advisory_engine.py)]
         ├─► Evaluates boolean conditions against context in rules/rules.yaml (10 rules)
         ├─► Ranks matches: high > medium > low > info
-        ├─► Selects highest priority advice & extracts text_bn / text_en
+        ├─► Selects highest priority advice & extracts text_en
         │
         ▼ Returns UTF-8 JSON Response:
 [Standardized Response: degraded=false, is_live_dynamic=true/false]
@@ -101,7 +101,7 @@ data_pipeline/
 | :--- | :--- | :--- | :--- |
 | `GET` | `/` | None | API discovery root with status, version, and route links |
 | `GET` | `/health` | None | Cloud health monitor, operational model status, and coverage metrics |
-| `GET` | `/v1/forecast` | `panchayat_id` (req), `days` (1-5), `lang` (bn/en), `crop` (str), `live` (bool) | Core downscaled 5-day forecast with P10/P50/P90 spreads & advisories |
+| `GET` | `/v1/forecast` | `panchayat_id` (req), `days` (1-5), `lang` (en), `crop` (str), `live` (bool) | Core downscaled 5-day forecast with P10/P50/P90 spreads & advisories |
 | `GET` | `/v1/statewide/districts` | None | Lists all 22 West Bengal rural districts with GP and block counts |
 | `GET` | `/v1/statewide/panchayats` | `district` (opt), `search` (opt), `limit` (default: 100) | Search & autocomplete across 3,339 statewide Gram Panchayats |
 | `GET` | `/v1/statewide/stats` | None | Statewide Parquet data lake metrics (2.44M rows, QA status) |
@@ -139,13 +139,13 @@ curl -s "http://127.0.0.1:8000/health"
 Primary endpoint serving real-time downscaled weather and agronomic advisories.
 - **`panchayat_id`** (`str`, required): Pilot code (`A1`–`A8`), LGD alias (`WB_107777`–`WB_107784`), or statewide LGD ID (`WB_107001`–`WB_111115` / numeric `gp_code`).
 - **`days`** (`int`, optional, default: `5`): Forecast horizon from `1` to `5` days.
-- **`lang`** (`str`, optional, default: `"bn"`): Advisory language: `"bn"` (Bengali) or `"en"` (English).
+- **`lang`** (`str`, optional, default: `"en"`): Advisory language: `"en"` (English).
 - **`crop`** (`str`, optional, default: `"paddy"`): Target crop for advisory context.
 - **`live`** (`bool`, optional, default: `true`): If `true`, fetches dynamic Open-Meteo ECMWF/GFS weather with 15-minute TTL caching; if `false` or upon network timeout (>3.5s), gracefully falls back to offline Parquet forecast data (`coarse_block_forecast.parquet`).
 
 **Curl Command (Live Dynamic Weather):**
 ```bash
-curl -s "http://127.0.0.1:8000/v1/forecast?panchayat_id=WB_107001&days=5&lang=bn&crop=paddy&live=true"
+curl -s "http://127.0.0.1:8000/v1/forecast?panchayat_id=WB_107001&days=5&lang=en&crop=paddy&live=true"
 ```
 
 **Curl Command (English & Offline Fallback):**
@@ -187,9 +187,8 @@ curl -s "http://127.0.0.1:8000/v1/forecast?panchayat_id=WB_107001&days=5&lang=en
         "rule_id": "moderate_rain",
         "priority": "medium",
         "type": "warning",
-        "text": "মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। জমির জলনিকাশি লক্ষ্য রাখুন এবং অপ্রয়োজনীয় কাজ এড়িয়ে চলুন.",
-        "text_en": "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations.",
-        "text_bn": "মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। জমির জলনিকাশি লক্ষ্য রাখুন এবং অপ্রয়োজনীয় কাজ এড়িয়ে চলুন."
+        "text": "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations.",
+        "text_en": "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations."
       }
     }
   ],
@@ -199,9 +198,8 @@ curl -s "http://127.0.0.1:8000/v1/forecast?panchayat_id=WB_107001&days=5&lang=en
       "rule_id": "moderate_rain",
       "priority": "medium",
       "type": "warning",
-      "text": "মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। জমির জলনিকাশি লক্ষ্য রাখুন এবং অপ্রয়োজনীয় কাজ এড়িয়ে চলুন.",
-      "text_en": "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations.",
-      "text_bn": "মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। জমির জলনিকাশি লক্ষ্য রাখুন এবং অপ্রয়োজনীয় কাজ এড়িয়ে চলুন."
+      "text": "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations.",
+      "text_en": "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations."
     }
   ],
   "degraded": false,
@@ -360,7 +358,7 @@ The following endpoints were proposed during initial architectural planning and 
 | :--- | :--- | :--- | :--- |
 | `/v1/block/overview` | `GET` | Phase 5 | Batch block summary. (Current: frontend queries `/v1/forecast` per GP). |
 | `/v1/export/whatsapp` | `GET` | Phase 4 | Server-side WhatsApp bulletin text. (Current: formatted directly in React client). |
-| `/v1/tts/synthesize` | `GET` | Phase 4 | Spoken Bengali audio stream. (Current: synthesized in browser via Web Speech API). |
+| `/v1/tts/synthesize` | `GET` | Phase 4 | Spoken audio stream. (Current: synthesized in browser via Web Speech API). |
 | `/v1/bulletin/pdf` | `GET` | Phase 4 | Printable A4 Krishi Bulletin PDF generator for CSC notice boards. |
 | `/v1/disaster/flood-risk`| `GET` | Phase 5 | Hydrological surface ponding & flood risk index. |
 | `/v1/admin/forecast/refresh`| `POST` | Phase 1 | Administrative cache purge. (Current: automatic 15-min TTL invalidation). |

@@ -5,7 +5,7 @@ Tests:
 - Offline coarse forecast downscaling for pilot & statewide GPs
 - Dynamic live meteorological data fetching and in-memory TTL caching
 - Monotonic quantile constraints (0 <= P10 <= P50 <= P90)
-- Agronomic advisory generation in Bengali & English
+- Agronomic advisory generation in English
 - Robust error handling for invalid panchayats, invalid day ranges
 - API endpoints /health and /v1/forecast integration
 """

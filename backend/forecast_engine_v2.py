@@ -21,7 +21,7 @@ for p in [BACKEND_DIR, ROOT_DIR]:
 #          ↓
 #   ADVISORY RULE ENGINE
 #          ↓
-#   BENGALI / ENGLISH ADVISORY
+#   AGRONOMIC ADVISORY
 #
 # IMPORTANT:
 #

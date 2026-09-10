@@ -173,10 +173,6 @@ for _, row in forecast.iterrows():
         advisory["text_en"]
     )
 
-    print(
-        "Bengali:",
-        advisory["text_bn"]
-    )
 
 
 print()

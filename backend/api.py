@@ -299,8 +299,8 @@ def get_forecast(
         description="Number of forecast days (1 to 5)",
     ),
     lang: str = Query(
-        "bn",
-        description="Preferred advisory language: bn or en",
+        "en",
+        description="Preferred advisory language: en or bn",
     ),
     crop: str = Query(
         "paddy",
@@ -314,7 +314,7 @@ def get_forecast(
     if not isinstance(days, int):
         days = 5
     if not isinstance(lang, str):
-        lang = "bn"
+        lang = "en"
     if not isinstance(crop, str):
         crop = "paddy"
     if not isinstance(live, bool):
@@ -431,21 +431,13 @@ def get_forecast(
         ]
 
 
-        if lang == "bn":
-
-            advisory_text = (
-                advisory[
-                    "text_bn"
-                ]
+        advisory_text = (
+            advisory.get(
+                "text_en",
+                ""
             )
+        )
 
-        else:
-
-            advisory_text = (
-                advisory[
-                    "text_en"
-                ]
-            )
 
 
         forecast_days.append({

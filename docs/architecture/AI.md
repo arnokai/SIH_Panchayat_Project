@@ -62,7 +62,7 @@ When a user opens the dashboard and interacts with the application, here is the 
        ├─► 6. Advisory Rule Evaluation (backend/advisory_engine.py & rules/rules.yaml):
        │      • Evaluates condition expressions against daily context variables.
        │      • Sorts matched rules by priority (critical > high > medium > low > info).
-       │      • Selects highest priority matching rule and packages bilingual advice (text_bn + text_en).
+       │      • Selects highest priority matching rule and packages advice (text_en).
        │
        └─► 7. Payload Assembly:
               Assembles weather quantiles, dynamic live status, degraded flag (false), and advisories
@@ -102,7 +102,7 @@ To run, develop, or deploy this project, the following components are required:
 ### D. Critical Files Required at Runtime (Must Exist)
 | File | Required By | Purpose |
 |:---|:---|:---|
-| `rules/rules.yaml` | `backend/advisory_engine.py` | Advisory rule definitions, thresholds, Bengali/English text |
+| `rules/rules.yaml` | `backend/advisory_engine.py` | Advisory rule definitions, thresholds, English text |
 | `data_pipeline/metadata/statewide_panchayats.parquet` | `backend/forecast_engine_v2.py`, `backend/api.py` | Master catalog of 3,339 Gram Panchayats with LGD codes and GPS |
 | `data_pipeline/features/statewide_static_features.parquet` | `backend/forecast_engine_v2.py` | 14-column physical static features (terrain, soil, rivers) |
 | `data_pipeline/metadata/crop_calendar.yaml` | `backend/forecast_advisory_context.py` | Crop stages mapped across months for Aman paddy & vegetables |
@@ -184,7 +184,6 @@ Each rule contains:
   type: "warning"          # alert | warning | action | info
   condition: "rain_mm > 20"
   text_en: "Heavy rain expected..."
-  text_bn: "ভারী বৃষ্টির সম্ভাবনা..."
 ```
 * Variables accessible in rule conditions:
   * `rain_mm`: Expected daily rainfall (mm).
@@ -200,7 +199,7 @@ Each rule contains:
 
 ## 7. Development Conventions for AI Agents
 
-1. **Bilingual Requirements:** Every agricultural advisory rule **must** provide both English (`text_en`) and Bengali (`text_bn`). Never omit Bengali text.
+1. **Advisory Requirements:** Every agricultural advisory rule provides English text (`text_en`).
 2. **Pure Parquet Data Lake:** Never commit or depend on active CSV files in `data_pipeline/`. Use partitioned Apache Parquet (`pyarrow` / `fastparquet`).
 3. **Running the Full Test Suite:**
    ```bash

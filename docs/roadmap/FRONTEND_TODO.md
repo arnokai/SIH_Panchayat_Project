@@ -18,10 +18,10 @@
 - [x] **Live Dynamic Weather Status Badge:**
   - Integrated status indicator reflecting real-time Open-Meteo ECMWF/GFS meteorological ingestion downscaled by the Hurdle model (`data.is_live_dynamic`).
   - Graceful fallback messaging for V2 static model and degraded mode.
-- [x] **Bengali Voice / Text-to-Speech ("অডিও শুনুন"):**
-  - Native browser Web Speech API implementation targeting Bengali (`bn-IN`).
-  - Intelligent voice discovery filtering for Bengali speech synthesizers.
-  - Per-card play/stop controls, per-advisory buttons, and full sequential audio player ("সব পরামর্শ শুনুন").
+- [x] **Voice / Text-to-Speech:**
+  - Native browser Web Speech API implementation targeting English.
+  - Intelligent voice discovery filtering for speech synthesizers.
+  - Per-card play/stop controls, per-advisory buttons, and full sequential audio player ("Listen to All").
 - [x] **One-Click WhatsApp Community Dissemination:**
   - WhatsApp Markdown bulletin generator with crop advisories, rainfall, temperatures, and portal links.
   - Dedicated share buttons on daily forecast cards and action advisories.
@@ -68,8 +68,6 @@
     - `src/components/AdvisorySection.jsx`
     - `src/components/SystemTelemetry.jsx`
     - `src/services/api.js`
-- [ ] **Language Toggle & Persistence:**
-  - Add Bengali (`বাংলা`) / English (`English`) toggle switch with `localStorage` persistence.
 - [ ] **Printable Notice Board Bulletin:**
   - Print-optimized CSS stylesheet for Gram Panchayat notice boards and Common Service Centres (CSCs).
 

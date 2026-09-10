@@ -43,8 +43,6 @@ function App() {
 
   const [mapDate, setMapDate] = useState("");
 
-  const [speakingId, setSpeakingId] = useState(null);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [activeStatewideGP, setActiveStatewideGP] = useState(null);
@@ -92,59 +90,6 @@ function App() {
 
 
   // ==========================================================
-  // BENGALI VOICE (TTS) & WHATSAPP BULLETIN DISSEMINATION
-  // ==========================================================
-
-  const speakAdvisory = (text, id) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      alert("আপনার ব্রাউজারে স্পিচ সাপোর্ট নেই (Speech synthesis not supported in this browser).");
-      return;
-    }
-
-    if (speakingId === id) {
-      window.speechSynthesis.cancel();
-      setSpeakingId(null);
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "bn-IN";
-    utterance.rate = 0.88;
-
-    const voices = window.speechSynthesis.getVoices();
-    const bnVoice = voices.find(
-      (v) => v.lang.startsWith("bn") || v.name.toLowerCase().includes("bengali")
-    );
-    if (bnVoice) {
-      utterance.voice = bnVoice;
-    }
-
-    utterance.onend = () => setSpeakingId(null);
-    utterance.onerror = () => setSpeakingId(null);
-
-    setSpeakingId(id);
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const shareOnWhatsApp = ({ panchayatName, date, rainMm, tempC, advisoryText }) => {
-    const lines = [
-      "🌾 *টেরামাইন্ড পঞ্চায়েত কৃষি আবহাওয়া বার্তা* 🌾",
-      `📍 *পঞ্চায়েত:* ${panchayatName}`,
-      date ? `📅 *তারিখ:* ${formatDate(date)} (${date})` : null,
-      rainMm !== undefined && rainMm !== null ? `🌧️ *পূর্বাভাস বৃষ্টি:* ${rainMm} মিমি` : null,
-      tempC !== undefined && tempC !== null ? `🌡️ *সর্বোচ্চ তাপমাত্রা:* ${tempC}°C` : null,
-      advisoryText ? `📢 *পরামর্শ:* ${advisoryText}` : null,
-      "",
-      "🔗 _টেরামাইন্ড — হাইপারলোকাল আবহাওয়া সেবা_",
-    ].filter(Boolean).join("\n");
-
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(lines)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-
-
-  // ==========================================================
   // FETCH FORECAST
   // ==========================================================
 
@@ -162,7 +107,7 @@ function App() {
           `${apiBase}/v1/forecast` +
           `?panchayat_id=${selectedId}` +
           `&days=5` +
-          `&lang=bn` +
+          `&lang=en` +
           `&crop=${encodeURIComponent(selectedCrop)}`;
 
 
@@ -805,73 +750,10 @@ function App() {
                             ADVISORY
                           </span>
 
+                          <p>
+                            {day.advisory?.text_en || day.advisory?.text || "No special advisory."}
+                          </p>
 
-                          {day.advisory?.text_bn ? (
-
-                            <p>
-                              {day.advisory.text_bn}
-                            </p>
-
-                          ) : day.advisory?.text_en ? (
-
-                            <p>
-                              {day.advisory.text_en}
-                            </p>
-
-                          ) : (
-
-                            <p>
-                              No special advisory.
-                            </p>
-
-                          )}
-
-                        </div>
-
-                        {/* Farmer Action Buttons: Voice (TTS) & WhatsApp */}
-                        <div className="card-farmer-actions">
-                          <button
-                            type="button"
-                            className={`btn-action btn-voice ${speakingId === day.date ? "is-speaking" : ""}`}
-                            onClick={() =>
-                              speakAdvisory(
-                                day.advisory?.text_bn ||
-                                  day.advisory?.text_en ||
-                                  "কোনো বিশেষ কৃষি পরামর্শ নেই।",
-                                day.date
-                              )
-                            }
-                            title="বাংলায় শুনুন"
-                          >
-                            <span className="action-icon">
-                              {speakingId === day.date ? "⏹️" : "🔊"}
-                            </span>
-                            <span>
-                              {speakingId === day.date
-                                ? "থামান"
-                                : "বাংলায় শুনুন"}
-                            </span>
-                          </button>
-
-                          <button
-                            type="button"
-                            className="btn-action btn-whatsapp"
-                            onClick={() =>
-                              shareOnWhatsApp({
-                                panchayatName: data.panchayat_name,
-                                date: day.date,
-                                rainMm: day.rain_mm?.p50,
-                                tempC: day.tmax_c?.p50,
-                                advisoryText:
-                                  day.advisory?.text_bn ||
-                                  day.advisory?.text_en,
-                              })
-                            }
-                            title="হোয়াটসঅ্যাপে শেয়ার"
-                          >
-                            <span className="action-icon">💬</span>
-                            <span>শেয়ার</span>
-                          </button>
                         </div>
 
                       </article>
@@ -944,32 +826,6 @@ function App() {
                         ? "ATTENTION"
                         : "LOW"}
                     </span>
-
-                    {data.advisories?.length > 0 && (
-                      <button
-                        type="button"
-                        className={`btn-action btn-voice-all ${speakingId === "all-advisories" ? "is-speaking" : ""}`}
-                        onClick={() => {
-                          const allText = data.advisories
-                            .map(
-                              (a) =>
-                                `${formatDate(a.date)}: ${a.text_bn || a.text_en}`
-                            )
-                            .join("। ");
-                          speakAdvisory(allText, "all-advisories");
-                        }}
-                        title="সব পরামর্শ বাংলায় শুনুন"
-                      >
-                        <span className="action-icon">
-                          {speakingId === "all-advisories" ? "⏹️" : "🔊"}
-                        </span>
-                        <span>
-                          {speakingId === "all-advisories"
-                            ? "থামান"
-                            : "সব পরামর্শ শুনুন"}
-                        </span>
-                      </button>
-                    )}
                   </div>
 
                 </div>
@@ -1008,48 +864,10 @@ function App() {
 
                             <strong>
 
-                              {item.text_bn ||
-                                item.text_en}
+                              {item.text_en ||
+                                item.text}
 
                             </strong>
-
-
-                            <small>
-                              {item.text_en}
-                            </small>
-
-                            <div className="advisory-item-actions">
-                              <button
-                                type="button"
-                                className={`btn-mini btn-mini-voice ${speakingId === `summary-${item.date}-${item.rule_id}` ? "is-speaking" : ""}`}
-                                onClick={() =>
-                                  speakAdvisory(
-                                    item.text_bn || item.text_en,
-                                    `summary-${item.date}-${item.rule_id}`
-                                  )
-                                }
-                                title="বাংলায় শুনুন"
-                              >
-                                {speakingId === `summary-${item.date}-${item.rule_id}`
-                                  ? "⏹️ থামান"
-                                  : "🔊 শুনুন"}
-                              </button>
-
-                              <button
-                                type="button"
-                                className="btn-mini btn-mini-whatsapp"
-                                onClick={() =>
-                                  shareOnWhatsApp({
-                                    panchayatName: data.panchayat_name,
-                                    date: item.date,
-                                    advisoryText: item.text_bn || item.text_en,
-                                  })
-                                }
-                                title="হোয়াটসঅ্যাপে শেয়ার"
-                              >
-                                💬 শেয়ার
-                              </button>
-                            </div>
 
                           </div>
 

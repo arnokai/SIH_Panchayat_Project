@@ -100,7 +100,7 @@ Crop calendar + soil context
    ↓
 Rule engine
    ↓
-English + Bengali advisory
+English advisory
    ↓
 FastAPI
    ↓
@@ -118,7 +118,7 @@ React dashboard + Panchayat comparison map
 | Soil context | Earlier feature experiments | SoilGrids-derived soil classification |
 | Dry spell logic | Not operationalized | Forecast-aware dry-day context |
 | Humidity context | Earlier weather data | Consecutive high-humidity context available for advisory rules |
-| Advisory language | English/Bengali | English + Bengali API output |
+| Advisory language | English | English API output |
 | Crop selection | Limited | `paddy` / `vegetables` in dashboard |
 | Map | Earlier dashboard concept | Panchayat comparison map |
 | API status | Prototype API | V2 `/v1/...` endpoints |
@@ -177,7 +177,7 @@ The forecast engine supports:
 - Maximum & minimum temperatures
 - Dynamic live weather ingestion (`live=true`, default) with 15-minute in-memory TTL cache
 - Graceful offline fallback (`live=false`) to local parquet baseline
-- Context-aware crop advisories in English and Bengali
+- Context-aware crop advisories in English
 
 ### Supported Panchayat Identifiers:
 Supports all **3,339 official Local Government Directory (LGD) Gram Panchayats** across West Bengal using canonical LGD identifiers (`WB_<gp_code>`), with backward compatibility for Amdanga pilot aliases (`A1`–`A8`):
@@ -225,7 +225,7 @@ Dry/humidity context
         ↓
    Highest-priority matching rule
         ↓
-English + Bengali advisory
+   English advisory
 ```
 
 This makes the advisory system easier to modify than hard-coding every recommendation inside the API.
@@ -439,11 +439,11 @@ curl -s "http://127.0.0.1:8000/v1/statewide/panchayats?search=Amdanga&limit=5" |
 
 ### 5. 5-Day Downscaled Weather Forecast & Advisory
 ```text
-GET /v1/forecast?panchayat_id={id}&days={1-5}&lang={bn|en}&crop={crop}&live={true|false}
+GET /v1/forecast?panchayat_id={id}&days={1-5}&lang={en}&crop={crop}&live={true|false}
 ```
 ```bash
-# Live dynamic forecast (LGD ID, Bengali):
-curl -s "http://127.0.0.1:8000/v1/forecast?panchayat_id=WB_107778&days=5&lang=bn&crop=paddy&live=true" | jq
+# Live dynamic forecast (LGD ID):
+curl -s "http://127.0.0.1:8000/v1/forecast?panchayat_id=WB_107778&days=5&lang=en&crop=paddy&live=true" | jq
 
 # Offline fallback forecast (Pilot alias, English):
 curl -s "http://127.0.0.1:8000/v1/forecast?panchayat_id=A2&days=5&lang=en&crop=paddy&live=false" | jq
@@ -458,7 +458,7 @@ http://127.0.0.1:8000/docs
 
 # 10. Example V2 Forecast Response
 
-Production multi-quantile API response (`/v1/forecast?panchayat_id=WB_107778&days=5&lang=bn&crop=paddy&live=true`):
+Production multi-quantile API response (`/v1/forecast?panchayat_id=WB_107778&days=5&lang=en&crop=paddy&live=true`):
 
 ```json
 {
@@ -491,9 +491,8 @@ Production multi-quantile API response (`/v1/forecast?panchayat_id=WB_107778&day
         "rule_id": "moderate_rain",
         "priority": "medium",
         "type": "warning",
-        "text": "মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। জমির জলনিকাশি লক্ষ্য রাখুন এবং অপ্রয়োজনীয় কাজ এড়িয়ে চলুন.",
-        "text_en": "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations.",
-        "text_bn": "মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। জমির জলনিকাশি লক্ষ্য রাখুন এবং অপ্রয়োজনীয় কাজ এড়িয়ে চলুন."
+        "text": "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations.",
+        "text_en": "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations."
       }
     }
   ]
@@ -530,7 +529,7 @@ frontend/src/ComparisonMap.jsx
 - Five-day forecast cards
 - Rainfall information
 - Temperature information
-- Bengali advisory
+- Agricultural advisory (English)
 - Advisory priority/type
 - Panchayat comparison map
 - System/degraded status
@@ -669,7 +668,7 @@ SIH_Panchayat_Project/
 │   └── forecast_advisory_context.py   # Multi-day streak tracking (dry days, humidity streaks)
 │
 ├── rules/                             # [Member 2: Backend & Domain Rules]
-│   └── rules.yaml                     # Single source of truth for agronomic rules & Bengali text
+│   └── rules.yaml                     # Single source of truth for agronomic rules & advisory text
 │
 ├── ml/                                # [Member 3: AI / ML & Data Lake Engineer]
 │   ├── pipelines/train_statewide_hurdle_model.py # Statewide Two-Stage Hurdle training pipeline
@@ -736,7 +735,7 @@ TerraMind V2 is deployed to production using a decoupled, zero-cost cloud archit
 │                                 Vercel Global Edge Network (Frontend)                               │
 │  - React 19 + Vite Dashboard                                                                        │
 │  - Interactive Leaflet Panchayat Map                                                                │
-│  - Bengali / English Agricultural Advisories                                                        │
+│  - Agricultural Advisories                                                                          │
 │  - URL: https://sih-panchayat-project.vercel.app                                                    │
 └──────────────────────────────────────────────────┬──────────────────────────────────────────────────┘
                                                    │
@@ -829,7 +828,7 @@ Current operational scope:
 - Full 22-district statewide coverage across 3,339 Gram Panchayats using official LGD codes.
 - High-accuracy Two-Stage Hurdle Downscaling model (`statewide_hurdle_v2.pkl`) producing P10/P50/P90 quantile bounds.
 - Dynamic live weather ingestion from Open-Meteo with 15-minute TTL caching and graceful offline fallback.
-- Context-aware bilingual agronomic advisories (English and Bengali) for major agro-climatic zones.
+- Context-aware agronomic advisories (English) for major agro-climatic zones.
 
 Future roadmap enhancements:
 - Local agricultural faculty & KVK field validation of dynamic spray/irrigation thresholds.
@@ -874,7 +873,7 @@ V2
 ├── 5-day forecast delivery (/v1/forecast)
 ├── Statewide directory & search endpoints (/v1/statewide/*)
 ├── Context-aware agronomic advisory engine (rules/rules.yaml)
-├── English + Bengali advisory API
+├── English advisory API
 ├── 3,339 GP search & comparison map
 ├── Render + Vercel cloud deployment with CI branch protection
 └── Complete 157-test automated verification suite
