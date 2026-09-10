@@ -108,3 +108,4 @@ api_test_output.txt
 
 # Agent logs & temporary artifacts
 .agents/
+graphify-out/

@@ -29,10 +29,8 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CSV_PATH = PROJECT_ROOT / "data_pipeline" / "csv" / "metadata" / "statewide_panchayats.csv"
 PARQUET_PATH = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
 PILOT_COORDS_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_coordinates.parquet"
-PILOT_COORDS_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "raw" / "panchayat_coordinates.csv"
 
 # Global Statewide Bounds (WGS84 EPSG:4326)
 WB_LAT_MIN, WB_LAT_MAX = 21.5, 27.3
@@ -66,12 +64,7 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
         if not PARQUET_PATH.is_file():
             raise FileNotFoundError(f"Parquet artifact not found: {PARQUET_PATH}")
         cls.df_parquet = pd.read_parquet(PARQUET_PATH)
-        if CSV_PATH.is_file():
-            cls.df_csv = pd.read_csv(CSV_PATH)
-            cls.dfs = [("Parquet", cls.df_parquet), ("CSV", cls.df_csv)]
-        else:
-            cls.df_csv = None
-            cls.dfs = [("Parquet", cls.df_parquet)]
+        cls.dfs = [("Parquet", cls.df_parquet)]
 
     def test_01_coordinate_bounds_oracle(self):
         """Oracle: All coordinates strictly within [21.5N, 27.3N] and [85.8E, 89.9E]."""
@@ -164,30 +157,10 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
             blocks = set(df["block_name"].unique())
             self.assertEqual(len(blocks), 342, f"{name}: block count {len(blocks)} != 342")
 
-    def test_06_csv_parquet_parity_oracle(self):
-        """Oracle: Strict cross-format parity between CSV and Parquet."""
-        if self.df_csv is None:
-            self.skipTest("CSV retired - pure Parquet architecture")
-        self.assertEqual(len(self.df_csv), len(self.df_parquet))
-        self.assertEqual(list(self.df_csv.columns), list(self.df_parquet.columns))
-
-        # Array identity for integers and strings
-        np.testing.assert_array_equal(self.df_csv["gp_code"].values, self.df_parquet["gp_code"].values)
-        self.assertTrue((self.df_csv["panchayat_id"].values == self.df_parquet["panchayat_id"].values).all())
-        self.assertTrue((self.df_csv["panchayat_name"].values == self.df_parquet["panchayat_name"].values).all())
-        self.assertTrue((self.df_csv["block_name"].values == self.df_parquet["block_name"].values).all())
-        self.assertTrue((self.df_csv["district_name"].values == self.df_parquet["district_name"].values).all())
-
-        # Coordinate floating point alignment within 1e-7 deg (~1 cm)
-        np.testing.assert_allclose(self.df_csv["latitude"].values, self.df_parquet["latitude"].values, atol=1e-7)
-        np.testing.assert_allclose(self.df_csv["longitude"].values, self.df_parquet["longitude"].values, atol=1e-7)
-
-    def test_07_pilot_amdanga_backward_compatibility_oracle(self):
+    def test_06_pilot_amdanga_backward_compatibility_oracle(self):
         """Oracle: Pilot Amdanga coordinates preserved identically."""
         if PILOT_COORDS_PARQUET.is_file():
             pilot_df = pd.read_parquet(PILOT_COORDS_PARQUET)
-        elif PILOT_COORDS_CSV.is_file():
-            pilot_df = pd.read_csv(PILOT_COORDS_CSV)
         else:
             self.skipTest(f"Pilot coordinate reference file not found at {PILOT_COORDS_PARQUET}")
         self.assertEqual(len(pilot_df), 8)
@@ -207,37 +180,7 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
             self.assertAlmostEqual(rec["latitude"], ref_lat, places=6)
             self.assertAlmostEqual(rec["longitude"], ref_lon, places=6)
 
-    def test_08_stdlib_csv_independent_parser(self):
-        """Oracle: Parse CSV with Python standard library csv module independently."""
-        if not CSV_PATH.is_file():
-            self.skipTest("CSV retired - pure Parquet architecture")
-        with open(CSV_PATH, "r", encoding="utf-8", newline="") as f:
-            reader = csv.reader(f)
-            header = next(reader)
-            self.assertEqual(header, EXPECTED_COLUMNS)
-
-            seen_codes: Set[int] = set()
-            seen_pids: Set[str] = set()
-            row_count = 0
-
-            for row in reader:
-                row_count += 1
-                self.assertEqual(len(row), 7)
-                code_str, pid, pname, bname, dname, lat_str, lon_str = row
-                code = int(code_str)
-                self.assertNotIn(code, seen_codes)
-                seen_codes.add(code)
-                self.assertNotIn(pid, seen_pids)
-                seen_pids.add(pid)
-                self.assertEqual(pid, f"WB_{code}")
-
-                lat, lon = float(lat_str), float(lon_str)
-                self.assertTrue(WB_LAT_MIN <= lat <= WB_LAT_MAX)
-                self.assertTrue(WB_LON_MIN <= lon <= WB_LON_MAX)
-
-            self.assertEqual(row_count, 3339)
-
-    def test_09_pyarrow_native_schema(self):
+    def test_07_pyarrow_native_schema(self):
         """Oracle: PyArrow table schema and null count."""
         table = pq.read_table(PARQUET_PATH)
         self.assertEqual(table.num_rows, 3339)
@@ -256,7 +199,7 @@ class TestM1ChallengerEmpirical(unittest.TestCase):
         self.assertEqual(str(schema.field("latitude").type), "double")
         self.assertEqual(str(schema.field("longitude").type), "double")
 
-    def test_10_adversarial_spatial_collision_oracle(self):
+    def test_08_adversarial_spatial_collision_oracle(self):
         """Adversarial Oracle: Enforce 0 spatial point collisions across the entire statewide catalog."""
         coords = list(zip(self.df_parquet["latitude"], self.df_parquet["longitude"]))
         unique_coords = set(coords)

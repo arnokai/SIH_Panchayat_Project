@@ -111,7 +111,12 @@ def fetch_live_block_weather(lat: float, lon: float, days: int = 5):
     now = time.time()
 
     if cache_key in _LIVE_WEATHER_CACHE:
-        cached_time, cached_df, cached_live_data = _LIVE_WEATHER_CACHE[cache_key]
+        cached = _LIVE_WEATHER_CACHE[cache_key]
+        if len(cached) == 3:
+            cached_time, cached_df, cached_live_data = cached
+        else:
+            cached_time, cached_df = cached
+            cached_live_data = None
         if now - cached_time < _LIVE_WEATHER_TTL_SECONDS:
             return cached_df.copy(), cached_live_data
 

@@ -19,10 +19,8 @@ import pyarrow.parquet as pq
 from scipy.spatial import cKDTree
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CSV_PATH = PROJECT_ROOT / "data_pipeline" / "csv" / "metadata" / "statewide_panchayats.csv"
 PARQUET_PATH = PROJECT_ROOT / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
 PILOT_COORDS_PARQUET = PROJECT_ROOT / "data_pipeline" / "raw" / "panchayat_coordinates.parquet"
-PILOT_COORDS_CSV = PROJECT_ROOT / "data_pipeline" / "csv" / "raw" / "panchayat_coordinates.csv"
 
 # Global Statewide Bounds (WGS84 EPSG:4326)
 WB_LAT_MIN, WB_LAT_MAX = 21.5, 27.3
@@ -62,12 +60,7 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.df_parquet = pd.read_parquet(PARQUET_PATH)
-        if CSV_PATH.is_file():
-            cls.df_csv = pd.read_csv(CSV_PATH)
-            cls.dfs = [("Parquet", cls.df_parquet), ("CSV", cls.df_csv)]
-        else:
-            cls.df_csv = None
-            cls.dfs = [("Parquet", cls.df_parquet)]
+        cls.dfs = [("Parquet", cls.df_parquet)]
 
     def test_01_cardinality_and_administrative_hierarchy(self):
         """Challenger Oracle: Exactly 3,339 GPs, 22 rural districts, 342 blocks, Kolkata excluded."""
@@ -200,30 +193,10 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
         self.assertGreater(p1_nn, 500.0, f"1st percentile NN distance {p1_nn:.2f}m < 400m")
         self.assertGreater(median_nn, 750.0, f"Median NN distance {median_nn:.2f}m < 1000m")
 
-    def test_08_csv_vs_parquet_complete_parity(self):
-        """Challenger Oracle: Bitwise & semantic parity between CSV and Parquet."""
-        if self.df_csv is None:
-            self.skipTest("CSV retired - pure Parquet architecture")
-        self.assertEqual(len(self.df_csv), len(self.df_parquet))
-        self.assertEqual(list(self.df_csv.columns), list(self.df_parquet.columns))
-
-        # Check column types and values
-        np.testing.assert_array_equal(self.df_csv["gp_code"].values, self.df_parquet["gp_code"].values)
-        self.assertTrue((self.df_csv["panchayat_id"].values == self.df_parquet["panchayat_id"].values).all())
-        self.assertTrue((self.df_csv["panchayat_name"].values == self.df_parquet["panchayat_name"].values).all())
-        self.assertTrue((self.df_csv["block_name"].values == self.df_parquet["block_name"].values).all())
-        self.assertTrue((self.df_csv["district_name"].values == self.df_parquet["district_name"].values).all())
-
-        # Coordinates match within 1e-7 deg (< 1.1 cm)
-        np.testing.assert_allclose(self.df_csv["latitude"].values, self.df_parquet["latitude"].values, atol=1e-7)
-        np.testing.assert_allclose(self.df_csv["longitude"].values, self.df_parquet["longitude"].values, atol=1e-7)
-
-    def test_09_pilot_amdanga_ground_truth_preservation(self):
+    def test_08_pilot_amdanga_ground_truth_preservation(self):
         """Challenger Oracle: Exact coordinate preservation for all 8 surveyed pilot Panchayats."""
         if PILOT_COORDS_PARQUET.is_file():
             pilot_df = pd.read_parquet(PILOT_COORDS_PARQUET)
-        elif PILOT_COORDS_CSV.is_file():
-            pilot_df = pd.read_csv(PILOT_COORDS_CSV)
         else:
             self.skipTest("Pilot coords file missing")
         self.assertEqual(len(pilot_df), 8)
@@ -243,26 +216,8 @@ class TestM1ChallengerStressHarness(unittest.TestCase):
             self.assertAlmostEqual(p_rec["latitude"], ref_lat, places=6)
             self.assertAlmostEqual(p_rec["longitude"], ref_lon, places=6)
 
-    def test_10_stdlib_csv_and_pyarrow_native_parsers(self):
-        """Challenger Oracle: Parse CSV with stdlib and Parquet with PyArrow native table reader."""
-        # 1. Stdlib CSV
-        if CSV_PATH.is_file():
-            with open(CSV_PATH, "r", encoding="utf-8", newline="") as f:
-                reader = csv.DictReader(f)
-                self.assertEqual(reader.fieldnames, EXPECTED_COLUMNS)
-                rows = list(reader)
-                self.assertEqual(len(rows), 3339)
-                seen_codes = set()
-                for r in rows:
-                    code = int(r["gp_code"])
-                    self.assertNotIn(code, seen_codes)
-                    seen_codes.add(code)
-                    self.assertEqual(r["panchayat_id"], f"WB_{code}")
-                    lat, lon = float(r["latitude"]), float(r["longitude"])
-                    self.assertTrue(WB_LAT_MIN <= lat <= WB_LAT_MAX)
-                    self.assertTrue(WB_LON_MIN <= lon <= WB_LON_MAX)
-
-        # 2. PyArrow native table
+    def test_09_pyarrow_native_parser(self):
+        """Challenger Oracle: Parquet with PyArrow native table reader."""
         table = pq.read_table(PARQUET_PATH)
         self.assertEqual(table.num_rows, 3339)
         self.assertEqual(table.num_columns, 7)

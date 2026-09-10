@@ -17,13 +17,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 METADATA_DIR = PROJECT_ROOT / "data_pipeline" / "metadata"
 RAW_DIR = PROJECT_ROOT / "data_pipeline" / "raw"
 
-CSV_DIR = PROJECT_ROOT / "data_pipeline" / "csv"
-CSV_PATH = CSV_DIR / "metadata" / "statewide_panchayats.csv"
 PARQUET_PATH = METADATA_DIR / "statewide_panchayats.parquet"
 PILOT_COORDS_PARQUET = RAW_DIR / "panchayat_coordinates.parquet"
-PILOT_COORDS_CSV = CSV_DIR / "raw" / "panchayat_coordinates.csv"
 PILOT_METADATA_PARQUET = METADATA_DIR / "panchayats.parquet"
-PILOT_METADATA_CSV = CSV_DIR / "metadata" / "panchayats.csv"
 
 CANONICAL_23_DISTRICTS = {
     "Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur",
@@ -52,16 +48,11 @@ class TestStatewideRegistry(unittest.TestCase):
         """Verify Parquet registry artifact exists and meets minimum size."""
         self.assertTrue(PARQUET_PATH.is_file(), f"Missing Parquet registry at {PARQUET_PATH}")
         self.assertGreater(PARQUET_PATH.stat().st_size, 50_000, "Parquet catalog suspiciously small (<50KB)")
-        if CSV_PATH.is_file():
-            self.assertGreater(CSV_PATH.stat().st_size, 100_000, "CSV catalog suspiciously small (<100KB)")
 
     def test_02_exact_columns_and_order(self):
         """Verify exact 7 column names and ordering."""
         df_parquet = pd.read_parquet(PARQUET_PATH)
         self.assertEqual(list(df_parquet.columns), EXPECTED_COLUMNS, "Parquet column order mismatch")
-        if CSV_PATH.is_file():
-            df_csv = pd.read_csv(CSV_PATH)
-            self.assertEqual(list(df_csv.columns), EXPECTED_COLUMNS, "CSV column order mismatch")
 
     def test_03_physical_dtypes(self):
         """Verify strict physical data types in the Parquet table."""
@@ -125,31 +116,17 @@ class TestStatewideRegistry(unittest.TestCase):
         df = pd.read_parquet(PARQUET_PATH)
         if PILOT_COORDS_PARQUET.is_file():
             df_pilot = pd.read_parquet(PILOT_COORDS_PARQUET)
-        elif PILOT_COORDS_CSV.is_file():
-            df_pilot = pd.read_csv(PILOT_COORDS_CSV)
         else:
             self.skipTest("Pilot coordinate file not found")
-            self.assertEqual(len(df_pilot), 8, "Expected 8 pilot Panchayats in raw coordinates")
-            for _, r in df_pilot.iterrows():
-                code = int(r["GPCODE"])
-                match = df[df["gp_code"] == code]
-                self.assertEqual(len(match), 1, f"Pilot GP code {code} missing or duplicate in registry")
-                self.assertAlmostEqual(match.iloc[0]["latitude"], float(r["latitude"]), places=6)
-                self.assertAlmostEqual(match.iloc[0]["longitude"], float(r["longitude"]), places=6)
+        self.assertEqual(len(df_pilot), 8, "Expected 8 pilot Panchayats in raw coordinates")
+        for _, r in df_pilot.iterrows():
+            code = int(r["GPCODE"])
+            match = df[df["gp_code"] == code]
+            self.assertEqual(len(match), 1, f"Pilot GP code {code} missing or duplicate in registry")
+            self.assertAlmostEqual(match.iloc[0]["latitude"], float(r["latitude"]), places=6)
+            self.assertAlmostEqual(match.iloc[0]["longitude"], float(r["longitude"]), places=6)
 
-    def test_09_csv_parquet_parity(self):
-        """Verify absolute parity between CSV and Parquet exports if CSV exists."""
-        if not CSV_PATH.is_file():
-            self.skipTest("CSV retired - pure Parquet architecture")
-        df_parquet = pd.read_parquet(PARQUET_PATH)
-        df_csv = pd.read_csv(CSV_PATH)
-        self.assertEqual(len(df_csv), len(df_parquet), "Row count discrepancy between CSV and Parquet")
-        pd.testing.assert_series_equal(df_csv["gp_code"], df_parquet["gp_code"], check_names=True)
-        pd.testing.assert_series_equal(df_csv["panchayat_id"], df_parquet["panchayat_id"], check_names=True)
-        np.testing.assert_allclose(df_csv["latitude"].values, df_parquet["latitude"].values, rtol=1e-7)
-        np.testing.assert_allclose(df_csv["longitude"].values, df_parquet["longitude"].values, rtol=1e-7)
-
-    def test_10_pure_python_dissolution_logic(self):
+    def test_09_pure_python_dissolution_logic(self):
         """Verify Shoelace dissolution handles multi-part polygons (e.g. BODAI 2 parts)."""
         from data_pipeline.metadata.build_statewide_registry import (
             pure_python_polygon_centroid,
@@ -170,26 +147,21 @@ class TestStatewideRegistry(unittest.TestCase):
             self.assertEqual(len(dissolved), 8, "Expected 8 dissolved GP centroids from 9 features")
             self.assertIn(107780, dissolved, "BODAI (GPCODE 107780) missing from dissolved result")
 
-    def test_11_global_spatial_uniqueness(self):
+    def test_10_global_spatial_uniqueness(self):
         """Verify that all 3,339 Gram Panchayats have strictly unique (latitude, longitude) coordinates."""
-        df_parquet = pd.read_parquet(PARQUET_PATH)
-        dfs = [("Parquet", df_parquet)]
-        if CSV_PATH.is_file():
-            dfs.append(("CSV", pd.read_csv(CSV_PATH)))
+        df = pd.read_parquet(PARQUET_PATH)
+        total_rows = len(df)
+        unique_coords_count = df[["latitude", "longitude"]].drop_duplicates().shape[0]
+        dups = df[df.duplicated(subset=["latitude", "longitude"], keep=False)]
+        self.assertEqual(
+            unique_coords_count,
+            total_rows,
+            f"Parquet spatial uniqueness failure: {total_rows - unique_coords_count} duplicate coordinate pairs "
+            f"({len(dups)} total affected rows). Duplicated coordinates:\n"
+            f"{dups[['gp_code', 'panchayat_name', 'block_name', 'latitude', 'longitude']]}"
+        )
 
-        for name, df in dfs:
-            total_rows = len(df)
-            unique_coords_count = df[["latitude", "longitude"]].drop_duplicates().shape[0]
-            dups = df[df.duplicated(subset=["latitude", "longitude"], keep=False)]
-            self.assertEqual(
-                unique_coords_count,
-                total_rows,
-                f"{name} spatial uniqueness failure: {total_rows - unique_coords_count} duplicate coordinate pairs "
-                f"({len(dups)} total affected rows). Duplicated coordinates:\n"
-                f"{dups[['gp_code', 'panchayat_name', 'block_name', 'latitude', 'longitude']]}"
-            )
-
-    def test_12_intra_block_minimum_spatial_separation(self):
+    def test_11_intra_block_minimum_spatial_separation(self):
         """Verify that all Gram Panchayats within each CD block maintain >= 250m pairwise geodesic separation."""
         df = pd.read_parquet(PARQUET_PATH)
         min_threshold_m = 250.0

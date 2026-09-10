@@ -123,11 +123,11 @@ class TestForecastEngineV2(unittest.TestCase):
         fake_lat, fake_lon = 22.82, 88.52
         cache_key = (round(fake_lat, 4), round(fake_lon, 4), 5)
         dummy_df = pd.DataFrame([{"dummy": 1}])
-        _LIVE_WEATHER_CACHE[cache_key] = (9999999999.0, dummy_df)
+        _LIVE_WEATHER_CACHE[cache_key] = (9999999999.0, dummy_df, None)
 
-        fetched = fetch_live_block_weather(fake_lat, fake_lon, days=5)
-        self.assertIsNotNone(fetched)
-        self.assertIn("dummy", fetched.columns)
+        fetched_df, fetched_live = fetch_live_block_weather(fake_lat, fake_lon, days=5)
+        self.assertIsNotNone(fetched_df)
+        self.assertIn("dummy", fetched_df.columns)
         _LIVE_WEATHER_CACHE.pop(cache_key, None)
 
 
