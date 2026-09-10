@@ -125,6 +125,75 @@ function getFarmerQuickActions(p50, rainProb, humidity, windKmh, crop) {
         tip: "Keep 2–3 cm shallow standing water to protect roots and suppress weed growth.",
       };
     }
+  } else if (crop === "potato") {
+    if (p50 >= 15.0) {
+      cropAction = {
+        title: "Potato Furrow Drainage",
+        status: "danger",
+        badge: "🚨 Open Drainage Furrows",
+        tip: "Potatoes cannot tolerate waterlogging. Clear furrows immediately to prevent tuber rot.",
+      };
+    } else if (humidity >= 82) {
+      cropAction = {
+        title: "Potato Blight Prevention",
+        status: "warning",
+        badge: "⚠️ Late Blight Alert",
+        tip: "Cool, damp air triggers Phytophthora blight. Inspect foliage and prepare protective spray.",
+      };
+    } else {
+      cropAction = {
+        title: "Potato Crop Management",
+        status: "success",
+        badge: "🥔 Ideal Bulking Conditions",
+        tip: "Cool, sunny days promote healthy tuber enlargement and root aeration.",
+      };
+    }
+  } else if (crop === "mustard") {
+    if (p50 >= 10.0) {
+      cropAction = {
+        title: "Mustard Field Drainage",
+        status: "warning",
+        badge: "⚠️ Avoid Standing Water",
+        tip: "Mustard plants are sensitive to waterlogging. Ensure channels drain freely.",
+      };
+    } else if (humidity >= 75) {
+      cropAction = {
+        title: "Mustard Pest Alert",
+        status: "warning",
+        badge: "⚠️ Aphid & Rust Watch",
+        tip: "Humid overcast conditions favor aphid colonies and white rust on leaves.",
+      };
+    } else {
+      cropAction = {
+        title: "Mustard Crop Growth",
+        status: "success",
+        badge: "🌼 Favorable Pod Filling",
+        tip: "Dry weather promotes active pollinator activity and healthy pod maturation.",
+      };
+    }
+  } else if (crop === "jute") {
+    if (p50 >= 20.0) {
+      cropAction = {
+        title: "Jute Field Protection",
+        status: "danger",
+        badge: "🚨 Drain Flood Water",
+        tip: "High risk of Macrophomina stem and root rot from standing water. Open field drains.",
+      };
+    } else if (p50 >= 5.0) {
+      cropAction = {
+        title: "Jute Stem Growth",
+        status: "info",
+        badge: "🌿 Vigorous Vegetative Phase",
+        tip: "Warm monsoon showers promote rapid stem elongation and fiber development.",
+      };
+    } else {
+      cropAction = {
+        title: "Jute Crop Care",
+        status: "success",
+        badge: "🌿 Normal Fiber Growth",
+        tip: "Maintain weed-free furrows and monitor soil moisture for young seedlings.",
+      };
+    }
   } else {
     // vegetables
     if (p50 >= 5.0) {
@@ -229,6 +298,27 @@ export default function CurrentWeatherHero({
                 onClick={() => onCropChange("paddy")}
               >
                 🌾 Paddy
+              </button>
+              <button
+                type="button"
+                className={`crop-pill ${selectedCrop === "potato" ? "active" : ""}`}
+                onClick={() => onCropChange("potato")}
+              >
+                🥔 Potato
+              </button>
+              <button
+                type="button"
+                className={`crop-pill ${selectedCrop === "mustard" ? "active" : ""}`}
+                onClick={() => onCropChange("mustard")}
+              >
+                🌼 Mustard
+              </button>
+              <button
+                type="button"
+                className={`crop-pill ${selectedCrop === "jute" ? "active" : ""}`}
+                onClick={() => onCropChange("jute")}
+              >
+                🌿 Jute
               </button>
               <button
                 type="button"
@@ -342,13 +432,37 @@ export default function CurrentWeatherHero({
 
       {/* Selected Crop Guidance Callout */}
       <div className="crop-guidance-banner">
-        <span className="crop-guidance-icon">{selectedCrop === "paddy" ? "🌾" : "🥬"}</span>
+        <span className="crop-guidance-icon">
+          {selectedCrop === "paddy"
+            ? "🌾"
+            : selectedCrop === "potato"
+            ? "🥔"
+            : selectedCrop === "mustard"
+            ? "🌼"
+            : selectedCrop === "jute"
+            ? "🌿"
+            : "🥬"}
+        </span>
         <div className="crop-guidance-text">
           <strong>
-            {selectedCrop === "paddy" ? "Paddy Crop Management Tip:" : "Vegetables Management Tip:"}
+            {selectedCrop === "paddy"
+              ? "Paddy Crop Management Tip:"
+              : selectedCrop === "potato"
+              ? "Potato Crop Management Tip:"
+              : selectedCrop === "mustard"
+              ? "Mustard Crop Management Tip:"
+              : selectedCrop === "jute"
+              ? "Jute Crop Management Tip:"
+              : "Vegetables Management Tip:"}
           </strong>{" "}
           {selectedCrop === "paddy"
             ? "Rice crops thrive with shallow standing water (2–3 cm). Check field bunds to retain rainwater, but open drainage channels if heavy showers exceed 5 cm depth to prevent tiller decay."
+            : selectedCrop === "potato"
+            ? "Potatoes require well-drained raised beds. Inspect for early Late Blight signs on leaf tips during cool humid fog, and never let water pool in furrows."
+            : selectedCrop === "mustard"
+            ? "Mustard is vulnerable to aphids during cloudy, humid weather at flowering. Ensure field drainage and inspect underside of leaves regularly."
+            : selectedCrop === "jute"
+            ? "Jute requires good soil moisture during vegetative elongation, but stagnant water at seedling stage causes fungal stem rot. Keep outlets cleared."
             : "Vegetable plots are sensitive to standing water and high air humidity. Maintain raised beds, clear drainage furrows before showers, and scout for early leaf blight or fungal mildew."}
         </div>
       </div>

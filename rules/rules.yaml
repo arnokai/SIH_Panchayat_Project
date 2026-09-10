@@ -21,6 +21,9 @@ rules:
     crop:
       - paddy
       - vegetables
+      - potato
+      - mustard
+      - jute
 
     condition: "rain_mm > 20"
 
@@ -212,3 +215,93 @@ rules:
     type: warning
 
     text_en: "Favorable conditions for Sheath Blight. Inspect lower leaf sheaths; avoid excessive nitrogen."
+
+
+
+  # ----------------------------------------------------------
+  # 11. POTATO LATE BLIGHT (Phytophthora infestans)
+  # ----------------------------------------------------------
+
+  - id: potato_late_blight
+
+    crop:
+      - potato
+
+    condition: "humidity > 82 and tmax_c <= 25 and tmax_c >= 12"
+
+    priority: high
+    type: warning
+
+    text_en: "Late Blight weather warning. High humidity and cool temperatures favor Phytophthora blight. Apply prophylactic Mancozeb spray."
+
+
+
+  # ----------------------------------------------------------
+  # 12. POTATO WATERLOGGING & DRAINAGE
+  # ----------------------------------------------------------
+
+  - id: potato_waterlogging_risk
+
+    crop:
+      - potato
+
+    condition: "rain_mm > 15"
+
+    priority: high
+    type: warning
+
+    text_en: "Excess moisture alert for potato crop. Clear furrow drains immediately to prevent tuber rotting and soil compaction."
+
+
+
+  # ----------------------------------------------------------
+  # 13. MUSTARD APHID & WHITE RUST RISK
+  # ----------------------------------------------------------
+
+  - id: mustard_aphid_rust_risk
+
+    crop:
+      - mustard
+
+    condition: "humidity > 75 and tmax_c >= 15 and tmax_c <= 26"
+
+    priority: medium
+    type: warning
+
+    text_en: "Favorable weather for Mustard Aphid and White Rust. Inspect inflorescence, flower buds, and lower leaves."
+
+
+
+  # ----------------------------------------------------------
+  # 14. JUTE STEM ROT & DRAINAGE
+  # ----------------------------------------------------------
+
+  - id: jute_stem_rot
+
+    crop:
+      - jute
+
+    condition: "rain_mm > 20 and humidity > 80"
+
+    priority: high
+    type: warning
+
+    text_en: "Water stagnation alert for Jute. Drain excess water promptly to prevent Macrophomina stem and root rot."
+
+
+
+  # ----------------------------------------------------------
+  # 15. PADDY BROWN PLANT HOPPER (BPH) ALERT
+  # ----------------------------------------------------------
+
+  - id: paddy_bph_risk
+
+    crop:
+      - paddy
+
+    condition: "humidity > 80 and tmax_c >= 28 and tmax_c <= 34 and dry_days >= 3"
+
+    priority: medium
+    type: warning
+
+    text_en: "Microclimate favorable for Brown Plant Hopper (BPH). Check base of rice tillers just above water level."

@@ -76,28 +76,38 @@
 ## 3. Active Priorities (Current Sprint)
 
 ### Priority 1: Multi-Crop Phenology Expansion (`data_pipeline/metadata/crop_calendar.yaml`)
-- [ ] **Multi-Crop Growth Stages:**
-  - Expand beyond existing `paddy` and generic `vegetables` to support distinct Bengal cropping seasons:
-    - **Aman Paddy (Kharif):** Nursery (Jun–Jul), Tillering (Aug–Sep), Panicle/Flowering (Oct), Harvest (Nov–Dec).
-    - **Boro Paddy (Rabi/Summer):** Seedbed (Nov–Dec), Transplanting (Jan), Vegetative (Feb), Flowering (Mar), Harvest (Apr–May).
-    - **Mustard (Rabi oilseed):** Sowing (Oct–Nov), Vegetative (Dec), Pod formation (Jan), Harvest (Feb).
-    - **Potato (Hooghly/Burdwan belt):** Planting (Nov), Tuber Bulking (Dec–Jan), Harvest (Feb).
+- [x] **Multi-Crop Growth Stages:**
+  - Expanded beyond existing `paddy` and generic `vegetables` to support distinct Bengal cropping seasons:
+    - **Aman Paddy (Kharif):** Tillering (Jul–Sep), Flowering (Sep–Oct), Harvest (Nov–Dec).
+    - **Mustard (Rabi oilseed):** Sowing (Oct–Nov), Vegetative (Nov–Dec), Pod formation (Dec–Jan), Harvest (Feb).
+    - **Potato (Hooghly/Burdwan belt):** Planting (Oct–Nov), Tuber Bulking (Nov–Jan), Harvest (Jan–Feb).
     - **Jute (Pre-Kharif fiber):** Sowing (Mar–Apr), Vegetative (May–Jun), Harvest/Retting (Jul–Aug).
-- [ ] **Context Builder Integration:**
-  - Update `data_pipeline/metadata/crop_calendar.py` and `backend/advisory_context.py` to recognize expanded crop options.
+    - **Vegetables (Horticulture):** Year-round continuous vegetative and fruiting management.
+- [x] **Context Builder Integration:**
+  - Updated `data_pipeline/metadata/crop_calendar.py` with dynamic stage iteration and calendar resolution.
 
 ### Priority 2: Pest & Disease Rule Expansion (`rules/rules.yaml`)
-- [ ] **Brown Plant Hopper (BPH) Warning Rule:**
-  - Trigger when relative humidity is high, temperatures are 28°C–32°C, and no rain occurs for 4+ days during dense tillering.
-- [ ] **Potato Late Blight (*Phytophthora infestans*):**
-  - Trigger during winter (Nov–Jan) when nighttime temperatures drop below 15°C with dense morning fog / relative humidity > 90%.
+- [x] **Brown Plant Hopper (BPH) Warning Rule (`paddy_bph_risk`):**
+  - Triggers when relative humidity > 80%, temperatures are 28°C–34°C, and dry days ≥ 3 during rice tillering.
+- [x] **Potato Late Blight (*Phytophthora infestans*) (`potato_late_blight`):**
+  - Triggers during cool, humid conditions (humidity > 82%, tmax between 12°C–25°C) with prophylactic Mancozeb spray guidance.
+- [x] **Potato Waterlogging & Drainage (`potato_waterlogging_risk`):**
+  - Triggers when rain > 15 mm to avert tuber rot and soil compaction.
+- [x] **Mustard Aphid & White Rust Alert (`mustard_aphid_rust_risk`):**
+  - Triggers when humidity > 75% and temperatures are 15°C–26°C.
+- [x] **Jute Stem Rot & Stagnation Alert (`jute_stem_rot`):**
+  - Triggers on heavy rainfall (>20 mm) and high humidity to prevent Macrophomina stem rot.
 
 ### Priority 3: Pydantic v2 Schema Migration (`backend/schemas/`)
-- [ ] Define strict Pydantic v2 models:
-  - `DailyForecast`: typed fields for `date`, `rain_mm` (dict with p10, p50, p90), `tmax_c`, `tmin_c`, `advisory`.
-  - `ForecastResponse`: root response model matching `/v1/forecast`.
-  - `PanchayatRecord`, `DistrictSummary`, `StatewideStatsResponse`.
-- [ ] Bind response models to FastAPI route decorators for OpenAPI / Swagger auto-generation.
+- [x] **Strict Pydantic v2 Schema Models (`backend/schemas/models.py`):**
+  - `RootResponse`, `HealthResponse`, `PanchayatBrief`, `PanchayatListResponse`.
+  - `StatewideDistrictsResponse`, `StatewidePanchayatsResponse`, `StatewideStatsResponse`.
+  - `QuantileRain`, `TMaxObj`, `AdvisoryDetail`, `AdvisorySummaryItem`, `DailyForecast`.
+  - `CurrentWeather`, `HourlyRecord`, `HourlyWeather`, `LiveWeatherPayload`, `ForecastResponse`.
+- [x] **FastAPI Route Decorator Binding:**
+  - Bound all endpoints with `response_model=...` generating auto-documented interactive Swagger UI at `/docs`.
+- [x] **Automated Schema Test Suite (`tests/test_schemas.py`):**
+  - Added 6 dedicated unit tests verifying full model validation across all endpoints.
 
 ---
 

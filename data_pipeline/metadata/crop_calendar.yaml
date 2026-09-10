@@ -1,34 +1,121 @@
 # ============================================================
-# TerraMind Prototype Crop Calendar
+# TerraMind Agricultural Crop Calendar (West Bengal)
 #
-# Based on scenarios described in the supplied SIH handbook.
-#
-# IMPORTANT:
-# This is a prototype calendar for demonstration.
-# Crop-stage dates require validation with agricultural
-# faculty / KVK experts before operational use.
+# Covers staple Bengal crops:
+# 1. Paddy (Aman season)
+# 2. Potato (Rabi tuber - Hooghly/Burdwan/Midnapore)
+# 3. Mustard (Rabi oilseed)
+# 4. Jute (Pre-Kharif golden fiber)
+# 5. Vegetables (Year-round horticulture)
 # ============================================================
 
 crops:
 
   - crop: paddy
     variety_group: aman
-    region: amdanga_block
-
+    region: statewide_bengal
     stages:
-
+      tillering:
+        approximate_period:
+          start: "07-15"
+          end: "09-14"
+        notes:
+          - "Active tillering and vegetative growth stage."
       flowering:
         approximate_period:
           start: "09-15"
           end: "10-05"
-
         notes:
           - "Representative handbook scenario: late-September Aman paddy at flowering."
-
       harvest:
         approximate_period:
           start: "11-01"
           end: "12-15"
-
         notes:
-          - "Prototype harvest window; requires local crop-calendar validation."
+          - "Aman rice reaping and threshing window."
+
+  - crop: potato
+    variety_group: rabi_tuber
+    region: statewide_bengal
+    stages:
+      planting:
+        approximate_period:
+          start: "10-25"
+          end: "11-20"
+        notes:
+          - "Seed tuber planting in raised ridges."
+      tuber_bulking:
+        approximate_period:
+          start: "11-21"
+          end: "01-20"
+        notes:
+          - "Critical vegetative and underground tuber enlargement phase."
+      harvest:
+        approximate_period:
+          start: "01-21"
+          end: "02-28"
+        notes:
+          - "Mature tuber lifting, grading, and cold storage transfer."
+
+  - crop: mustard
+    variety_group: rabi_oilseed
+    region: statewide_bengal
+    stages:
+      sowing:
+        approximate_period:
+          start: "10-15"
+          end: "11-15"
+        notes:
+          - "Direct line sowing after monsoon retreat."
+      vegetative:
+        approximate_period:
+          start: "11-16"
+          end: "12-25"
+        notes:
+          - "Rosette and branching growth phase."
+      pod_formation:
+        approximate_period:
+          start: "12-26"
+          end: "01-31"
+        notes:
+          - "Flowering and siliqua (pod) filling phase; sensitive to aphids."
+      harvest:
+        approximate_period:
+          start: "02-01"
+          end: "02-28"
+        notes:
+          - "Pod yellowing and seed harvesting window."
+
+  - crop: jute
+    variety_group: pre_kharif_fiber
+    region: statewide_bengal
+    stages:
+      sowing:
+        approximate_period:
+          start: "03-15"
+          end: "04-30"
+        notes:
+          - "Pre-monsoon fiber sowing in well-drained loam."
+      vegetative:
+        approximate_period:
+          start: "05-01"
+          end: "06-30"
+        notes:
+          - "Rapid vegetative stem elongation."
+      harvest:
+        approximate_period:
+          start: "07-01"
+          end: "08-20"
+        notes:
+          - "Small-pod stage cutting, bundle steeping, and microbial retting."
+
+  - crop: vegetables
+    variety_group: annual_horticulture
+    region: statewide_bengal
+    stages:
+      vegetative:
+        approximate_period:
+          start: "01-01"
+          end: "12-31"
+        notes:
+          - "Continuous multi-cycle vegetable crop cultivation."

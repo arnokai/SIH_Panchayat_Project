@@ -19,6 +19,27 @@ from forecast_engine_v2 import (
     _get_model_artifact,
 )
 
+try:
+    from backend.schemas import (
+        RootResponse,
+        HealthResponse,
+        PanchayatListResponse,
+        ForecastResponse,
+        StatewideDistrictsResponse,
+        StatewidePanchayatsResponse,
+        StatewideStatsResponse,
+    )
+except ImportError:
+    from schemas import (
+        RootResponse,
+        HealthResponse,
+        PanchayatListResponse,
+        ForecastResponse,
+        StatewideDistrictsResponse,
+        StatewidePanchayatsResponse,
+        StatewideStatsResponse,
+    )
+
 
 # ============================================================
 # TERRAMIND V2 API
@@ -183,7 +204,7 @@ def utf8_json_response(data):
 # ROOT
 # ============================================================
 
-@app.get("/")
+@app.get("/", response_model=RootResponse)
 def root():
 
     return {
@@ -216,7 +237,7 @@ def root():
 # HEALTH
 # ============================================================
 
-@app.get("/health")
+@app.get("/health", response_model=HealthResponse)
 def health():
     model_artifact = _get_model_artifact()
     is_ready = model_artifact is not None
@@ -251,7 +272,7 @@ def health():
 # PANCHAYAT LIST
 # ============================================================
 
-@app.get("/v1/panchayats")
+@app.get("/v1/panchayats", response_model=PanchayatListResponse)
 def get_panchayats():
 
     return {
@@ -286,7 +307,7 @@ def get_panchayats():
 # FORECAST
 # ============================================================
 
-@app.get("/v1/forecast")
+@app.get("/v1/forecast", response_model=ForecastResponse)
 def get_forecast(
     panchayat_id: str = Query(
         ...,
@@ -671,7 +692,7 @@ def get_forecast(
 # STATEWIDE WEST BENGAL ENDPOINTS
 # ============================================================
 
-@app.get("/v1/statewide/districts")
+@app.get("/v1/statewide/districts", response_model=StatewideDistrictsResponse)
 def get_statewide_districts():
     """Return all 22 West Bengal districts with GP and block counts."""
     reg_path = ROOT_DIR / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
@@ -692,7 +713,7 @@ def get_statewide_districts():
     }
 
 
-@app.get("/v1/statewide/panchayats")
+@app.get("/v1/statewide/panchayats", response_model=StatewidePanchayatsResponse)
 def get_statewide_panchayats(
     district: str | None = None,
     search: str | None = None,
@@ -721,7 +742,7 @@ def get_statewide_panchayats(
     }
 
 
-@app.get("/v1/statewide/stats")
+@app.get("/v1/statewide/stats", response_model=StatewideStatsResponse)
 def get_statewide_stats():
     """Return summary metrics for the 2.44M row statewide data lake."""
     report_path = ROOT_DIR / "data_pipeline" / "reports" / "statewide_qa_report.md"

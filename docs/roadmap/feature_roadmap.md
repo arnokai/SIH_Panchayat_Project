@@ -45,12 +45,14 @@
 
 > 📖 **Full Workspace Guide & Technical Tasks:** See [backend/README.md](../../backend/README.md) or [BACKEND_TODO.md](BACKEND_TODO.md).
 
-- [ ] **Pest & Disease Prediction Expansion:**
-  - High-humidity streaks (>85% for ≥3 consecutive days) combined with temperatures between 24°C–30°C for fungal blast defense.
-- [ ] **Actionable Fertilizer & Chemical Spray Windows:**
-  - Direct guidance on urea wash-off avoidance and chemical application timing.
-- [ ] **KVK Scientist Rule Verification Interface:**
-  - Dedicated lightweight endpoint for agricultural scientists to audit rule thresholds in `rules/rules.yaml`.
+- [x] **Pest & Disease Prediction Expansion:**
+  - High-humidity streaks (>85% for ≥3 consecutive days) for blast defense, plus Potato Late Blight, Mustard Aphid/Rust, Jute Stem Rot, and Paddy BPH.
+- [x] **Actionable Fertilizer & Chemical Spray Windows:**
+  - Direct guidance on urea wash-off avoidance, 24-hour spray safety pills, and chemical application timing.
+- [x] **Multi-Crop Phenology Support:**
+  - Expanded statewide calendar covering Paddy, Potato, Mustard, Jute, and Vegetables.
+- [x] **Pydantic v2 Production Schemas:**
+  - Strict typing, validation, and auto-generated OpenAPI / Swagger docs on `/docs`.
 
 ---
 

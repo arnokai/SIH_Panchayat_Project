@@ -70,6 +70,48 @@ export function getActionChip(ruleId, rainMm) {
         icon: "🚜",
         desc: "Ideal for spraying and cultivation",
       };
+    case "sheath_blight_risk":
+      return {
+        label: "Sheath Blight Alert",
+        type: "warning",
+        icon: "⚠️",
+        desc: "Inspect lower rice leaf sheaths",
+      };
+    case "potato_late_blight":
+      return {
+        label: "Late Blight Alert",
+        type: "danger",
+        icon: "🥔",
+        desc: "High fungal risk; apply Mancozeb",
+      };
+    case "potato_waterlogging_risk":
+      return {
+        label: "Drain Potato Beds",
+        type: "danger",
+        icon: "🚨",
+        desc: "Open furrows to stop tuber rot",
+      };
+    case "mustard_aphid_rust_risk":
+      return {
+        label: "Mustard Aphid Alert",
+        type: "warning",
+        icon: "🌼",
+        desc: "Inspect siliqua and lower leaves",
+      };
+    case "jute_stem_rot":
+      return {
+        label: "Drain Jute Field",
+        type: "danger",
+        icon: "🌿",
+        desc: "Prevent Macrophomina stem rot",
+      };
+    case "paddy_bph_risk":
+      return {
+        label: "BPH Pest Watch",
+        type: "warning",
+        icon: "🌾",
+        desc: "Scout rice tiller bases",
+      };
     default:
       if (rainMm > 15) {
         return {

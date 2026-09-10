@@ -142,80 +142,18 @@ def get_crop_context(
             {}
         )
 
-
-        # ----------------------------------------------------
-        # Check flowering
-        # ----------------------------------------------------
-
-        flowering = stages.get(
-            "flowering"
-        )
-
-        if flowering:
-
-            period = flowering.get(
-                "approximate_period",
-                {}
-            )
-
-            if _in_period(
-                target_date,
-                period["start"],
-                period["end"]
-            ):
-
+        for stage_name, stage_info in stages.items():
+            if not isinstance(stage_info, dict):
+                continue
+            period = stage_info.get("approximate_period", {})
+            start = period.get("start")
+            end = period.get("end")
+            if start and end and _in_period(target_date, start, end):
                 return {
-
-                    "crop":
-                        crop,
-
-                    "season":
-                        variety_group,
-
-                    "crop_stage":
-                        "flowering",
-
-                    "harvest_window":
-                        False,
-
-                }
-
-
-        # ----------------------------------------------------
-        # Check harvest
-        # ----------------------------------------------------
-
-        harvest = stages.get(
-            "harvest"
-        )
-
-        if harvest:
-
-            period = harvest.get(
-                "approximate_period",
-                {}
-            )
-
-            if _in_period(
-                target_date,
-                period["start"],
-                period["end"]
-            ):
-
-                return {
-
-                    "crop":
-                        crop,
-
-                    "season":
-                        variety_group,
-
-                    "crop_stage":
-                        "harvest",
-
-                    "harvest_window":
-                        True,
-
+                    "crop": crop,
+                    "season": variety_group,
+                    "crop_stage": stage_name,
+                    "harvest_window": (stage_name == "harvest"),
                 }
 
 
