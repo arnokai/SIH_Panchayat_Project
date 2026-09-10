@@ -275,6 +275,10 @@ function App() {
               </div>
             </div>
             
+            <div className="hero-tabs">
+              <button className="hero-tab active">Hourly</button>
+            </div>
+            
             <div className="hourly-slider">
               {data.live_weather.hourly.time.slice(0, 24).map((timeStr, idx) => {
                  const d = new Date(timeStr);
@@ -698,7 +702,7 @@ function App() {
                           <div>
 
                             <span>
-                              RAIN PROB.
+                              ML RAIN PROB.
                             </span>
 
                             <strong>

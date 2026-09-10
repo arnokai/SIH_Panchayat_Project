@@ -1865,3 +1865,24 @@ footer span {
   font-size: 0.8rem;
   color: #a0d8ff;
 }
+
+.hero-tabs {
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  margin-top: 16px;
+  padding-bottom: 8px;
+}
+.hero-tab {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.hero-tab.active {
+  color: white;
+  border-bottom: 3px solid white;
+}
