@@ -14,7 +14,7 @@
   - Separated project into dedicated, conflict-free workspaces: `frontend/`, `backend/`, `rules/`, `ml/`, `data_pipeline/`, `docs/`, and `tests/`.
   - Added root `api.py` backward-compatibility shim guaranteeing uninterrupted Render cloud deployments.
   - Resolved all relative and project-root path imports with fallback support.
-  - Verified all integration tests pass 100% cleanly (153/153 tests).
+  - Verified all integration tests pass 100% cleanly (161/161 tests).
 - [x] **Live Cloud Deployments:**
   - Frontend live on Vercel: [sih-panchayat-project.vercel.app](https://sih-panchayat-project.vercel.app)
   - Backend live on Render: [sih-panchayat-project.onrender.com](https://sih-panchayat-project.onrender.com)
@@ -24,7 +24,7 @@
   - Tested across 5,848 historical weather rows with verified rule triggers.
   - Complete elimination of regional fonts — 100% pure English advisory copy.
 - [x] **Frontend Modular Component Architecture:**
-  - Decoupled monolithic layout into `src/services/api.js`, `SearchBar.jsx`, `CurrentWeatherHero.jsx`, `QuantileForecastList.jsx`, `AgronomicAlerts.jsx`, `SystemStatsFooter.jsx`, and `utils/formatters.js`.
+  - Decoupled monolithic layout into `src/services/api.js`, `SearchBar.jsx`, `CurrentWeatherHero.jsx`, `HourlyWeatherSlider.jsx`, `WeatherIcon.jsx`, `QuantileForecastList.jsx`, `AgronomicAlerts.jsx`, `SystemStatsFooter.jsx`, and `utils/formatters.js`.
 - [x] **5-Day Quantile Uncertainty Horizon (P10 / P50 / P90):**
   - Visual confidence intervals on daily cards showing minimum dry bound (P10), expected median (P50), and worst-case runoff risk (P90).
 - [x] **Operational Agronomic Action Chips:**
@@ -34,9 +34,10 @@
 - [x] **Statewide Autocomplete & District Filter:**
   - Debounced search across 3,339 Gram Panchayats with 22-district filter dropdown.
 - [x] **Google-Style 24-Hour Hourly Weather Refinement (`HourlyWeatherSlider.jsx`):**
-  - Horizontal 24-hour time carousel with daylight markers and weather icons.
+  - Horizontal 24-hour time carousel dynamically synchronized with the selected forecast day (Today, Tomorrow, Day +2, Day +3, Day +4).
+  - Quick day-selector pills embedded in the hourly slider header.
   - 3 interactive metric tabs: Elevation-adjusted Temperature (°C), Hurdle Precipitation (%), Wind & Spray Safety.
-  - Operational spray window insight banner with DEM lapse rate telemetry pill.
+  - Dynamic operational spray window insight banner with DEM lapse rate telemetry pill.
   - Automatic diurnal solar curve fallback guaranteeing zero blank states when offline.
 - [x] **Browser Geolocation & LocalStorage Preference Memory:**
   - One-click "📍 Use My Location" auto-detecting the closest Gram Panchayat via Haversine distance (<15ms vector lookup).

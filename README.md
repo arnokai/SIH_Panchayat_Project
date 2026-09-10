@@ -5,11 +5,13 @@
 [![API Docs](https://img.shields.io/badge/API%20Docs-Swagger-85EA2D?style=flat&logo=swagger)](https://sih-panchayat-project.onrender.com/docs)
 [![CI Guard](https://img.shields.io/badge/CI%20Guard-Active-brightgreen?style=flat&logo=githubactions)](https://github.com/arnokai/SIH_Panchayat_Project/actions)
 [![Data Lake](https://img.shields.io/badge/Data%20Lake-2.44M%20Rows%20(Parquet)-blue)](data_pipeline/processed/statewide)
-[![Tests](https://img.shields.io/badge/Tests-157%20Passing-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/Tests-161%20Passing-brightgreen)](tests)
+[![Knowledge Graph](https://img.shields.io/badge/Graphify-Active%20Knowledge%20Graph-8A2BE2)](AGENTIC_AI_GRAPHIFY_SETUP.md)
 
 > 🌐 **Live Web Application:** [https://sih-panchayat-project.vercel.app](https://sih-panchayat-project.vercel.app)  
 > ⚡ **Live Cloud API:** [https://sih-panchayat-project.onrender.com](https://sih-panchayat-project.onrender.com)  
 > 📚 **Interactive Swagger Docs:** [https://sih-panchayat-project.onrender.com/docs](https://sih-panchayat-project.onrender.com/docs)  
+> 🤖 **Agentic AI & Graphify Guide:** [`AGENTIC_AI_GRAPHIFY_SETUP.md`](AGENTIC_AI_GRAPHIFY_SETUP.md)  
 > **Repository:** `https://github.com/arnokai/SIH_Panchayat_Project`  
 > **Geographic Scope:** Statewide West Bengal (3,339 Gram Panchayats across all 22 Rural Districts)  
 
@@ -806,17 +808,17 @@ The project continues to keep large external source/raster datasets outside Git 
 
 # 17. Testing
 
-TerraMind includes a comprehensive 157-test automated verification suite in `tests/`:
+TerraMind includes a comprehensive 161-test automated verification suite in `tests/`:
 
 ```bash
-# Run complete 157-test verification suite
+# Run complete 161-test verification suite
 python -m unittest discover -s tests
 
 # Or directly using project virtual environment
 .venv/bin/python -m unittest discover -s tests
 ```
 
-The test suite executes 157 unit tests across 13 test files covering registry boundaries, 14-feature physical realism, Parquet data lake Hive partition integrity, zero temporal leakage, forecast engine caching, and agronomic advisory rules in under 3 seconds.
+The test suite executes 161 unit tests across 13 test files covering registry boundaries, 14-feature physical realism, Parquet data lake Hive partition integrity, zero temporal leakage, forecast engine caching, Pydantic v2 schemas, and agronomic advisory rules in under 3 seconds.
 
 ---
 
@@ -828,7 +830,9 @@ Current operational scope:
 - Full 22-district statewide coverage across 3,339 Gram Panchayats using official LGD codes.
 - High-accuracy Two-Stage Hurdle Downscaling model (`statewide_hurdle_v2.pkl`) producing P10/P50/P90 quantile bounds.
 - Dynamic live weather ingestion from Open-Meteo with 15-minute TTL caching and graceful offline fallback.
-- Context-aware agronomic advisories (English) for major agro-climatic zones.
+- Google-style 24-hour hourly weather & spray window slider dynamically synchronized across all 5 forecast dates with interactive day-selector tabs.
+- Clean 3-element location search bar with 1-click GPS auto-detect and `localStorage` preference memory.
+- Context-aware agronomic advisories (100% English) for major agro-climatic zones and crops (Paddy, Potato, Mustard, Jute, Vegetables).
 
 Future roadmap enhancements:
 - Local agricultural faculty & KVK field validation of dynamic spray/irrigation thresholds.

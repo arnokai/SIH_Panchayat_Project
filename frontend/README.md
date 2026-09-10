@@ -18,20 +18,24 @@
 The **TerraMind Frontend** provides rural farmers, Gram Panchayat agricultural officers (*Krishi Sahayaks*), and district planners with an ultra-accessible, high-contrast agro-meteorological dashboard. It transforms complex two-stage machine learning downscaling predictions and live atmospheric forecasts into actionable farming decisions.
 
 ### Core Implemented Capabilities:
-1. **Statewide 3,339 Gram Panchayat Autocomplete & District Filter:** Real-time debounced search across all 22 rural districts of West Bengal, querying `/v1/statewide/panchayats` to instantly locate and inspect any Gram Panchayat with verified Local Government Directory (LGD) codes, elevation, and soil texture.
-2. **Current Weather Hero & Telemetry:** Displays current temperature, daily high/low, rain probability, surface humidity, and 10m wind speed with dynamic weather condition icons.
-3. **Live / Offline Model Switcher:** Real-time toggle between live dynamic Open-Meteo ECMWF/GFS meteorological ingestion downscaled by the Hurdle ML model and the offline Parquet baseline.
-4. **Crop Switcher:** Instant toggle between **Paddy** and **Vegetables** triggering dynamic advisory heuristic recalculation.
-5. **5-Day Quantile Uncertainty Horizon (P10 / P50 / P90):** Visual confidence spread bars showing the lower dry bound (P10), expected median (P50), and worst-case runoff bound (P90).
-6. **Operational Agronomic Action Chips:** High-contrast decision pills directly on daily cards (e.g. `🚫 Do Not Spray`, `✅ Fertilizer Safe`, `🌧️ Check Drainage`, `🌾 Protect Harvest`).
-7. **Ranked Agricultural Advisories:** Prioritized advisory cards (High Alert, Caution Warning, Favorable Window) with actionable plain English guidance.
-8. **Platform Telemetry Footer:** Live indicators verifying the 2.44M row statewide data lake, 3,339 GPs, 22 districts, and QA validation status.
+1. **Statewide 3,339 Gram Panchayat Autocomplete & District Filter:** Clean 3-element search bar across all 22 rural districts of West Bengal, querying `/v1/statewide/panchayats` to instantly locate and inspect any Gram Panchayat with verified Local Government Directory (LGD) codes, elevation, and soil texture.
+2. **1-Click Browser GPS Auto-Detect & LocalStorage Memory:** Instant geolocation using device GPS coordinates resolved via vectorized Haversine lookup (`/v1/statewide/nearest`) in <15ms. Remembers user's selected Gram Panchayat and active crop across sessions.
+3. **Current Weather Hero & Telemetry:** Displays current temperature, daily high/low, rain probability, surface humidity, and 10m wind speed with inline vector SVG condition icons (`WeatherIcon.jsx`).
+4. **Live / Offline Model Switcher:** Real-time toggle between live dynamic Open-Meteo ECMWF/GFS meteorological ingestion downscaled by the Hurdle ML model and the offline Parquet baseline.
+5. **Multi-Day 24-Hour Hourly Weather & Spray Slider (`HourlyWeatherSlider.jsx`):**
+   - 24-hour hour-by-hour forecast dynamically synchronized across all 5 days (Today, Tomorrow, Day +2, Day +3, Day +4).
+   - Interactive day picker tabs embedded directly in the card header.
+   - 3 interactive metric views: Elevation-adjusted Temperature (°C), Precipitation Chance (%) & mm, Wind & Spray Safety.
+   - Dynamic Operational Farm Work Advice banner auto-synthesizing the optimal daytime spraying window.
+6. **5-Day Quantile Uncertainty Horizon (P10 / P50 / P90):** Visual confidence spread bars showing the lower dry bound (P10), expected median (P50), and worst-case runoff bound (P90), fully synchronized with the hourly preview.
+7. **Operational Agronomic Action Chips:** High-contrast decision pills directly on daily cards (e.g. `🚫 Do Not Spray`, `✅ Fertilizer Safe`, `🌧️ Check Drainage`, `🌾 Protect Harvest`).
+8. **Ranked Agricultural Advisories:** Prioritized advisory cards (High Alert, Caution Warning, Favorable Window) with actionable plain English guidance.
+9. **Zero Broken Assets:** Self-contained vector SVG icons (`WeatherIcon.jsx`) ensuring reliable offline and online rendering without external CDN dependencies.
+10. **Platform Telemetry Footer:** Live indicators verifying the 2.44M row statewide data lake, 3,339 GPs, 22 districts, and QA validation status.
 
 ### On Hold / Roadmap Items:
 * **Spatial Comparison Map (`ComparisonMap.jsx`):** On hold for future GIS spatial model refinement.
 * **Offline Mode / PWA:** On hold (system is 100% real-time and online dynamic).
-* **Automatic Geolocation / GPS:** On hold (tracked in TODO roadmap).
-* **Google-Style Hourly Weather Refinement:** Next major feature in active planning (24-hour horizontal slider with Temperature, Precipitation %, and Wind/Spray Safety tabs refined by Hurdle ML).
 * **Multichannel Dissemination (Voice TTS & WhatsApp):** Staged for Phase 4 deployment.
 
 ---
@@ -51,14 +55,15 @@ frontend/
 │   └── icons.svg                   # Vector icon definitions
 ├── src/
 │   ├── main.jsx                    # React root entry point (StrictMode mount)
-│   ├── App.jsx                     # Modular root layout coordinator (~160 lines)
+│   ├── App.jsx                     # Modular root layout coordinator
 │   ├── App.css                     # High-contrast component-scoped stylesheet
 │   ├── services/
 │   │   └── api.js                  # Centralized API service (fetchForecast, search, districts, stats)
 │   ├── components/
-│   │   ├── SearchBar.jsx           # Debounced 3,339 GP search + 22-district filter + breadcrumbs
+│   │   ├── SearchBar.jsx           # 3-element search bar + 3,339 GP search + district filter + GPS auto-detect
 │   │   ├── CurrentWeatherHero.jsx  # Hero weather card, live/offline toggle, crop pills, surface metrics
-│   │   ├── HourlyWeatherSlider.jsx # 24-hour Google-style weather & spray window slider (3 tabs)
+│   │   ├── HourlyWeatherSlider.jsx # 24-hour Google-style weather & spray slider (multi-day synchronized)
+│   │   ├── WeatherIcon.jsx         # Pure vector SVG weather icons (zero broken images / 100% offline)
 │   │   ├── QuantileForecastList.jsx# 5-day horizon cards with P10/P50/P90 uncertainty bars
 │   │   ├── AgronomicAlerts.jsx     # Prioritized agricultural advisory cards
 │   │   └── SystemStatsFooter.jsx   # Data lake telemetry footer (2.44M rows, 3,339 GPs)

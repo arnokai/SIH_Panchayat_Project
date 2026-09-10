@@ -43,17 +43,23 @@
   - 100% pure English text across the entire frontend (0 non-ASCII / Bengali characters).
 - [x] **Google-Style 24-Hour Hourly Weather & Spray Window Slider (`HourlyWeatherSlider.jsx`):**
   - **24-Hour Horizontal Time Slider:** Scrollable carousel with daylight/night markers, condition icons, and current hour indicator.
+  - **Dynamic Multi-Day Date Synchronization:** Synchronized with the 5-day forecast horizon (Today, Tomorrow, Day +2, Day +3, Day +4).
+  - **Day-Selector Navigation Bar:** Interactive day pill buttons in the card header providing instant switching across all 5 days.
   - **3 Interactive Metric Tabs:**
     - **Temperature Tab:** Elevation-adjusted hourly curve (-6.5°C / 1,000m lapse rate).
     - **Precipitation Tab:** Hourly rain probability bars and accumulation in millimeters.
     - **Wind & Spray Safety Tab:** Hourly wind speed with color-coded safety badges (`Optimal`, `Caution`, `Rain Risk`, `Wind Drift`).
-  - **Operational Spray Window Banner:** Auto-synthesizes contiguous daytime spraying window and renders DEM lapse rate telemetry pill.
+  - **Operational Spray Window Banner:** Auto-synthesizes contiguous daytime spraying window and dynamic farm work advice for the active date.
   - **Dual Live/Offline Guarantee:** Connects to live ECMWF/GFS stream in Live mode, and automatically synthesizes a physical solar diurnal curve in Offline mode with an inline quick-toggle button.
 - [x] **Browser Geolocation & LocalStorage Preference Memory:**
   - **1-Click GPS Auto-Detect Button:** Interactive "📍 Use My Location" in the search row queries device GPS coordinates.
   - **Vectorized Haversine Resolution:** Calls `GET /v1/statewide/nearest` to locate the closest Gram Panchayat in <15ms across all 3,339 GPs.
   - **Session Memory (`localStorage`):** Remembers the user's selected Gram Panchayat (`terramind_panchayat_id`, `terramind_panchayat_meta`) and active crop (`terramind_crop`) across browser restarts and page refreshes.
   - **GPS Distance Tag:** Renders exact distance from user coordinates (e.g. `GPS Distance: 14.6 km away`) directly in the active Gram Panchayat card.
+- [x] **Self-Contained Vector SVG Icons (`WeatherIcon.jsx`):**
+  - Pure inline vector SVGs eliminating external Google CDN dependencies, broken images, and text wrapping glitches.
+- [x] **Clean 3-Element Search Bar (`SearchBar.jsx`):**
+  - Restored streamlined layout: District filter dropdown, debounced Gram Panchayat search with reliable click selection, and GPS auto-detect button.
 
 ---
 

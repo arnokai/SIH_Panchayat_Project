@@ -31,6 +31,9 @@ backend/
 ├── advisory_engine.py              # Rule loader, context matcher, and priority selector
 ├── advisory_context.py             # AdvisoryContext dataclass and soil context mapping
 ├── forecast_advisory_context.py    # Merges weather, soil, crop calendar, and dry-streak days
+├── schemas/                        # Pydantic v2 strict data transfer objects
+│   ├── __init__.py
+│   └── models.py                   # ForecastResponse, HourlyWeather (120h records), HealthResponse
 └── README.md                       # Backend workspace guide and API reference
 
 rules/
@@ -400,7 +403,7 @@ uvicorn api:app --reload --port 8000
 Interactive Swagger documentation: **http://127.0.0.1:8000/docs**
 
 ### Running Test Suite
-Execute the authoritative test suite (157 unit tests across backend, pipeline, features, and registry):
+Execute the authoritative test suite (161 unit tests across backend, pipeline, features, and registry):
 ```bash
 .venv/bin/python -m unittest discover -s tests
 ```

@@ -104,7 +104,7 @@
   - `StatewideDistrictsResponse`, `StatewidePanchayatsResponse`, `StatewideStatsResponse`.
   - `NearestPanchayatResponse` (`GET /v1/statewide/nearest` Haversine GPS resolver).
   - `QuantileRain`, `TMaxObj`, `AdvisoryDetail`, `AdvisorySummaryItem`, `DailyForecast`.
-  - `CurrentWeather`, `HourlyRecord`, `HourlyWeather`, `LiveWeatherPayload`, `ForecastResponse`.
+  - `CurrentWeather`, `HourlyRecord`, `HourlyWeather` (with `all_records` exposing complete 120h multi-day horizon), `LiveWeatherPayload`, `ForecastResponse`.
 - [x] **FastAPI Route Decorator Binding:**
   - Bound all endpoints with `response_model=...` generating auto-documented interactive Swagger UI at `/docs`.
 - [x] **Automated Schema Test Suite (`tests/test_schemas.py`):**
