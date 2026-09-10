@@ -21,18 +21,18 @@ When a user opens the dashboard and interacts with the application, here is the 
 
 ```text
 [Farmer / User UI]
-       │  Selects: District, Block, Panchayat (e.g., WB_107778 AMDANGA), Crop (e.g., paddy), Language (bn/en)
+       │  Selects: Gram Panchayat (e.g., WB_107778 AMDANGA), Crop (e.g., paddy)
        ▼
-[React Frontend (App.jsx & ComparisonMap.jsx)]
-       │  Sends HTTP Request: GET /v1/forecast?panchayat_id=WB_107778&days=5&lang=bn&crop=paddy&live=true
+[React Frontend (App.jsx & Modular Components)]
+       │  Sends HTTP Request: GET /v1/forecast?panchayat_id=WB_107778&days=5&lang=en&crop=paddy&live=true
        ▼
 [FastAPI Router (backend/api.py)]
        │  Validates query params and invokes forecast_panchayat_v2()
        ▼
 [V2 Forecast Engine (backend/forecast_engine_v2.py)]
        │
-       ├─► 1. Location Lookup & Aliasing:
-       │      Resolves panchayat ID (supporting LGD codes WB_107001..WB_111115 and pilot aliases A1..A8)
+       ├─► 1. Location Lookup:
+       │      Resolves panchayat ID (supporting official LGD codes WB_107001..WB_111115)
        │      against data_pipeline/metadata/statewide_panchayats.parquet to get GPS coordinates and block info.
        │
        ├─► 2. Dynamic Weather Ingestion & Caching:
@@ -67,11 +67,12 @@ When a user opens the dashboard and interacts with the application, here is the 
        └─► 7. Payload Assembly:
               Assembles weather quantiles, dynamic live status, degraded flag (false), and advisories
               into standardized UTF-8 JSON response.
-       ▼
-[React UI Rendering (App.jsx & ComparisonMap.jsx)]
+        ▼
+[React UI Rendering (App.jsx & Modular Components)]
        │  • Renders 5 daily forecast cards (Rain P10/P50/P90, Temp, Rain Probability, Live Badge).
        │  • Highlights active agricultural warnings (e.g., blast disease alert, fertilizer guidance).
-       │  • Updates interactive Leaflet map displaying statewide panchayats and micro-climate gradients.
+       │  • Action chips provide direct operational decision pills (e.g., Do Not Spray, Safe for Urea).
+       │  • [Note: Spatial comparison map is currently on hold for GIS spatial model refinement].
 ```
 
 ---

@@ -54,6 +54,7 @@ from forecast_advisory_context import (
 )
 
 
+import datetime
 import json
 import time
 import urllib.error
@@ -125,7 +126,7 @@ def fetch_live_block_weather(lat: float, lon: float, days: int = 5):
         f"latitude={lat}&longitude={lon}"
         f"&daily=precipitation_sum,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
         f"&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m"
-        f"&hourly=temperature_2m,precipitation_probability,weather_code"
+        f"&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m"
         f"&timezone=Asia%2FKolkata&forecast_days={days}"
     )
 
@@ -134,7 +135,7 @@ def fetch_live_block_weather(lat: float, lon: float, days: int = 5):
             url,
             headers={"User-Agent": "TerraMind-Weather-Intelligence/2.0"}
         )
-        with urllib.request.urlopen(req, timeout=3.5) as resp:
+        with urllib.request.urlopen(req, timeout=10.0) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             daily = data.get("daily", {})
             if not daily or "time" not in daily:
@@ -466,6 +467,318 @@ def load_coarse_forecast():
     return df
 
 
+def refine_hourly_weather(
+    live_weather_data: Optional[Dict[str, Any]],
+    meta: Dict[str, Any],
+    gp_feat: Optional[Any] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    Applies micro-topographic (DEM lapse rate) and agronomic operational refinement
+    to coarse numerical weather prediction (NWP) hourly weather data.
+    """
+    if not live_weather_data or not isinstance(live_weather_data, dict):
+        return live_weather_data
+
+    hourly = live_weather_data.get("hourly")
+    if not hourly or not isinstance(hourly, dict) or "time" not in hourly:
+        return live_weather_data
+
+    # 1. Topographic Lapse Rate Refinement: delta_T = -0.0065 * relative_elevation_m
+    rel_elev = 0.0
+    dem_m = 0.0
+    if gp_feat is not None and hasattr(gp_feat, "get"):
+        try:
+            rel_elev = float(gp_feat.get("relative_elevation_m", 0.0))
+            dem_m = float(gp_feat.get("elevation_dem_m", 0.0))
+        except Exception:
+            rel_elev = 0.0
+            dem_m = 0.0
+
+    delta_t = round(-0.0065 * rel_elev, 2)
+
+    # Refine current temperature if available
+    current = live_weather_data.get("current", {})
+    if isinstance(current, dict) and "temperature_2m" in current:
+        try:
+            raw_cur_temp = float(current["temperature_2m"])
+            current["raw_temperature_2m"] = raw_cur_temp
+            current["temperature_2m"] = round(raw_cur_temp + delta_t, 1)
+            current["elevation_lapse_c"] = delta_t
+        except (ValueError, TypeError):
+            pass
+
+    times = hourly.get("time", [])
+    raw_temps = hourly.get("temperature_2m", [])
+    rain_probs = hourly.get("precipitation_probability", [])
+    rains = hourly.get("precipitation", [])
+    weather_codes = hourly.get("weather_code", [])
+    winds = hourly.get("wind_speed_10m", [])
+
+    refined_temps = []
+    for t in raw_temps:
+        if t is not None:
+            try:
+                refined_temps.append(round(float(t) + delta_t, 1))
+            except (ValueError, TypeError):
+                refined_temps.append(t)
+        else:
+            refined_temps.append(None)
+
+    hourly["raw_temperature_2m"] = raw_temps
+    hourly["temperature_2m"] = refined_temps
+    hourly["elevation_lapse_c"] = delta_t
+
+    spray_safeties = []
+    spray_safety_labels = []
+    records = []
+
+    for i in range(len(times)):
+        t_str = str(times[i])
+        temp_val = refined_temps[i] if i < len(refined_temps) else None
+
+        prob_val = 0.0
+        if i < len(rain_probs) and rain_probs[i] is not None:
+            try:
+                prob_val = float(rain_probs[i])
+            except (ValueError, TypeError):
+                prob_val = 0.0
+
+        rain_val = 0.0
+        if i < len(rains) and rains[i] is not None:
+            try:
+                rain_val = float(rains[i])
+            except (ValueError, TypeError):
+                rain_val = 0.0
+
+        code_val = 0
+        if i < len(weather_codes) and weather_codes[i] is not None:
+            try:
+                code_val = int(weather_codes[i])
+            except (ValueError, TypeError):
+                code_val = 0
+
+        wind_val = 0.0
+        if i < len(winds) and winds[i] is not None:
+            try:
+                wind_val = float(winds[i])
+            except (ValueError, TypeError):
+                wind_val = 0.0
+
+        # Agronomic spray safety heuristic:
+        # - Rain >= 0.2mm or Rain Prob >= 50% -> Unsafe (wash-off risk)
+        # - Wind >= 15 km/h -> Unsafe (chemical drift hazard)
+        # - Wind >= 10 km/h or Rain Prob >= 30% -> Caution (moderate drift/drizzle risk)
+        # - Otherwise -> Optimal (safe window)
+        if rain_val >= 0.2 or prob_val >= 50.0:
+            safety = "unsafe_rain"
+            label = "Unsafe: Rain Wash-off Risk"
+        elif wind_val >= 15.0:
+            safety = "unsafe_wind"
+            label = "Unsafe: Chemical Drift Hazard"
+        elif wind_val >= 10.0 or prob_val >= 30.0:
+            safety = "caution"
+            label = "Caution: Moderate Wind / Drizzle Risk"
+        else:
+            safety = "optimal"
+            label = "Optimal: Safe for Spraying"
+
+        spray_safeties.append(safety)
+        spray_safety_labels.append(label)
+
+        # Parse hour for UI display
+        hour_str = t_str
+        display_time = t_str
+        dt_hour = 12
+        if "T" in t_str:
+            parts = t_str.split("T")
+            time_part = parts[1]
+            hour_str = time_part[:5]
+            try:
+                dt_hour = int(time_part.split(":")[0])
+                display_time = f"{dt_hour % 12 or 12} {'AM' if dt_hour < 12 else 'PM'}"
+            except Exception:
+                dt_hour = 12
+
+        record = {
+            "time": t_str,
+            "hour": hour_str,
+            "display_time": display_time,
+            "temperature_c": temp_val,
+            "precipitation_probability": prob_val,
+            "precipitation_mm": rain_val,
+            "wind_speed_kmh": wind_val,
+            "weather_code": code_val,
+            "spray_safety": safety,
+            "spray_safety_label": label,
+            "is_daylight": 6 <= dt_hour <= 18,
+        }
+        records.append(record)
+
+    # Align records so index 0 starts from the CURRENT hour (matching Google Weather)
+    cur_time = current.get("time") if isinstance(current, dict) else None
+    start_idx = 0
+    if cur_time:
+        for idx, rec in enumerate(records):
+            if rec["time"] >= cur_time:
+                start_idx = idx
+                break
+
+    hourly["spray_safety"] = spray_safeties
+    hourly["spray_safety_label"] = spray_safety_labels
+    hourly["all_records"] = records
+    active_records = records[start_idx : start_idx + 24] if (start_idx + 24 <= len(records)) else records[start_idx:]
+    hourly["records"] = active_records
+
+    # Operational Insight Window Synthesis
+    daylight_records = [r for r in active_records if r["is_daylight"]]
+    best_start = None
+    best_end = None
+    best_len = 0
+    cur_start = None
+    cur_len = 0
+
+    for r in daylight_records:
+        if r["spray_safety"] == "optimal":
+            if cur_start is None:
+                cur_start = r["display_time"]
+            cur_len += 1
+            if cur_len > best_len:
+                best_len = cur_len
+                best_start = cur_start
+                best_end = r["display_time"]
+        else:
+            cur_start = None
+            cur_len = 0
+
+    if best_len >= 2:
+        insight = f"Optimal spraying window: {best_start} \u2013 {best_end} (Low drift <10 km/h, Rain probability <30%)."
+    elif best_len == 1:
+        insight = f"Narrow spraying window around {best_start}. Verify wind and rain conditions before application."
+    else:
+        rain_unsafe = any(r["spray_safety"] == "unsafe_rain" for r in daylight_records)
+        wind_unsafe = any(r["spray_safety"] == "unsafe_wind" for r in daylight_records)
+        if rain_unsafe and wind_unsafe:
+            insight = "Unfavorable spraying conditions: Rain wash-off and high wind drift expected today."
+        elif rain_unsafe:
+            insight = "Unfavorable spraying conditions: High rain wash-off risk expected today."
+        elif wind_unsafe:
+            insight = "Chemical drift hazard: High wind speeds (>15 km/h) make daytime spraying unsafe."
+        else:
+            insight = "Marginal spraying conditions: Caution advised due to moderate wind or drizzle."
+
+    live_weather_data["operational_insight"] = insight
+    live_weather_data["operational_refinement"] = {
+        "lapse_rate_c": delta_t,
+        "relative_elevation_m": rel_elev,
+        "elevation_dem_m": dem_m,
+        "status": "applied",
+    }
+
+    return live_weather_data
+
+
+def generate_offline_hourly_weather(
+    coarse_df: pd.DataFrame,
+    meta: Dict[str, Any],
+    gp_feat: Optional[Any] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    Synthesizes a 24-hour diurnal meteorology profile when operating in
+    offline baseline mode or during NWP connection fallbacks.
+    """
+    if coarse_df is None or coarse_df.empty:
+        return None
+
+    row0 = coarse_df.iloc[0]
+    tmax = float(row0.get("coarse_tmax_c", 32.0))
+    tmin = float(row0.get("coarse_tmin_c", 24.0))
+    rain_mm = float(row0.get("coarse_rain_mm", 0.0))
+    prob_val = float(row0.get("coarse_rain_probability", 0.0))
+
+    try:
+        date_val = pd.Timestamp(row0["date"]).date()
+    except Exception:
+        date_val = pd.Timestamp.now().date()
+
+    times = []
+    temps = []
+    rain_probs = []
+    precips = []
+    weather_codes = []
+    winds = []
+
+    for day_offset in range(2):
+        cur_date = date_val + datetime.timedelta(days=day_offset)
+        # Use day 2 parameters if available in coarse_df
+        if day_offset < len(coarse_df):
+            row_d = coarse_df.iloc[day_offset]
+            tmax_d = float(row_d.get("coarse_tmax_c", tmax))
+            tmin_d = float(row_d.get("coarse_tmin_c", tmin))
+            rain_mm_d = float(row_d.get("coarse_rain_mm", rain_mm))
+            prob_val_d = float(row_d.get("coarse_rain_probability", prob_val))
+        else:
+            tmax_d, tmin_d, rain_mm_d, prob_val_d = tmax, tmin, rain_mm, prob_val
+
+        for h in range(24):
+            times.append(f"{cur_date}T{h:02d}:00")
+
+            # Sinusoidal diurnal temperature curve: minimum at 05:00, maximum at 14:00
+            if 5 <= h <= 14:
+                diurnal_factor = 0.5 * (1.0 - np.cos(np.pi * (h - 5) / 9.0))
+            else:
+                diurnal_factor = 0.5 * (1.0 + np.cos(np.pi * ((h - 14) % 24) / 15.0))
+
+            t_h = round(tmin_d + (tmax_d - tmin_d) * diurnal_factor, 1)
+            temps.append(t_h)
+
+            # Diurnal wind profile (calm nocturnal 3-5 km/h, peaking at 10-12 km/h in mid-afternoon)
+            wind_h = round(4.0 + 7.0 * (1.0 - abs(h - 14) / 14.0), 1)
+            winds.append(wind_h)
+
+            # Realistic diurnal rain probability curve (Bengali monsoonal afternoon convection)
+            if 13 <= h <= 18:
+                rain_probs.append(min(90, max(25, int(prob_val_d * 0.75))))
+                precips.append(round(rain_mm_d / 3.0, 1) if rain_mm_d > 0 else 0.0)
+                weather_codes.append(61 if rain_mm_d > 0 else 2)
+            elif 10 <= h <= 12:
+                rain_probs.append(min(45, max(15, int(prob_val_d * 0.40))))
+                precips.append(0.0)
+                weather_codes.append(1)
+            else:
+                # Night & early morning (calmer, lower rain probability)
+                rain_probs.append(max(10, min(25, int(prob_val_d * 0.20))))
+                precips.append(0.0)
+                weather_codes.append(1 if (6 <= h <= 18) else 0)
+
+    try:
+        cur_hour = datetime.datetime.now().hour
+    except Exception:
+        cur_hour = 12
+
+    offline_data = {
+        "source": "Offline Baseline Model (Synthesized Diurnal Profile)",
+        "current": {
+            "time": f"{date_val}T{cur_hour:02d}:00",
+            "temperature_2m": temps[cur_hour],
+            "relative_humidity_2m": 82,
+            "apparent_temperature": round(temps[cur_hour] + 2.5, 1),
+            "precipitation": precips[cur_hour],
+            "weather_code": weather_codes[cur_hour],
+            "wind_speed_10m": winds[cur_hour],
+        },
+        "hourly": {
+            "time": times,
+            "temperature_2m": temps,
+            "precipitation_probability": rain_probs,
+            "precipitation": precips,
+            "weather_code": weather_codes,
+            "wind_speed_10m": winds,
+        },
+    }
+
+    return refine_hourly_weather(offline_data, meta, gp_feat)
+
+
 # ============================================================
 # FORECAST FUNCTION
 # ============================================================
@@ -691,12 +1004,20 @@ def forecast_panchayat_v2(
             })
 
     # ========================================================
+    # HOURLY WEATHER REFINEMENT
+    # ========================================================
+    if live and live_weather_data is not None:
+        live_weather_data = refine_hourly_weather(live_weather_data, meta, gp_feat)
+    else:
+        live_weather_data = generate_offline_hourly_weather(coarse, meta, gp_feat)
+
+    # ========================================================
     # FINAL RESPONSE
     # ========================================================
     return {
         "panchayat_id": meta["panchayat_id"],
         "panchayat_name": meta["panchayat_name"],
-        "live_weather": live_weather_data if live else None,
+        "live_weather": live_weather_data,
         "block_name": meta.get("block_name"),
         "district_name": meta.get("district_name"),
         "crop": crop,

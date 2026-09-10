@@ -290,7 +290,7 @@ def get_panchayats():
 def get_forecast(
     panchayat_id: str = Query(
         ...,
-        description="Panchayat ID, for example A2 or WB_107001",
+        description="Panchayat ID, for example WB_107778 or WB_107001",
     ),
     days: int = Query(
         5,
@@ -652,6 +652,11 @@ def get_forecast(
             result[
                 "degraded_reason"
             ],
+
+        "live_weather":
+            result.get(
+                "live_weather"
+            ),
 
     }
 

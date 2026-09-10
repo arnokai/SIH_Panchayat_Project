@@ -79,8 +79,19 @@ const BLOCK_CENTER = {
    MAP VIEW CONTROLLER
 ========================================================= */
 
-function MapViewController({ selectedId }) {
+function MapViewController({ selectedId, activePanchayat }) {
   const map = useMap();
+
+  if (activePanchayat && activePanchayat.latitude && activePanchayat.longitude) {
+    map.setView(
+      [activePanchayat.latitude, activePanchayat.longitude],
+      13,
+      {
+        animate: true,
+      }
+    );
+    return null;
+  }
 
   const selected = PANCHAYATS.find(
     (panchayat) => panchayat.id === selectedId
@@ -112,6 +123,7 @@ function ComparisonMap({
   selectedId = "A2",
   selectedDate,
   onDateChange,
+  activePanchayat = null,
 }) {
   const selectedDay =
     forecastDays.find(
@@ -336,6 +348,7 @@ function ComparisonMap({
 
               <MapViewController
                 selectedId={selectedId}
+                activePanchayat={activePanchayat}
               />
 
 
@@ -479,6 +492,56 @@ function ComparisonMap({
                   );
                 }
               )}
+
+              {activePanchayat &&
+                activePanchayat.latitude &&
+                activePanchayat.longitude &&
+                !PANCHAYATS.some((p) => p.id === selectedId) && (
+                  <CircleMarker
+                    center={[
+                      activePanchayat.latitude,
+                      activePanchayat.longitude,
+                    ]}
+                    radius={12}
+                    pathOptions={{
+                      color: "#ffffff",
+                      weight: 3,
+                      fillColor: "#06372b",
+                      fillOpacity: 1,
+                    }}
+                  >
+                    <Popup>
+                      <strong>
+                        {activePanchayat.panchayat_name} Gram Panchayat
+                      </strong>
+                      <br />
+                      Block: {activePanchayat.block_name}
+                      <br />
+                      District: {activePanchayat.district_name}
+                      <br />
+                      LGD Code: {activePanchayat.gp_code}
+                      <br />
+                      Coordinates: {Number(activePanchayat.latitude).toFixed(4)}°N, {Number(activePanchayat.longitude).toFixed(4)}°E
+                      {activePanchayat.elevation_m && (
+                        <>
+                          <br />
+                          Elevation: {Math.round(activePanchayat.elevation_m)} m
+                        </>
+                      )}
+                      {activePanchayat.soil_type && (
+                        <>
+                          <br />
+                          Soil: {activePanchayat.soil_type.replace("_", " ")}
+                        </>
+                      )}
+                      <br />
+                      <br />
+                      Forecast: {rainMm ?? "—"} mm
+                      <br />
+                      Date: {selectedDay?.date || "—"}
+                    </Popup>
+                  </CircleMarker>
+                )}
 
             </MapContainer>
 

@@ -95,3 +95,18 @@ Review and update `BACKEND_TODO.md`, `ML_TODO.md`, `FRONTEND_TODO.md`, and `DEVO
 - [x] Zero broken file references or obsolete active CSV instructions across all edited markdown documents
 - [x] All curl, python, and npm commands documented in README files run successfully against the repository
 
+---
+
+## 2026-09-10T23:15:00Z
+
+Frontend Modular Architecture Rebuild, Scope Alignment, and Documentation Synchronization:
+- Decompose monolithic frontend into modular components: `src/services/api.js`, `SearchBar.jsx`, `CurrentWeatherHero.jsx`, `QuantileForecastList.jsx`, `AgronomicAlerts.jsx`, `SystemStatsFooter.jsx`, and `utils/formatters.js`.
+- Establish clean real-world statewide default: Amdanga Gram Panchayat (`WB_107778`, LGD `107778`, North 24 Parganas).
+- Purge all legacy "Pilot A1..A8" terminology across active UI and documentation.
+- Place spatial Leaflet map (`ComparisonMap.jsx`) on hold for future GIS spatial model refinement.
+- Place offline mode / PWA on hold (system operating in 100% online dynamic mode).
+- Place Section B (pipeline deep-dive) and automatic GPS geolocation on hold in TODO roadmap.
+- Plan Google-style hourly weather refinement slider (24-hr slider with Temp, Rain %, Wind/Spray Safety tabs refined by Hurdle ML).
+- Enforce strictly 100% English across all documentation and frontend components (0 Bengali characters).
+- Maintain 100% test pass rate (153 unit tests passing, ESLint passing with 0 errors).
+

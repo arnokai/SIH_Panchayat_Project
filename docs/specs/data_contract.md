@@ -26,7 +26,7 @@
 | Column | Type | Unit | Available at Forecast Time? | Description & Source |
 |---|---|---|:---:|---|
 | `date` | `string (YYYY-MM-DD)` | Date | ✅ Yes | Valid forecast/observation date (`2024-01-01` to `2025-12-31`) |
-| `panchayat_id` | `string` | Categorical | ✅ Yes | Unique Panchayat ID (e.g. `WB_107001` to `WB_110339`, 3,339 GPs; pilot aliases `A1`–`A8`) |
+| `panchayat_id` | `string` | Categorical | ✅ Yes | Unique Panchayat ID (e.g. `WB_107001` to `WB_110339`, 3,339 GPs across West Bengal) |
 | `gp_code` | `int64` | LGD Code | ✅ Yes | National Local Government Directory (LGD) ID |
 | `panchayat_name` | `string` | Text | ✅ Yes | Official Gram Panchayat name |
 | `block_name` | `string` | Text | ✅ Yes | Administrative Block name (342 blocks statewide) |

@@ -104,7 +104,7 @@ English advisory
    ↓
 FastAPI
    ↓
-React dashboard + Panchayat comparison map
+React dashboard (Modular Components: Search, Hero, 5-Day Quantiles, Alerts, Telemetry)
 ```
 
 ### V2 adds
@@ -112,15 +112,15 @@ React dashboard + Panchayat comparison map
 | Area | V1 / V1.3 | V2 |
 |---|---|---|
 | Forecast delivery | Earlier model experiments | 5-day forecast API |
-| Panchayat selection | Basic | Panchayat-specific V2 API + dashboard |
+| Panchayat selection | Basic | Statewide 3,339 Panchayat search + district filtering |
 | Agricultural logic | Basic rules | Context-aware advisory engine |
 | Crop context | Limited | Crop + crop-stage lookup |
 | Soil context | Earlier feature experiments | SoilGrids-derived soil classification |
 | Dry spell logic | Not operationalized | Forecast-aware dry-day context |
 | Humidity context | Earlier weather data | Consecutive high-humidity context available for advisory rules |
-| Advisory language | English | English API output |
+| Advisory language | English | English API output (100% pure English) |
 | Crop selection | Limited | `paddy` / `vegetables` in dashboard |
-| Map | Earlier dashboard concept | Panchayat comparison map |
+| Map | Earlier dashboard concept | Spatial map (On hold for GIS spatial model refinement) |
 | API status | Prototype API | V2 `/v1/...` endpoints |
 | Model downscaling | Multiple experimental models | Operational Two-Stage Hurdle V2 (P10/P50/P90) with safe fallback |
 
@@ -164,7 +164,7 @@ Static 14-Feature Parquet Extraction (DEM, Roughness, River, Soil)
         ↓
 Two-Stage Hurdle Downscaling (Occurrence + P10/P50/P90 Quantiles)
         ↓
-Bilingual Agronomic Advisory Rule Engine (rules/rules.yaml)
+English Agronomic Advisory Rule Engine (rules/rules.yaml)
         ↓
 FastAPI Response (/v1/forecast)
 ```
@@ -180,10 +180,10 @@ The forecast engine supports:
 - Context-aware crop advisories in English
 
 ### Supported Panchayat Identifiers:
-Supports all **3,339 official Local Government Directory (LGD) Gram Panchayats** across West Bengal using canonical LGD identifiers (`WB_<gp_code>`), with backward compatibility for Amdanga pilot aliases (`A1`–`A8`):
+Supports all **3,339 official Local Government Directory (LGD) Gram Panchayats** across West Bengal using canonical LGD identifiers (`WB_<gp_code>`):
 ```text
 WB_107001 → Banchukamari (Alipurduar)
-WB_107778 → AMDANGA (North 24 Parganas, alias: A2)
+WB_107778 → AMDANGA (North 24 Parganas)
 WB_110339 → Mathurapur (South 24 Parganas)
 ...
 (Search all 3,339 Panchayats via /v1/statewide/panchayats?search=...)
@@ -445,8 +445,8 @@ GET /v1/forecast?panchayat_id={id}&days={1-5}&lang={en}&crop={crop}&live={true|f
 # Live dynamic forecast (LGD ID):
 curl -s "http://127.0.0.1:8000/v1/forecast?panchayat_id=WB_107778&days=5&lang=en&crop=paddy&live=true" | jq
 
-# Offline fallback forecast (Pilot alias, English):
-curl -s "http://127.0.0.1:8000/v1/forecast?panchayat_id=A2&days=5&lang=en&crop=paddy&live=false" | jq
+# Offline fallback forecast (English):
+curl -s "http://127.0.0.1:8000/v1/forecast?panchayat_id=WB_107778&days=5&lang=en&crop=paddy&live=false" | jq
 ```
 
 ### 6. Interactive OpenAPI / Swagger Documentation

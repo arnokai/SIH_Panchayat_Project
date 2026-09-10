@@ -57,10 +57,10 @@ data_pipeline/
 ```text
 [HTTP Client / Frontend]
         │
-        ▼ GET /v1/forecast?panchayat_id=WB_107001&days=5&lang=bn&crop=paddy&live=true
+        ▼ GET /v1/forecast?panchayat_id=WB_107778&days=5&lang=en&crop=paddy&live=true
 [FastAPI Router (backend/api.py)]
         │
-        ▼ Validates params (panchayat_id in statewide catalog, days 1..5, lang in bn|en, crop)
+        ▼ Validates params (panchayat_id in statewide catalog, days 1..5, lang=en, crop)
 [Forecast Engine (backend/forecast_engine_v2.py)]
         │
         ├─► Resolves metadata via resolve_panchayat_meta (lat, lon, block, district)
@@ -137,7 +137,7 @@ curl -s "http://127.0.0.1:8000/health"
 
 #### 2. `GET /v1/forecast`
 Primary endpoint serving real-time downscaled weather and agronomic advisories.
-- **`panchayat_id`** (`str`, required): Pilot code (`A1`–`A8`), LGD alias (`WB_107777`–`WB_107784`), or statewide LGD ID (`WB_107001`–`WB_111115` / numeric `gp_code`).
+- **`panchayat_id`** (`str`, required): Official Gram Panchayat LGD ID (e.g., `WB_107778` for Amdanga, `WB_107001` for Banchukamari, or numeric `gp_code`).
 - **`days`** (`int`, optional, default: `5`): Forecast horizon from `1` to `5` days.
 - **`lang`** (`str`, optional, default: `"en"`): Advisory language: `"en"` (English).
 - **`crop`** (`str`, optional, default: `"paddy"`): Target crop for advisory context.
@@ -300,8 +300,8 @@ curl -s "http://127.0.0.1:8000/v1/statewide/stats"
 
 ---
 
-#### 6. `GET /v1/panchayats`
-Returns pilot and canonical LGD alias list (16 records: `A1`–`A8` pilot codes and `WB_107777`–`WB_107784` LGD IDs).
+#### 6. `GET /v1/panchayats` (Legacy Compatibility)
+Returns legacy benchmark Gram Panchayat list. For all modern application workflows, use `/v1/statewide/panchayats`.
 
 **Curl Command:**
 ```bash

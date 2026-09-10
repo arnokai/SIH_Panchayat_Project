@@ -22,6 +22,7 @@ from backend.forecast_engine_v2 import (
     _LIVE_WEATHER_CACHE,
     fetch_live_block_weather,
     forecast_panchayat_v2,
+    refine_hourly_weather,
     resolve_panchayat_meta,
 )
 
@@ -129,6 +130,34 @@ class TestForecastEngineV2(unittest.TestCase):
         self.assertIsNotNone(fetched_df)
         self.assertIn("dummy", fetched_df.columns)
         _LIVE_WEATHER_CACHE.pop(cache_key, None)
+
+    def test_11_refine_hourly_weather_spray_safety_and_lapse_rate(self):
+        """Verify DEM lapse rate adjustment and agronomic spray safety classification."""
+        dummy_live_data = {
+            "current": {"temperature_2m": 30.0},
+            "hourly": {
+                "time": ["2026-09-10T10:00", "2026-09-10T11:00", "2026-09-10T12:00"],
+                "temperature_2m": [28.0, 30.0, 32.0],
+                "precipitation_probability": [10, 60, 20],
+                "precipitation": [0.0, 1.5, 0.0],
+                "weather_code": [1, 61, 1],
+                "wind_speed_10m": [5.0, 8.0, 18.0],
+            },
+        }
+        dummy_gp_feat = {"relative_elevation_m": 100.0, "elevation_dem_m": 150.0}
+        refined = refine_hourly_weather(dummy_live_data, {"panchayat_name": "Test"}, dummy_gp_feat)
+
+        self.assertIsNotNone(refined)
+        self.assertEqual(refined["operational_refinement"]["lapse_rate_c"], -0.65)
+        self.assertEqual(refined["current"]["temperature_2m"], 29.4)
+        self.assertEqual(refined["hourly"]["temperature_2m"], [27.4, 29.4, 31.4])
+
+        records = refined["hourly"]["records"]
+        self.assertEqual(len(records), 3)
+        self.assertEqual(records[0]["spray_safety"], "optimal")
+        self.assertEqual(records[1]["spray_safety"], "unsafe_rain")
+        self.assertEqual(records[2]["spray_safety"], "unsafe_wind")
+        self.assertTrue(len(refined["operational_insight"]) > 0)
 
 
 if __name__ == "__main__":

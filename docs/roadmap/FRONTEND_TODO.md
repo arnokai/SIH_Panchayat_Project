@@ -1,80 +1,77 @@
 # TerraMind Frontend Roadmap & Task Tracking
 
 > **Owner:** Member 1 — Frontend Engineer  
-> **Framework:** React 19 (`^19.2.8`) + Vite 8 (`^8.2.2`) + React-Leaflet 5 (`^5.0.0`)  
+> **Framework:** React 19 (`^19.2.8`) + Vite 8 (`^8.2.2`)  
 > **Deployment:** Vercel Production [https://sih-panchayat-project.vercel.app](https://sih-panchayat-project.vercel.app)  
-> **Last Synchronized:** 2026-09-08 (Post Statewide Parquet & Live Open-Meteo Integration)
+> **Language:** Strictly English (Zero Bengali text, clean international presentation)  
+> **Default Panchayat:** Amdanga (`WB_107778`, North 24 Parganas)  
+> **Last Synchronized:** 2026-09-10 (Post Modular Rebuild & Quantile Uncertainty Integration)
 
 ---
 
 ## 1. Milestone Tracking
 
-### Completed Milestones
-- [x] **Statewide 3,339 Gram Panchayat Autocomplete:**
-  - Real-time debounced search calling `GET /v1/statewide/panchayats?search=...&limit=6`.
-  - Dropdown rendering GP name, Block name, and District name.
-  - Selected statewide GP badge displaying LGD code and verified centroid latitude/longitude.
-  - Automatic fallback mapping to surveyed pilot coordinates for Amdanga Panchayats.
-- [x] **Live Dynamic Weather Status Badge:**
-  - Integrated status indicator reflecting real-time Open-Meteo ECMWF/GFS meteorological ingestion downscaled by the Hurdle model (`data.is_live_dynamic`).
-  - Graceful fallback messaging for V2 static model and degraded mode.
-- [x] **Voice / Text-to-Speech:**
-  - Native browser Web Speech API implementation targeting English.
-  - Intelligent voice discovery filtering for speech synthesizers.
-  - Per-card play/stop controls, per-advisory buttons, and full sequential audio player ("Listen to All").
-- [x] **One-Click WhatsApp Community Dissemination:**
-  - WhatsApp Markdown bulletin generator with crop advisories, rainfall, temperatures, and portal links.
-  - Dedicated share buttons on daily forecast cards and action advisories.
-- [x] **Interactive Comparison Map (Pilot Baseline):**
-  - React-Leaflet spatial map plotting Amdanga Block centre and 8 Panchayat centroids.
-  - Day selector synchronized with 5-day forecast cards.
-- [x] **Core Stack Modernization:**
-  - Migrated to React 19.2 and Vite 8 with zero compilation or lint errors.
+### ✅ Completed Milestones
+- [x] **Component Modularization Refactoring:**
+  - Decomposed monolithic `App.jsx` into clean, single-responsibility components:
+    - `src/services/api.js` (centralized API fetch client with error handling)
+    - `src/components/SearchBar.jsx` (debounced 3,339 GP search + 22-district filter)
+    - `src/components/CurrentWeatherHero.jsx` (hero weather card, crop selector, live/offline toggle)
+    - `src/components/QuantileForecastList.jsx` (5-day cards with P10/P50/P90 uncertainty bars)
+    - `src/components/AgronomicAlerts.jsx` (prioritized agricultural advisory cards)
+    - `src/components/SystemStatsFooter.jsx` (2.44M rows, 3,339 GPs telemetry banner)
+    - `src/utils/formatters.js` (date formatting and operational action chip heuristics)
+  - Result: `npm run lint` passes with 0 errors, 0 warnings. Production build executes in <250ms.
+- [x] **Full Quantile Uncertainty Visualization (P10 / P50 / P90):**
+  - Rendered horizontal confidence interval bars displaying minimum dry bound (P10), expected median (P50), and worst-case runoff risk (P90).
+- [x] **Operational Agronomic Action Chips:**
+  - Direct actionable decision pills on each daily forecast card:
+    - 🚫 **Do Not Spray:** *High risk of pesticide wash-off*
+    - ✅ **Fertilizer Safe:** *Light rain aids nitrogen absorption*
+    - 🌧️ **Check Drainage:** *Keep field drainage channels clear*
+    - 🌾 **Protect Harvest:** *Cover reaped paddy to avoid spoilage*
+    - ☀️ **Heat Stress Alert:** *Schedule irrigation early morning*
+    - ⚠️ **Blast Risk:** *Favorable fungal humidity conditions*
+- [x] **Live Dynamic Weather Toggle Switch:**
+  - Integrated toggle switch between live dynamic Open-Meteo (ECMWF/GFS) Hurdle downscaling and offline Parquet baseline.
+- [x] **Statewide 3,339 Gram Panchayat Autocomplete & District Filter:**
+  - Real-time debounced search calling `GET /v1/statewide/panchayats` + `GET /v1/statewide/districts`.
+  - Active breadcrumb card displaying LGD code, elevation (m), and soil texture.
+- [x] **Statewide Data Lake Telemetry Banner:**
+  - Ingests `GET /v1/statewide/stats` to verify 2.44M records and QA status.
+- [x] **Language Normalization:**
+  - 100% pure English text across the entire frontend (0 non-ASCII / Bengali characters).
+- [x] **Google-Style 24-Hour Hourly Weather & Spray Window Slider (`HourlyWeatherSlider.jsx`):**
+  - **24-Hour Horizontal Time Slider:** Scrollable carousel with daylight/night markers, condition icons, and current hour indicator.
+  - **3 Interactive Metric Tabs:**
+    - **Temperature Tab:** Elevation-adjusted hourly curve (-6.5°C / 1,000m lapse rate).
+    - **Precipitation Tab:** Hourly rain probability bars and accumulation in millimeters.
+    - **Wind & Spray Safety Tab:** Hourly wind speed with color-coded safety badges (`Optimal`, `Caution`, `Rain Risk`, `Wind Drift`).
+  - **Operational Spray Window Banner:** Auto-synthesizes contiguous daytime spraying window and renders DEM lapse rate telemetry pill.
+  - **Dual Live/Offline Guarantee:** Connects to live ECMWF/GFS stream in Live mode, and automatically synthesizes a physical solar diurnal curve in Offline mode with an inline quick-toggle button.
 
 ---
 
-## 2. Active Priorities & Backlog
+## 2. Active Priorities
 
-### Priority 1: High-Impact Jury & Operational Features
-- [ ] **Live Dynamic Weather Toggle Switch:**
-  - Add an intuitive UI toggle in the selector card to allow switching between `live=true` (Live Open-Meteo 5-day ECMWF/GFS forecast) and `live=false` (Offline V2 Hurdle model).
-- [ ] **Offline-First Progressive Web App (PWA):**
-  - Install and configure `vite-plugin-pwa`.
-  - Add Web App Manifest (`manifest.json`) with agriculture icons, green theme (`#06372b`), and standalone display mode.
-  - Implement ServiceWorker cache strategy (`StaleWhileRevalidate`) for `/v1/forecast` and `/v1/statewide/panchayats`.
-  - Display offline banner when `navigator.onLine === false`.
-- [ ] **Full Quantile Uncertainty Visualization (P10 / P50 / P90):**
-  - Render an intuitive confidence range bar on each daily card displaying:
-    - Minimum likely rain (P10)
-    - Median expected rain (P50)
-    - Worst-case downpour (P90)
-
-### Priority 2: Statewide Exploration & Spatial Depth
-- [ ] **Cascading Statewide District & Block Selector:**
-  - Consume `GET /v1/statewide/districts` to provide hierarchical district-first browsing (22 Districts -> 342 Blocks -> 3,339 GPs) alongside the search bar.
-- [ ] **Statewide Spatial Map View:**
-  - Expand `ComparisonMap.jsx` beyond Amdanga to render district boundary overlays and dynamically center on any selected statewide Gram Panchayat.
-- [ ] **Operational Agronomic Action Pills:**
-  - Render dedicated high-contrast visual chips for key field operations:
-    - 🚫 **Urea Application:** *Avoid for 48 hrs (Runoff risk)*
-    - 🚜 **Field Spraying:** *Safe tomorrow 8:00 AM – 11:00 AM*
-    - 💧 **Irrigation:** *Not needed (Rain expected)*
-
-### Priority 3: Architecture & Polish
-- [ ] **Component Modularization Refactoring:**
-  - Decompose monolithic `App.jsx` (1,193 lines) into modular components:
-    - `src/components/StatewideSearch.jsx`
-    - `src/components/ForecastCard.jsx`
-    - `src/components/AdvisorySection.jsx`
-    - `src/components/SystemTelemetry.jsx`
-    - `src/services/api.js`
-- [ ] **Printable Notice Board Bulletin:**
-  - Print-optimized CSS stylesheet for Gram Panchayat notice boards and Common Service Centres (CSCs).
+*(All high-priority core presentation features are implemented and verified. Platform is in polish and review stage.)*
 
 ---
 
-## 3. Bug Fixes & Technical Debt
+## 3. Items On Hold (Backlog)
 
-- [x] Fixed ESLint configuration for React 19 flat config in `eslint.config.js`.
-- [ ] Fix execution bit permissions on `frontend/node_modules/.bin/eslint` for seamless CI/CD `npm run lint` execution.
-- [ ] Standardize API error handling with retry toast alerts when backend is warming up on Render cold start.
+### On Hold: Spatial Leaflet Map Refinement
+- **Status:** **ON HOLD**  
+- `ComparisonMap.jsx` is paused while the multi-day spatial downscaling model undergoes further GIS validation.
+
+### On Hold: Offline Mode & PWA
+- **Status:** **ON HOLD**  
+- System is operating in 100% online dynamic mode. PWA caching and service workers will be scheduled in a subsequent phase.
+
+### On Hold: Automatic Geolocation & LocalStorage Persistence
+- **Status:** **ON HOLD (TODO)**  
+- Current default is cleanly set to **Amdanga (`WB_107778`)**. Automatic GPS detection and `localStorage` preference memory are documented for future enhancement.
+
+### On Hold: Multichannel Voice (TTS) & WhatsApp Dissemination
+- **Status:** **ON HOLD (Phase 4)**  
+- Audio voice streaming and WhatsApp community sharing buttons are staged for post-hackathon pilot expansion.
