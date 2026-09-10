@@ -735,6 +735,7 @@ def get_statewide_panchayats(
             df["panchayat_name"].str.lower().str.contains(s, na=False)
             | df["block_name"].str.lower().str.contains(s, na=False)
         ]
+    df = df.sort_values(by=["panchayat_name"])
     limit_val = int(limit) if isinstance(limit, (int, str)) and str(limit).isdigit() else 100
     return {
         "state": "West Bengal",
@@ -766,8 +767,9 @@ def get_statewide_stats():
 def get_nearest_panchayat(
     lat: float = Query(..., description="User latitude (GPS)"),
     lon: float = Query(..., description="User longitude (GPS)"),
+    limit: int = Query(5, description="Number of nearest Panchayats to return", ge=1, le=20),
 ):
-    """Find the closest Gram Panchayat to the specified coordinates using Haversine distance."""
+    """Find the closest Gram Panchayats to the specified coordinates using Haversine distance."""
     reg_path = ROOT_DIR / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
     if not reg_path.exists():
         raise HTTPException(status_code=503, detail="Statewide registry not yet available.")
@@ -786,13 +788,19 @@ def get_nearest_panchayat(
     c = 2 * np.arcsin(np.sqrt(a))
     dist_km = 6371.0 * c
 
-    closest_idx = int(np.argmin(dist_km))
-    nearest_row = df.iloc[closest_idx].to_dict()
-    nearest_row["distance_km"] = round(float(dist_km[closest_idx]), 2)
+    top_indices = np.argsort(dist_km)[:limit]
+    nearby = []
+    for idx in top_indices:
+        row_dict = df.iloc[int(idx)].to_dict()
+        row_dict["distance_km"] = round(float(dist_km[idx]), 2)
+        nearby.append(row_dict)
+
+    nearest_row = nearby[0] if nearby else {}
 
     return {
         "status": "ok",
         "nearest_panchayat": nearest_row,
+        "nearby_panchayats": nearby,
     }
 
 

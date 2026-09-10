@@ -82,6 +82,7 @@ class StatewideStatsResponse(BaseModel):
 class NearestPanchayatResponse(BaseModel):
     status: str = Field("ok", description="Status string")
     nearest_panchayat: Dict[str, Any] = Field(..., description="Closest Gram Panchayat record with distance_km")
+    nearby_panchayats: List[Dict[str, Any]] = Field(default_factory=list, description="Top closest Gram Panchayats with distance_km")
 
 
 # ============================================================

@@ -123,19 +123,23 @@ export async function fetchPilotPanchayats() {
 }
 
 /**
- * Find the nearest Gram Panchayat based on device GPS coordinates.
+ * Find the nearest Gram Panchayats based on device GPS coordinates.
  *
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
- * @returns {Promise<Object>} Closest Gram Panchayat record with distance_km
+ * @param {number} [limit=5] - Number of candidate Panchayats to return
+ * @returns {Promise<{nearest_panchayat: Object, nearby_panchayats: Array}>} Closest Gram Panchayats with distance_km
  */
-export async function fetchNearestPanchayat(lat, lon) {
-  const response = await fetch(`${API_BASE}/v1/statewide/nearest?lat=${lat}&lon=${lon}`);
+export async function fetchNearestPanchayat(lat, lon, limit = 5) {
+  const response = await fetch(`${API_BASE}/v1/statewide/nearest?lat=${lat}&lon=${lon}&limit=${limit}`);
 
   if (!response.ok) {
     throw new Error("Failed to locate nearest Gram Panchayat");
   }
 
   const data = await response.json();
-  return data.nearest_panchayat;
+  return {
+    nearest_panchayat: data.nearest_panchayat,
+    nearby_panchayats: data.nearby_panchayats || (data.nearest_panchayat ? [data.nearest_panchayat] : []),
+  };
 }

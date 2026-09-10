@@ -63,12 +63,14 @@ class TestAPISchemas(unittest.TestCase):
         self.assertIsNotNone(model.forecast[0].rain_mm.p50)
 
     def test_nearest_schema(self):
-        res = get_nearest_panchayat(lat=22.5726, lon=88.3639)
+        res = get_nearest_panchayat(lat=22.5726, lon=88.3639, limit=3)
         model = NearestPanchayatResponse.model_validate(res)
         self.assertEqual(model.status, "ok")
         self.assertIn("panchayat_name", model.nearest_panchayat)
         self.assertIn("distance_km", model.nearest_panchayat)
         self.assertIsInstance(model.nearest_panchayat["distance_km"], float)
+        self.assertEqual(len(model.nearby_panchayats), 3)
+        self.assertEqual(model.nearby_panchayats[0]["panchayat_name"], model.nearest_panchayat["panchayat_name"])
 
 
 if __name__ == "__main__":
