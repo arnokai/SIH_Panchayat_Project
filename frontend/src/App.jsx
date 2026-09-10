@@ -247,21 +247,7 @@ function App() {
           </div>
 
 
-          <div className="location">
-            {data ? (
-              <>
-                {(data.block_name || "UNKNOWN BLOCK").toUpperCase()}
-                <span>•</span>
-                {(data.district_name || "UNKNOWN DISTRICT").toUpperCase()}
-              </>
-            ) : (
-              <>
-                FETCHING DATA
-                <span>•</span>
-                PLEASE WAIT
-              </>
-            )}
-          </div>
+
 
         </div>
 
