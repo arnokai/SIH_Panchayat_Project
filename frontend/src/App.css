@@ -1907,9 +1907,8 @@ footer span {
   flex-wrap: wrap;
 }
 
-.district-filter-select,
-.district-panchayat-select {
-  flex: 0 0 240px;
+.district-filter-select {
+  flex: 0 0 260px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -2248,118 +2247,6 @@ footer span {
 .gps-status-close:hover {
   opacity: 1;
   background: rgba(0, 0, 0, 0.05);
-}
-
-/* Nearby GPS Candidates Selector Card */
-.nearby-gps-candidates-card {
-  margin-top: 14px;
-  padding: 14px 18px;
-  background: #f0f7f3;
-  border: 1px solid #b8d9c5;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  animation: fadeIn 0.2s ease-out;
-}
-
-.nearby-gps-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 13px;
-  color: #06372b;
-}
-
-.nearby-gps-title strong {
-  color: #06372b;
-}
-
-.nearby-gps-hint {
-  color: #385d50;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.nearby-gps-dismiss {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #54786b;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-left: auto;
-}
-
-.nearby-gps-dismiss:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #082b20;
-}
-
-.nearby-gps-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.nearby-gps-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 13px;
-  background: #ffffff;
-  border: 1.5px solid #c8ded1;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #082b20;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.nearby-gps-chip:hover {
-  border-color: #06372b;
-  background: #e8f3ec;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(6, 55, 43, 0.1);
-}
-
-.nearby-gps-chip.active-chip {
-  background: #06372b;
-  color: #ffffff;
-  border-color: #06372b;
-  box-shadow: 0 3px 8px rgba(6, 55, 43, 0.2);
-}
-
-.chip-indicator {
-  font-size: 12px;
-}
-
-.chip-name {
-  font-weight: 700;
-}
-
-.chip-block {
-  font-size: 11px;
-  opacity: 0.75;
-}
-
-.chip-dist {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 5px;
-  background: #e8f3ec;
-  color: #06372b;
-}
-
-.nearby-gps-chip.active-chip .chip-dist {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
 }
 
 
@@ -3622,7 +3509,6 @@ footer span {
 
 @media (max-width: 768px) {
   .district-filter-select,
-  .district-panchayat-select,
   .search-input-container,
   .gps-location-container {
     width: 100%;

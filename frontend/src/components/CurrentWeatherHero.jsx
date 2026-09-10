@@ -1,3 +1,5 @@
+import WeatherIcon from "./WeatherIcon";
+
 /**
  * CurrentWeatherHero.jsx
  *
@@ -255,11 +257,9 @@ export default function CurrentWeatherHero({
     ? (isNight ? "Partly Cloudy Night" : "Partly Cloudy Sky")
     : (isNight ? "Clear Night Sky" : "Sunny / Fair Weather");
 
-  const weatherIconUrl = isRainy
-    ? "https://ssl.gstatic.com/onebox/weather/64/rain.png"
-    : isCloudy
-    ? (isNight ? "https://ssl.gstatic.com/onebox/weather/64/partly_cloudy_night.png" : "https://ssl.gstatic.com/onebox/weather/64/partly_cloudy.png")
-    : (isNight ? "https://ssl.gstatic.com/onebox/weather/64/night.png" : "https://ssl.gstatic.com/onebox/weather/64/sunny.png");
+  const currentWeatherCode = liveCur?.weather_code != null
+    ? liveCur.weather_code
+    : (isRainy ? 61 : isCloudy ? 2 : 0);
 
   const currentTemp = liveCur?.temperature_2m != null
     ? Math.round(liveCur.temperature_2m)
@@ -348,7 +348,12 @@ export default function CurrentWeatherHero({
       {/* Main Temperature & Visual Condition Row */}
       <div className="hero-main-weather">
         <div className="hero-temp-display">
-          <img src={weatherIconUrl} alt={conditionText} className="hero-weather-icon" />
+          <WeatherIcon
+            code={currentWeatherCode}
+            isDaylight={!isNight}
+            className="hero-weather-icon"
+            size={60}
+          />
           <div className="hero-temp-numbers">
             <span className="hero-temp-large">{currentTemp}</span>
             <span className="hero-temp-unit">°C</span>

@@ -1,40 +1,5 @@
 import { useState } from "react";
-
-/**
- * Returns weather icon URL based on WMO weather code and daylight status.
- */
-function getWeatherIcon(code, isDaylight = true) {
-  if (code == null) {
-    return isDaylight
-      ? "https://ssl.gstatic.com/onebox/weather/64/partly_cloudy.png"
-      : "https://ssl.gstatic.com/onebox/weather/64/partly_cloudy_night.png";
-  }
-  if (code === 0) {
-    return isDaylight
-      ? "https://ssl.gstatic.com/onebox/weather/64/sunny.png"
-      : "https://ssl.gstatic.com/onebox/weather/64/night.png";
-  }
-  if (code >= 1 && code <= 3) {
-    return isDaylight
-      ? "https://ssl.gstatic.com/onebox/weather/64/partly_cloudy.png"
-      : "https://ssl.gstatic.com/onebox/weather/64/partly_cloudy_night.png";
-  }
-  if (code === 45 || code === 48) {
-    return "https://ssl.gstatic.com/onebox/weather/64/cloudy.png";
-  }
-  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
-    return "https://ssl.gstatic.com/onebox/weather/64/rain.png";
-  }
-  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) {
-    return "https://ssl.gstatic.com/onebox/weather/64/snow.png";
-  }
-  if (code >= 95) {
-    return "https://ssl.gstatic.com/onebox/weather/64/thunderstorms.png";
-  }
-  return isDaylight
-    ? "https://ssl.gstatic.com/onebox/weather/64/partly_cloudy.png"
-    : "https://ssl.gstatic.com/onebox/weather/64/partly_cloudy_night.png";
-}
+import WeatherIcon from "./WeatherIcon";
 
 /**
  * Maps spray safety code to badge styling and label.
@@ -253,7 +218,6 @@ export default function HourlyWeatherSlider({ data, onToggleLive }) {
           {records.map((rec, idx) => {
             const isFirst = idx === 0;
             const timeLabel = isFirst ? "Now" : rec.display_time;
-            const iconUrl = getWeatherIcon(rec.weather_code, rec.is_daylight);
             const badge = getSprayBadgeInfo(rec.spray_safety);
 
             return (
@@ -266,13 +230,13 @@ export default function HourlyWeatherSlider({ data, onToggleLive }) {
                 {/* Time */}
                 <div className="hourly-cell-time">{timeLabel}</div>
 
-                {/* Weather Icon */}
+                {/* Weather Icon (Self-contained SVG - zero broken images) */}
                 <div className="hourly-cell-icon-wrap">
-                  <img
-                    src={iconUrl}
-                    alt="Weather condition"
+                  <WeatherIcon
+                    code={rec.weather_code}
+                    isDaylight={rec.is_daylight}
                     className="hourly-cell-icon"
-                    loading="lazy"
+                    size={32}
                   />
                 </div>
 

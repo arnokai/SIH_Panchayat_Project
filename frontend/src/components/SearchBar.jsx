@@ -5,15 +5,12 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [districts, setDistricts] = useState([]);
-  const [selectedDistrict, setSelectedDistrict] = useState(() => activePanchayat?.district_name || "");
-  const [districtPanchayats, setDistrictPanchayats] = useState([]);
-  const [isLoadingDistrictGPs, setIsLoadingDistrictGPs] = useState(false);
+  const [selectedDistrict, setSelectedDistrict] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isLocating, setIsLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState(null);
-  const [nearbyCandidates, setNearbyCandidates] = useState([]);
 
   const containerRef = useRef(null);
   const debounceTimerRef = useRef(null);
@@ -35,31 +32,6 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
       mounted = false;
     };
   }, []);
-
-  // Fetch all Panchayats for the selected district (for the direct cascading dropdown)
-  useEffect(() => {
-    if (!selectedDistrict) {
-      return;
-    }
-
-    let active = true;
-
-    searchPanchayats({ district: selectedDistrict, limit: 350 })
-      .then((list) => {
-        if (active) {
-          setDistrictPanchayats(list);
-          setIsLoadingDistrictGPs(false);
-        }
-      })
-      .catch((err) => {
-        console.warn("Could not load district panchayats:", err);
-        if (active) setIsLoadingDistrictGPs(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [selectedDistrict]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -121,9 +93,6 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
     setSearchTerm(gp.panchayat_name);
     setIsOpen(false);
     setSearchResults([]);
-    if (gp.district_name && gp.district_name !== selectedDistrict) {
-      setSelectedDistrict(gp.district_name);
-    }
     onSelectPanchayat(gp);
   };
 
@@ -149,7 +118,6 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
     setSearchTerm("");
     setSearchResults([]);
     setIsOpen(false);
-    setNearbyCandidates([]);
     setLocationStatus(null);
     if (onClear) onClear();
   };
@@ -170,14 +138,13 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
       async (pos) => {
         try {
           const { latitude, longitude } = pos.coords;
-          const { nearest_panchayat, nearby_panchayats } = await fetchNearestPanchayat(latitude, longitude, 5);
+          const { nearest_panchayat } = await fetchNearestPanchayat(latitude, longitude, 1);
 
           if (nearest_panchayat && nearest_panchayat.panchayat_name) {
             handleSelect(nearest_panchayat);
-            setNearbyCandidates(nearby_panchayats || [nearest_panchayat]);
             setLocationStatus({
               type: "success",
-              message: `GPS detected closest GP: ${nearest_panchayat.panchayat_name} (${nearest_panchayat.district_name}) ~${nearest_panchayat.distance_km} km away. Tap any nearby candidate below if your farm is in an adjacent Panchayat.`,
+              message: `GPS located nearest GP: ${nearest_panchayat.panchayat_name} (${nearest_panchayat.district_name}) ~${nearest_panchayat.distance_km} km away`,
             });
           } else {
             setLocationStatus({
@@ -225,20 +192,13 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
         {/* District Filter Dropdown */}
         <div className="district-filter-select">
           <label htmlFor="district-select" className="search-label">
-            1. DISTRICT
+            DISTRICT
           </label>
           <select
             id="district-select"
             value={selectedDistrict}
             onChange={(e) => {
-              const val = e.target.value;
-              setSelectedDistrict(val);
-              if (!val) {
-                setDistrictPanchayats([]);
-                setIsLoadingDistrictGPs(false);
-              } else {
-                setIsLoadingDistrictGPs(true);
-              }
+              setSelectedDistrict(e.target.value);
               setIsOpen(false);
             }}
             className="district-select-input"
@@ -252,46 +212,17 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
           </select>
         </div>
 
-        {/* Cascading Gram Panchayat Dropdown (Active when a District is selected) */}
-        {selectedDistrict && (
-          <div className="district-panchayat-select">
-            <label htmlFor="panchayat-dropdown-select" className="search-label">
-              2. SELECT GP ({districtPanchayats.length})
-            </label>
-            <select
-              id="panchayat-dropdown-select"
-              value={activePanchayat?.district_name?.toLowerCase() === selectedDistrict.toLowerCase() ? (activePanchayat.panchayat_id || `WB_${activePanchayat.gp_code}`) : ""}
-              onChange={(e) => {
-                const pid = e.target.value;
-                const match = districtPanchayats.find((gp) => (gp.panchayat_id || `WB_${gp.gp_code}`) === pid);
-                if (match) handleSelect(match);
-              }}
-              className="district-select-input"
-              disabled={isLoadingDistrictGPs}
-            >
-              <option value="">
-                {isLoadingDistrictGPs ? "Loading GPs..." : `-- Choose ${selectedDistrict} GP --`}
-              </option>
-              {districtPanchayats.map((gp) => (
-                <option key={gp.panchayat_id || gp.gp_code} value={gp.panchayat_id || `WB_${gp.gp_code}`}>
-                  {gp.panchayat_name} ({gp.block_name})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Universal Search Input */}
+        {/* GP Name / Block Autocomplete Input */}
         <div className="search-input-container">
           <label htmlFor="gp-search-input" className="search-label">
-            {selectedDistrict ? `SEARCH IN ${selectedDistrict.toUpperCase()}` : "UNIVERSAL SEARCH (3,339 GPs)"}
+            GRAM PANCHAYAT SEARCH (3,339 GPs)
           </label>
           <div className="search-input-field">
             <span className="search-icon">🔍</span>
             <input
               id="gp-search-input"
               type="text"
-              placeholder={selectedDistrict ? `Search GP or Block in ${selectedDistrict}...` : "Search by Gram Panchayat or Block name..."}
+              placeholder="Search by Gram Panchayat or Block (e.g. Banchukamari, Falakata, Amdanga)..."
               value={searchTerm}
               onChange={(e) => {
                 const val = e.target.value;
@@ -314,13 +245,8 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
               <button
                 type="button"
                 className="search-clear-btn"
-                onClick={() => {
-                  isSelectingRef.current = true;
-                  setSearchTerm("");
-                  setSearchResults([]);
-                  setIsOpen(false);
-                }}
-                title="Clear text"
+                onClick={handleClear}
+                title="Clear search"
               >
                 ✕
               </button>
@@ -389,46 +315,6 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
           >
             ✕
           </button>
-        </div>
-      )}
-
-      {/* Nearby GPS Candidates Selector Bar */}
-      {nearbyCandidates.length > 0 && (
-        <div className="nearby-gps-candidates-card">
-          <div className="nearby-gps-header">
-            <span className="nearby-gps-title">
-              📍 <strong>Nearby Panchayats Detected:</strong>
-            </span>
-            <span className="nearby-gps-hint">
-              Tap any candidate below if your farm is in an adjacent Panchayat:
-            </span>
-            <button
-              type="button"
-              className="nearby-gps-dismiss"
-              onClick={() => setNearbyCandidates([])}
-              title="Close nearby suggestions"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="nearby-gps-chips">
-            {nearbyCandidates.map((gp) => {
-              const isCurrent = (activePanchayat?.panchayat_id || `WB_${activePanchayat?.gp_code}`) === (gp.panchayat_id || `WB_${gp.gp_code}`);
-              return (
-                <button
-                  key={gp.panchayat_id || gp.gp_code}
-                  type="button"
-                  className={`nearby-gps-chip ${isCurrent ? "active-chip" : ""}`}
-                  onClick={() => handleSelect(gp)}
-                >
-                  <span className="chip-indicator">{isCurrent ? "✓" : "📍"}</span>
-                  <span className="chip-name">{gp.panchayat_name}</span>
-                  <span className="chip-block">{gp.block_name}</span>
-                  <span className="chip-dist">{gp.distance_km} km</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
       )}
 
