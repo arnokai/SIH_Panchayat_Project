@@ -1483,6 +1483,168 @@ footer span {
   }
 }
 
+/* Leaflet Popup & Action Preview Styling */
+.block-action-preview {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #d5e5da;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.block-action-preview span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #789188;
+}
+
+.action-badge-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.action-badge-mini.danger {
+  background: #fde8e8;
+  color: #9b1c1c;
+  border: 1px solid #f8b4b4;
+}
+
+.action-badge-mini.warning {
+  background: #fef08a;
+  color: #854d0e;
+  border: 1px solid #fde047;
+}
+
+.action-badge-mini.info {
+  background: #e1effe;
+  color: #1e429f;
+  border: 1px solid #b3c5ff;
+}
+
+.action-badge-mini.success {
+  background: #def7ec;
+  color: #03543f;
+  border: 1px solid #bcf0da;
+}
+
+.map-popup-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px;
+  font-family: inherit;
+  color: #082b20;
+}
+
+.popup-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #06372b;
+  border-bottom: 1px solid #e5ebe7;
+  padding-bottom: 4px;
+}
+
+.popup-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: #526f63;
+}
+
+.popup-forecast-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 8px;
+  background: #f0f7f3;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.popup-forecast-row strong {
+  color: #06372b;
+}
+
+.popup-label {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  color: #688579;
+  text-transform: uppercase;
+}
+
+.popup-chip-row {
+  margin-top: 2px;
+}
+
+.popup-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.popup-chip.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.popup-chip.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.popup-chip.info {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.popup-chip.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.popup-select-btn {
+  margin-top: 6px;
+  padding: 6px 12px;
+  background: #06372b;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease;
+  text-align: center;
+}
+
+.popup-select-btn:hover {
+  background: #0b5e42;
+}
+
+.popup-active-tag {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #087443;
+  text-align: center;
+  padding: 4px;
+  background: #e8f7ee;
+  border-radius: 4px;
+}
+
 /* =========================================================
    COMPARISON DAY SELECTOR
 ========================================================= */

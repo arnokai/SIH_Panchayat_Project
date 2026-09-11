@@ -71,9 +71,12 @@
 
 ## 3. Items On Hold (Backlog)
 
-### On Hold: Spatial Leaflet Map Refinement
-- **Status:** **ON HOLD**  
-- `ComparisonMap.jsx` is paused while the multi-day spatial downscaling model undergoes further GIS validation.
+### ✅ Dynamic Statewide Spatial Leaflet Comparison Map
+- **Status:** **COMPLETED**
+- Dynamic Leaflet GIS comparison map fully integrated into `frontend/src/App.jsx`.
+- Dynamically queries and renders all sibling Gram Panchayats in the active block via statewide registry.
+- Side-by-side coarse regional forecast vs. localized downscaled Panchayat predictions.
+- Full date-horizon synchronization, smooth animated map transitions (`map.flyTo`), and "Inspect This Panchayat" quick-selection popups.
 
 ### On Hold: Offline Mode & PWA
 - **Status:** **ON HOLD**  

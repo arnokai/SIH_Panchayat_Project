@@ -6,8 +6,7 @@ import CurrentWeatherHero from "./components/CurrentWeatherHero";
 import HourlyWeatherSlider from "./components/HourlyWeatherSlider";
 import QuantileForecastList from "./components/QuantileForecastList";
 import AgronomicAlerts from "./components/AgronomicAlerts";
-// ComparisonMap is on hold for GIS spatial model refinement
-// import ComparisonMap from "./ComparisonMap";
+import ComparisonMap from "./ComparisonMap";
 import SystemStatsFooter from "./components/SystemStatsFooter";
 
 export default function App() {
@@ -195,7 +194,15 @@ export default function App() {
               crop={selectedCrop}
             />
 
-            {/* Note: Spatial Leaflet Map is on hold for GIS spatial model refinement */}
+            {/* Spatial Forecast & Regional Comparison Map */}
+            <ComparisonMap
+              data={data}
+              forecastDays={data.forecast || []}
+              selectedDate={selectedDate}
+              onDateChange={handleDateChange}
+              onSelectPanchayat={handleSelectPanchayat}
+              activePanchayat={activePanchayat}
+            />
           </>
         )}
       </main>

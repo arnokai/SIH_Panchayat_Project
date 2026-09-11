@@ -89,6 +89,6 @@
 
 | Feature | Status | Rationale / Next Steps |
 |---|---|---|
-| **Spatial Leaflet Map (`ComparisonMap.jsx`)** | **ON HOLD** | Multi-day spatial downscaling model is undergoing further GIS validation before reactivation. |
+| **Spatial Leaflet Map (`ComparisonMap.jsx`)** | **COMPLETED** | Dynamic statewide GIS comparison map displaying coarse grid vs localized panchayats, smooth map fly-to, and interactive popup switching. |
 | **Offline-First PWA Mode** | **ON HOLD** | Platform is 100% focused on real-time online dynamic forecasts. Service worker caching staged for subsequent phase. |
 | **Voice Audio (TTS) & WhatsApp Sharing** | **ON HOLD (Phase 4)** | Multichannel voice synthesis and WhatsApp community bulletins are planned for Phase 4 field expansion. |
