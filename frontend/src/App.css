@@ -1471,6 +1471,65 @@ footer span {
   box-shadow: 0 0 0 2px #d9e9df;
 }
 
+.legend-selected-boundary {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2.5px solid #06372b;
+  background: rgba(45, 138, 87, 0.42);
+  border-radius: 3px;
+}
+
+.legend-neighbor-boundary {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px dashed #2d8a57;
+  background: rgba(72, 187, 120, 0.12);
+  border-radius: 3px;
+}
+
+/* Boundary Interactive Tooltips */
+.active-gp-boundary-label {
+  background: #06372b !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 5px 12px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  box-shadow: 0 4px 14px rgba(6, 55, 43, 0.35) !important;
+  pointer-events: none !important;
+}
+
+.active-gp-boundary-label::before {
+  display: none !important;
+}
+
+.neighbor-gp-boundary-label {
+  background: #ffffff !important;
+  color: #123727 !important;
+  border: 1.5px solid #2d8a57 !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14) !important;
+}
+
+.neighbor-gp-boundary-label .boundary-click-cta {
+  display: inline-block;
+  margin-top: 4px;
+  color: #2d8a57;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.leaflet-interactive {
+  cursor: pointer !important;
+}
+
 @media (max-width: 800px) {
   .leaflet-map-wrapper {
     height: 390px;

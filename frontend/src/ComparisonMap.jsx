@@ -2,12 +2,11 @@ import { Component, useEffect, useState } from "react";
 import {
   MapContainer,
   TileLayer,
-  CircleMarker,
-  Popup,
+  GeoJSON,
   useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { searchPanchayats } from "./services/api";
+import { fetchBoundaries } from "./services/api";
 import { formatForecastDate, getActionChip } from "./utils/formatters";
 
 class MapErrorBoundary extends Component {
@@ -92,8 +91,8 @@ function ComparisonMapInner({
   onSelectPanchayat,
   activePanchayat = null,
 }) {
-  const [neighborPanchayats, setNeighborPanchayats] = useState([]);
-  const [loadingNeighbors, setLoadingNeighbors] = useState(false);
+  const [boundariesData, setBoundariesData] = useState(null);
+  const [loadingBoundaries, setLoadingBoundaries] = useState(false);
 
   // Active coordinates
   const activeLat =
@@ -115,59 +114,35 @@ function ComparisonMapInner({
   const districtName =
     data?.district_name || activePanchayat?.district_name || "North 24 Parganas";
 
-  // Fetch sibling Gram Panchayats in the active block or district
+  // Fetch boundaries for the active block or panchayat
   useEffect(() => {
     let active = true;
 
-    async function loadNeighbors() {
-      if (!blockName && !districtName) return;
-      setLoadingNeighbors(true);
+    async function loadBoundaries() {
+      setLoadingBoundaries(true);
       try {
-        // Query by block name first
-        let list = await searchPanchayats({ search: blockName, limit: 30 });
-        if (!list || list.length === 0) {
-          // Fallback to district query
-          list = await searchPanchayats({ district: districtName, limit: 30 });
-        }
-        if (active && Array.isArray(list) && list.length > 0) {
-          setNeighborPanchayats(list);
+        const geojson = await fetchBoundaries({
+          block: blockName,
+          gpCode: activePanchayat?.gp_code || data?.gp_code,
+          panchayatId: currentPanchayatId,
+          district: districtName,
+        });
+        if (active && geojson && Array.isArray(geojson.features)) {
+          setBoundariesData(geojson);
         }
       } catch (err) {
-        console.warn("Could not load neighbor panchayats for spatial map:", err);
+        console.warn("Could not load boundaries for spatial map:", err);
       } finally {
-        if (active) setLoadingNeighbors(false);
+        if (active) setLoadingBoundaries(false);
       }
     }
 
-    loadNeighbors();
+    loadBoundaries();
 
     return () => {
       active = false;
     };
-  }, [blockName, districtName]);
-
-  // Combine markers ensuring current active panchayat is present
-  const allMarkers = [...neighborPanchayats];
-  const hasActive = allMarkers.some(
-    (p) =>
-      p.panchayat_id === currentPanchayatId ||
-      String(p.gp_code) === String(activePanchayat?.gp_code)
-  );
-
-  if (!hasActive) {
-    allMarkers.unshift({
-      panchayat_id: currentPanchayatId,
-      gp_code: activePanchayat?.gp_code || 107778,
-      panchayat_name:
-        data?.panchayat_name || activePanchayat?.panchayat_name || "Active Panchayat",
-      block_name: blockName,
-      district_name: districtName,
-      latitude: activeLat,
-      longitude: activeLon,
-      elevation_m: data?.elevation_m,
-      soil_type: data?.soil_type,
-    });
-  }
+  }, [blockName, districtName, currentPanchayatId, activePanchayat?.gp_code, data?.gp_code]);
 
   // Active selected day forecast values
   const daysList = forecastDays.length > 0 ? forecastDays : data?.forecast || [];
@@ -182,13 +157,99 @@ function ComparisonMapInner({
   const tmin = selectedDay?.tmin_c ?? "--";
   const chip = getActionChip(selectedDay?.advisory?.rule_id, p50);
 
+  const getFeatureStyle = (feature) => {
+    const props = feature.properties || {};
+    const featCode = String(props.gp_code || props.GPCODE || "");
+    const featId = String(props.panchayat_id || "");
+
+    const isSelected =
+      featId === currentPanchayatId ||
+      featCode === String(activePanchayat?.gp_code || data?.gp_code || "");
+
+    if (isSelected) {
+      return {
+        color: "#06372b",
+        weight: 3.5,
+        opacity: 1,
+        fillColor: "#2d8a57",
+        fillOpacity: 0.42,
+      };
+    }
+
+    return {
+      color: "#2d8a57",
+      weight: 1.8,
+      opacity: 0.8,
+      fillColor: "#48bb78",
+      fillOpacity: 0.12,
+      dashArray: "4, 4",
+    };
+  };
+
+  const onEachFeature = (feature, layer) => {
+    const props = feature.properties || {};
+    const name = props.panchayat_name || props.GPNAME || "Panchayat";
+    const code = props.gp_code || props.GPCODE;
+    const block = props.block_name || props.blkname || blockName;
+    const district = props.district_name || districtName;
+    const featId = props.panchayat_id || (code ? `WB_${code}` : "");
+
+    const isSelected =
+      featId === currentPanchayatId ||
+      String(code) === String(activePanchayat?.gp_code || data?.gp_code || "");
+
+    // Interactive tooltip
+    if (isSelected) {
+      layer.bindTooltip(
+        `<div class="map-boundary-tooltip active"><strong>📍 ${name}</strong><br/><small>Rain: ${p50.toFixed(1)} mm (${p10.toFixed(1)}–${p90.toFixed(1)} mm)</small></div>`,
+        { permanent: true, direction: "center", className: "active-gp-boundary-label" }
+      );
+    } else {
+      layer.bindTooltip(
+        `<div class="map-boundary-tooltip"><strong>${name} Gram Panchayat</strong><br/><small>Block: ${block} • LGD: ${code || "—"}</small><br/><span class="boundary-click-cta">📍 Click to Select</span></div>`,
+        { sticky: true, className: "neighbor-gp-boundary-label" }
+      );
+    }
+
+    // Direct click selection: selects this panchayat on the dashboard immediately!
+    layer.on({
+      mouseover: (e) => {
+        const target = e.target;
+        target.setStyle({
+          weight: isSelected ? 4 : 2.8,
+          color: "#06372b",
+          fillOpacity: isSelected ? 0.55 : 0.28,
+        });
+        target.bringToFront();
+      },
+      mouseout: (e) => {
+        const target = e.target;
+        target.setStyle(getFeatureStyle(feature));
+      },
+      click: () => {
+        const targetPanchayat = {
+          panchayat_id: featId,
+          gp_code: Number(code),
+          panchayat_name: name,
+          block_name: block,
+          district_name: district,
+          latitude: Number(props.latitude) || activeLat,
+          longitude: Number(props.longitude) || activeLon,
+        };
+        if (onSelectPanchayat) {
+          onSelectPanchayat(targetPanchayat);
+        }
+      },
+    });
+  };
+
   return (
     <section className="comparison-section">
       {/* Heading & Meta */}
       <div className="comparison-heading">
         <div>
-          <p className="eyebrow">SPATIAL INTELLIGENCE & DOWN-SCALING</p>
-          <h3>Spatial Forecast & Regional Comparison</h3>
+          <p className="eyebrow">SPATIAL INTELLIGENCE & BOUNDARY DOWN-SCALING</p>
+          <h3>Panchayat Boundaries & Regional Comparison</h3>
         </div>
         <div className="comparison-date">
           <span>Target Date: </span>
@@ -269,10 +330,12 @@ function ComparisonMapInner({
         <div className="map-card">
           <div className="map-title">
             <span>
-              PANCHAYAT SPATIAL NETWORK ({blockName.toUpperCase()} BLOCK)
+              PANCHAYAT SPATIAL BOUNDARIES ({blockName.toUpperCase()} BLOCK)
             </span>
             <span className="map-status">
-              {loadingNeighbors ? "UPDATING MAP..." : `${allMarkers.length} PANCHAYATS ACTIVE`}
+              {loadingBoundaries
+                ? "LOADING BOUNDARIES..."
+                : `${boundariesData?.features?.length || 0} BOUNDARIES ACTIVE`}
             </span>
           </div>
 
@@ -291,80 +354,15 @@ function ComparisonMapInner({
 
                 <MapViewController center={[activeLat, activeLon]} />
 
-                {/* Sibling and Active Panchayat Markers */}
-                {allMarkers.map((p, idx) => {
-                  const lat = Number(p.latitude);
-                  const lon = Number(p.longitude);
-                  if (!lat || !lon || isNaN(lat) || isNaN(lon)) return null;
-
-                  const isSelected =
-                    p.panchayat_id === currentPanchayatId ||
-                    String(p.gp_code) === String(activePanchayat?.gp_code);
-
-                  return (
-                    <CircleMarker
-                      key={p.panchayat_id || (p.gp_code ? `gp-${p.gp_code}` : `marker-${idx}`)}
-                      center={[lat, lon]}
-                      radius={isSelected ? 12 : 8}
-                      pathOptions={{
-                        color: "#ffffff",
-                        weight: isSelected ? 3 : 2,
-                        fillColor: isSelected ? "#06372b" : "#2d8a57",
-                        fillOpacity: isSelected ? 1 : 0.85,
-                      }}
-                    >
-                      <Popup>
-                        <div className="map-popup-card">
-                          <strong className="popup-title">
-                            {p.panchayat_name} Gram Panchayat
-                          </strong>
-                          <div className="popup-meta">
-                            <span>Block: {p.block_name}</span>
-                            <span>District: {p.district_name}</span>
-                            <span>LGD Code: {p.gp_code}</span>
-                            <span>
-                              Coords: {lat.toFixed(4)}°N, {lon.toFixed(4)}°E
-                            </span>
-                          </div>
-
-                          <div className="popup-forecast-row">
-                            <div>
-                              <span className="popup-label">Rain (P50):</span>
-                              <strong>{p50.toFixed(1)} mm</strong>
-                            </div>
-                            <div>
-                              <span className="popup-label">Uncertainty:</span>
-                              <span>
-                                {p10.toFixed(1)} – {p90.toFixed(1)} mm
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="popup-chip-row">
-                            <span className={`popup-chip ${chip.type}`}>
-                              {chip.icon} {chip.label}
-                            </span>
-                          </div>
-
-                          {!isSelected && onSelectPanchayat && (
-                            <button
-                              type="button"
-                              className="popup-select-btn"
-                              onClick={() => onSelectPanchayat(p)}
-                            >
-                              📍 Inspect This Panchayat
-                            </button>
-                          )}
-                          {isSelected && (
-                            <div className="popup-active-tag">
-                              ✓ Currently Active on Dashboard
-                            </div>
-                          )}
-                        </div>
-                      </Popup>
-                    </CircleMarker>
-                  );
-                })}
+                {/* Panchayat Administrative Boundaries */}
+                {boundariesData && boundariesData.features && (
+                  <GeoJSON
+                    key={`${currentPanchayatId}-${boundariesData.features.length}`}
+                    data={boundariesData}
+                    style={getFeatureStyle}
+                    onEachFeature={onEachFeature}
+                  />
+                )}
               </MapContainer>
             </MapErrorBoundary>
           </div>
@@ -372,16 +370,16 @@ function ComparisonMapInner({
           {/* Map Legend */}
           <div className="map-legend">
             <span>
-              <i className="legend-selected"></i>
-              Active Panchayat ({data?.panchayat_name || "Selected"})
+              <i className="legend-selected-boundary"></i>
+              Selected Panchayat ({data?.panchayat_name || activePanchayat?.panchayat_name || "Active"})
             </span>
             <span>
-              <i className="legend-panchayat"></i>
-              Neighboring Panchayats in {blockName}
+              <i className="legend-neighbor-boundary"></i>
+              Neighboring Boundaries in {blockName} (Click to Select)
             </span>
             <span>
               <i className="legend-block"></i>
-              Regional Grid Centroid
+              Regional Grid Centroid (~25 km)
             </span>
           </div>
         </div>

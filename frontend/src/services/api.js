@@ -143,3 +143,43 @@ export async function fetchNearestPanchayat(lat, lon, limit = 5) {
     nearby_panchayats: data.nearby_panchayats || (data.nearest_panchayat ? [data.nearest_panchayat] : []),
   };
 }
+
+/**
+ * Fetch GeoJSON boundaries for Gram Panchayats in a block or district.
+ *
+ * @param {Object} options
+ * @param {string} [options.block=""] - Block name
+ * @param {number|string} [options.gpCode=""] - GP LGD code
+ * @param {string} [options.panchayatId=""] - Panchayat ID (e.g. WB_107778)
+ * @param {string} [options.district=""] - District name
+ * @returns {Promise<Object>} GeoJSON FeatureCollection
+ */
+export async function fetchBoundaries(options = {}) {
+  const { block = "", gpCode = "", panchayatId = "", district = "" } = options;
+  const params = new URLSearchParams();
+  if (block) params.append("block", block);
+  if (gpCode) params.append("gp_code", String(gpCode));
+  if (panchayatId) params.append("panchayat_id", String(panchayatId));
+  if (district) params.append("district", district);
+
+  try {
+    const response = await fetch(`${API_BASE}/v1/statewide/boundaries?${params.toString()}`);
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (err) {
+    console.warn("Could not fetch remote boundaries, attempting fallback:", err);
+  }
+
+  // Fallback to static bundled GeoJSON
+  try {
+    const localRes = await fetch("/data/amdanga_boundaries.json");
+    if (localRes.ok) {
+      return await localRes.json();
+    }
+  } catch {
+    // fallback
+  }
+
+  return { type: "FeatureCollection", features: [] };
+}
