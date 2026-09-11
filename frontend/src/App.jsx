@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 import { fetchForecast } from "./services/api";
 import SearchBar from "./components/SearchBar";
@@ -40,9 +40,39 @@ export default function App() {
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(() => new Date());
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
+  const lastFetchTimeRef = useRef(0);
 
+  // Manual or background real-time sync handler
+  const handleRefresh = useCallback(
+    async (forceBypass = false) => {
+      if (isRefreshing) return;
+      setIsRefreshing(true);
+      try {
+        const result = await fetchForecast(selectedId, {
+          days: 5,
+          lang: "en",
+          crop: selectedCrop,
+          live: isLive,
+          refresh: forceBypass,
+        });
+        setData(result);
+        setLastUpdated(new Date());
+        lastFetchTimeRef.current = Date.now();
+        setError("");
+      } catch (err) {
+        console.warn("Weather sync notice:", err);
+      } finally {
+        setIsRefreshing(false);
+      }
+    },
+    [selectedId, selectedCrop, isLive, isRefreshing]
+  );
+
+  // Initial and reactive fetch on dependency change
   useEffect(() => {
     let active = true;
 
@@ -56,6 +86,8 @@ export default function App() {
         });
         if (active) {
           setData(result);
+          setLastUpdated(new Date());
+          lastFetchTimeRef.current = Date.now();
           setError("");
           if (result.forecast?.length > 0) {
             setSelectedDate(result.forecast[0].date);
@@ -77,6 +109,33 @@ export default function App() {
       active = false;
     };
   }, [selectedId, selectedCrop, isLive]);
+
+  // Real-Time Background Auto-Sync: keep all weather and sub-weather data always up to date
+  useEffect(() => {
+    // 1. Periodic background sync every 5 minutes (300,000 ms)
+    const interval = setInterval(() => {
+      handleRefresh(false);
+    }, 300000);
+
+    // 2. Re-sync when user switches back to this tab (if more than 3 minutes have passed)
+    const handleVisibilityOrFocus = () => {
+      if (
+        document.visibilityState === "visible" &&
+        Date.now() - lastFetchTimeRef.current > 180000
+      ) {
+        handleRefresh(false);
+      }
+    };
+
+    window.addEventListener("focus", handleVisibilityOrFocus);
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+    };
+  }, [handleRefresh]);
 
   const handleSelectPanchayat = (gp) => {
     setLoading(true);
@@ -154,11 +213,15 @@ export default function App() {
           </div>
         )}
 
-        {/* Syncing Indicator for Subsequent Panchayat Switches */}
-        {loading && data && (
+        {/* Syncing Indicator for Subsequent Panchayat Switches & Auto-Sync Refresh */}
+        {((loading && data) || isRefreshing) && (
           <div className="syncing-badge">
             <div className="syncing-dot"></div>
-            <span>Updating weather intelligence for selected Panchayat...</span>
+            <span>
+              {isRefreshing
+                ? "Refreshing real-time weather stream & micro-downscaling..."
+                : "Updating weather intelligence for selected Panchayat..."}
+            </span>
           </div>
         )}
 
@@ -179,6 +242,9 @@ export default function App() {
               onCropChange={handleCropChange}
               isLive={isLive}
               onToggleLive={handleToggleLive}
+              lastUpdated={lastUpdated}
+              isRefreshing={isRefreshing}
+              onRefresh={() => handleRefresh(true)}
             />
 
             {/* 24-Hour Weather & Spray Safety Slider */}
@@ -187,6 +253,9 @@ export default function App() {
               selectedDate={selectedDate}
               onSelectDate={handleDateChange}
               onToggleLive={handleToggleLive}
+              lastUpdated={lastUpdated}
+              isRefreshing={isRefreshing}
+              onRefresh={() => handleRefresh(true)}
             />
 
             {/* 5-Day Quantile Forecast Horizon */}

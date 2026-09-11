@@ -22,6 +22,7 @@ export async function fetchForecast(panchayatId, options = {}) {
     crop = "paddy",
     live = true,
     lang = "en",
+    refresh = false,
   } = options;
 
   const params = new URLSearchParams({
@@ -31,6 +32,10 @@ export async function fetchForecast(panchayatId, options = {}) {
     crop,
     live: String(live),
   });
+
+  if (refresh) {
+    params.set("refresh", "true");
+  }
 
   const response = await fetch(`${API_BASE}/v1/forecast?${params.toString()}`);
 

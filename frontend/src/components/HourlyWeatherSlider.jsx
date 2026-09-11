@@ -231,6 +231,9 @@ export default function HourlyWeatherSlider({
   selectedDate,
   onSelectDate,
   onToggleLive,
+  lastUpdated,
+  isRefreshing,
+  onRefresh,
 }) {
   const [activeTab, setActiveTab] = useState("temperature");
 
@@ -270,8 +273,28 @@ export default function HourlyWeatherSlider({
             <span className="hourly-badge-icon">⚡</span>
             <h3 className="hourly-title">HOURLY WEATHER & SPRAY WINDOW</h3>
             <span className={`hourly-mode-badge ${isDynamic ? "live" : "offline"}`}>
-              {isDynamic ? "🟢 LIVE STREAM" : "🟡 BASELINE FORECAST"}
+              {isDynamic ? "🟢 LIVE 24H STREAM" : "🟡 BASELINE FORECAST"}
             </span>
+            <span className="hourly-sync-tag">
+              {isToday ? "🕒 Rolling 24h Window (Starting Now)" : "📅 Full Day Horizon"}
+            </span>
+            {onRefresh && (
+              <button
+                type="button"
+                className={`hourly-mini-sync-btn ${isRefreshing ? "syncing" : ""}`}
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                title="Sync 24h rolling hourly forecast"
+              >
+                <span className={isRefreshing ? "spin" : ""}>🔄</span>
+                <span>{isRefreshing ? "Syncing..." : "Sync"}</span>
+              </button>
+            )}
+            {lastUpdated && (
+              <span className="hourly-sync-time">
+                Synced: {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
           </div>
           <p className="hourly-subtitle">
             24-hour hour-by-hour forecast and spraying recommendations for{" "}

@@ -231,11 +231,23 @@ export default function CurrentWeatherHero({
   onCropChange,
   isLive,
   onToggleLive,
+  lastUpdated,
+  isRefreshing,
+  onRefresh,
 }) {
   if (!data) return null;
 
   const today = data.forecast?.[0];
   const liveCur = data.live_weather?.current;
+
+  const formattedUpdatedTime = lastUpdated
+    ? new Intl.DateTimeFormat("en-IN", {
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+        hour12: true,
+      }).format(lastUpdated)
+    : "Just now";
 
   // Day/night status and icon selection
   const currentHour = new Date().getHours();
@@ -342,6 +354,25 @@ export default function CurrentWeatherHero({
               <span>{isLive ? "Live (ECMWF/GFS)" : "Offline Baseline"}</span>
             </button>
           </div>
+
+          {/* Real-time sync indicator & immediate manual refresh */}
+          {onRefresh && (
+            <div className="hero-sync-wrap">
+              <button
+                type="button"
+                className={`hero-refresh-btn ${isRefreshing ? "refreshing" : ""}`}
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                title="Refresh real-time weather observations from Open-Meteo & rerun Hurdle ML downscaling"
+              >
+                <span className={`refresh-icon ${isRefreshing ? "spin" : ""}`}>🔄</span>
+                <span>{isRefreshing ? "Syncing..." : "Sync Weather"}</span>
+              </button>
+              <span className="hero-last-updated" title="Live weather telemetry auto-syncs every 5 minutes">
+                🕒 {formattedUpdatedTime}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -369,6 +400,7 @@ export default function CurrentWeatherHero({
           <div className="hero-source-tag">
             <span>Forecast Source: <strong>{data.source || "Open-Meteo Dynamic"}</strong></span>
             <span> • Panchayat Model: {data.model_version || "TerraMind V2"}</span>
+            <span> • Stream: <strong className="live-status-pulse">🟢 Real-Time Auto-Synced</strong></span>
           </div>
         </div>
 

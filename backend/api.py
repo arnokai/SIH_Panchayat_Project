@@ -333,6 +333,10 @@ def get_forecast(
         True,
         description="Whether to fetch dynamic live weather from block coordinates",
     ),
+    refresh: bool = Query(
+        False,
+        description="Whether to bypass in-memory cache and fetch fresh meteorological stream immediately",
+    ),
 ):
     if not isinstance(days, int):
         days = 5
@@ -342,6 +346,8 @@ def get_forecast(
         crop = "paddy"
     if not isinstance(live, bool):
         live = True
+    if not isinstance(refresh, bool):
+        refresh = False
 
     # ========================================================
     # NORMALIZE
@@ -405,6 +411,7 @@ def get_forecast(
             days=days,
             crop=crop,
             live=live,
+            refresh=refresh,
         )
     except ValueError as exc:
         raise HTTPException(

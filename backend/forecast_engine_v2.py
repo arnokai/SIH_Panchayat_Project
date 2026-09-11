@@ -97,13 +97,14 @@ _STATEWIDE_REGISTRY = None
 # In-memory cache for live weather to prevent spamming Open-Meteo API
 # Key: (round(lat, 4), round(lon, 4), days) -> (timestamp, pd.DataFrame)
 _LIVE_WEATHER_CACHE = {}
-_LIVE_WEATHER_TTL_SECONDS = 900  # 15 minutes
+_LIVE_WEATHER_TTL_SECONDS = 300  # 5 minutes for real-time live synchronization
 
 
-def fetch_live_block_weather(lat: float, lon: float, days: int = 5):
+def fetch_live_block_weather(lat: float, lon: float, days: int = 5, refresh: bool = False):
     """
     Fetch dynamic 5-day weather forecast from Open-Meteo ECMWF/GFS model
-    for block coordinates with in-memory TTL caching (15 min).
+    for block coordinates with in-memory TTL caching (5 min).
+    If refresh is True, bypasses cache to fetch fresh data immediately.
     
     Returns a DataFrame conforming to the coarse_block_forecast schema,
     or None if the network request times out or fails (triggering offline fallback).
@@ -111,7 +112,7 @@ def fetch_live_block_weather(lat: float, lon: float, days: int = 5):
     cache_key = (round(float(lat), 4), round(float(lon), 4), int(days))
     now = time.time()
 
-    if cache_key in _LIVE_WEATHER_CACHE:
+    if not refresh and cache_key in _LIVE_WEATHER_CACHE:
         cached = _LIVE_WEATHER_CACHE[cache_key]
         if len(cached) == 3:
             cached_time, cached_df, cached_live_data = cached
@@ -416,12 +417,14 @@ def load_coarse_forecast():
         .reset_index(drop=True)
     )
 
-
     if df.empty:
-
         raise ValueError(
             "Coarse forecast is empty."
         )
+
+    # Always keep dates dynamically aligned to current date (today and onward)
+    today = datetime.date.today()
+    df["date"] = [pd.Timestamp(today + datetime.timedelta(days=i)) for i in range(len(df))]
 
 
     # --------------------------------------------------------
@@ -788,6 +791,7 @@ def forecast_panchayat_v2(
     days=5,
     crop="paddy",
     live=True,
+    refresh=False,
 ):
     meta = resolve_panchayat_meta(panchayat_id)
     if not meta:
@@ -819,6 +823,7 @@ def forecast_panchayat_v2(
                 lat=meta["latitude"],
                 lon=meta["longitude"],
                 days=days,
+                refresh=refresh,
             )
             if res is not None:
                 coarse, live_weather_data = res
