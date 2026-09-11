@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -10,6 +10,54 @@ import "leaflet/dist/leaflet.css";
 import { searchPanchayats } from "./services/api";
 import { formatForecastDate, getActionChip } from "./utils/formatters";
 
+class MapErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.warn("Map encountered a runtime issue:", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          className="map-error-fallback"
+          style={{
+            padding: "40px 20px",
+            textAlign: "center",
+            background: "#f3f8f5",
+            borderRadius: "15px",
+            border: "1px dashed #2d8a57",
+            color: "#06372b",
+          }}
+        >
+          <p style={{ fontWeight: 600, margin: "0 0 8px 0" }}>
+            ⚠️ Interactive GIS map preview encountered an issue.
+          </p>
+          <p style={{ fontSize: "13px", color: "#4f695f", margin: "0 0 16px 0" }}>
+            All core weather intelligence, 24-hour sliders, and agricultural advisories remain fully operational.
+          </p>
+          <button
+            type="button"
+            className="popup-select-btn"
+            onClick={() => this.setState({ hasError: false })}
+          >
+            Retry Loading Map
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 /**
  * Controller to smoothly pan and zoom the Leaflet map when the target changes.
  */
@@ -19,19 +67,24 @@ function MapViewController({ center }) {
   useEffect(() => {
     if (
       center &&
+      Array.isArray(center) &&
       typeof center[0] === "number" &&
       typeof center[1] === "number" &&
       !isNaN(center[0]) &&
       !isNaN(center[1])
     ) {
-      map.flyTo(center, 12, { duration: 1.0 });
+      try {
+        map.flyTo(center, 12, { duration: 1.0 });
+      } catch (err) {
+        console.warn("Leaflet flyTo failed:", err);
+      }
     }
   }, [center, map]);
 
   return null;
 }
 
-export default function ComparisonMap({
+function ComparisonMapInner({
   data,
   forecastDays = [],
   selectedDate,
@@ -224,94 +277,96 @@ export default function ComparisonMap({
           </div>
 
           <div className="leaflet-map-wrapper">
-            <MapContainer
-              center={[activeLat, activeLon]}
-              zoom={12}
-              scrollWheelZoom={false}
-              className="leaflet-map"
-            >
-              <TileLayer
-                attribution="&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors"
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
+            <MapErrorBoundary>
+              <MapContainer
+                center={[activeLat, activeLon]}
+                zoom={12}
+                scrollWheelZoom={false}
+                className="leaflet-map"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
 
-              <MapViewController center={[activeLat, activeLon]} />
+                <MapViewController center={[activeLat, activeLon]} />
 
-              {/* Sibling and Active Panchayat Markers */}
-              {allMarkers.map((p) => {
-                const lat = Number(p.latitude);
-                const lon = Number(p.longitude);
-                if (!lat || !lon || isNaN(lat) || isNaN(lon)) return null;
+                {/* Sibling and Active Panchayat Markers */}
+                {allMarkers.map((p, idx) => {
+                  const lat = Number(p.latitude);
+                  const lon = Number(p.longitude);
+                  if (!lat || !lon || isNaN(lat) || isNaN(lon)) return null;
 
-                const isSelected =
-                  p.panchayat_id === currentPanchayatId ||
-                  String(p.gp_code) === String(activePanchayat?.gp_code);
+                  const isSelected =
+                    p.panchayat_id === currentPanchayatId ||
+                    String(p.gp_code) === String(activePanchayat?.gp_code);
 
-                return (
-                  <CircleMarker
-                    key={p.panchayat_id || p.gp_code}
-                    center={[lat, lon]}
-                    radius={isSelected ? 12 : 8}
-                    pathOptions={{
-                      color: "#ffffff",
-                      weight: isSelected ? 3 : 2,
-                      fillColor: isSelected ? "#06372b" : "#2d8a57",
-                      fillOpacity: isSelected ? 1 : 0.85,
-                    }}
-                  >
-                    <Popup>
-                      <div className="map-popup-card">
-                        <strong className="popup-title">
-                          {p.panchayat_name} Gram Panchayat
-                        </strong>
-                        <div className="popup-meta">
-                          <span>Block: {p.block_name}</span>
-                          <span>District: {p.district_name}</span>
-                          <span>LGD Code: {p.gp_code}</span>
-                          <span>
-                            Coords: {lat.toFixed(4)}°N, {lon.toFixed(4)}°E
-                          </span>
-                        </div>
-
-                        <div className="popup-forecast-row">
-                          <div>
-                            <span className="popup-label">Rain (P50):</span>
-                            <strong>{p50.toFixed(1)} mm</strong>
-                          </div>
-                          <div>
-                            <span className="popup-label">Uncertainty:</span>
+                  return (
+                    <CircleMarker
+                      key={p.panchayat_id || (p.gp_code ? `gp-${p.gp_code}` : `marker-${idx}`)}
+                      center={[lat, lon]}
+                      radius={isSelected ? 12 : 8}
+                      pathOptions={{
+                        color: "#ffffff",
+                        weight: isSelected ? 3 : 2,
+                        fillColor: isSelected ? "#06372b" : "#2d8a57",
+                        fillOpacity: isSelected ? 1 : 0.85,
+                      }}
+                    >
+                      <Popup>
+                        <div className="map-popup-card">
+                          <strong className="popup-title">
+                            {p.panchayat_name} Gram Panchayat
+                          </strong>
+                          <div className="popup-meta">
+                            <span>Block: {p.block_name}</span>
+                            <span>District: {p.district_name}</span>
+                            <span>LGD Code: {p.gp_code}</span>
                             <span>
-                              {p10.toFixed(1)} – {p90.toFixed(1)} mm
+                              Coords: {lat.toFixed(4)}°N, {lon.toFixed(4)}°E
                             </span>
                           </div>
-                        </div>
 
-                        <div className="popup-chip-row">
-                          <span className={`popup-chip ${chip.type}`}>
-                            {chip.icon} {chip.label}
-                          </span>
-                        </div>
-
-                        {!isSelected && onSelectPanchayat && (
-                          <button
-                            type="button"
-                            className="popup-select-btn"
-                            onClick={() => onSelectPanchayat(p)}
-                          >
-                            📍 Inspect This Panchayat
-                          </button>
-                        )}
-                        {isSelected && (
-                          <div className="popup-active-tag">
-                            ✓ Currently Active on Dashboard
+                          <div className="popup-forecast-row">
+                            <div>
+                              <span className="popup-label">Rain (P50):</span>
+                              <strong>{p50.toFixed(1)} mm</strong>
+                            </div>
+                            <div>
+                              <span className="popup-label">Uncertainty:</span>
+                              <span>
+                                {p10.toFixed(1)} – {p90.toFixed(1)} mm
+                              </span>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    </Popup>
-                  </CircleMarker>
-                );
-              })}
-            </MapContainer>
+
+                          <div className="popup-chip-row">
+                            <span className={`popup-chip ${chip.type}`}>
+                              {chip.icon} {chip.label}
+                            </span>
+                          </div>
+
+                          {!isSelected && onSelectPanchayat && (
+                            <button
+                              type="button"
+                              className="popup-select-btn"
+                              onClick={() => onSelectPanchayat(p)}
+                            >
+                              📍 Inspect This Panchayat
+                            </button>
+                          )}
+                          {isSelected && (
+                            <div className="popup-active-tag">
+                              ✓ Currently Active on Dashboard
+                            </div>
+                          )}
+                        </div>
+                      </Popup>
+                    </CircleMarker>
+                  );
+                })}
+              </MapContainer>
+            </MapErrorBoundary>
           </div>
 
           {/* Map Legend */}
@@ -341,5 +396,13 @@ export default function ComparisonMap({
         river proximity, and SoilGrids soil texture.
       </div>
     </section>
+  );
+}
+
+export default function ComparisonMap(props) {
+  return (
+    <MapErrorBoundary>
+      <ComparisonMapInner {...props} />
+    </MapErrorBoundary>
   );
 }
