@@ -146,11 +146,19 @@ export default function App() {
           onClear={handleClearPanchayat}
         />
 
-        {/* Loading Spinner */}
-        {loading && (
+        {/* Full Loader for Initial Cold Start */}
+        {loading && !data && (
           <div className="loading">
             <div className="loading-spinner"></div>
             <span>Loading downscaled forecast and agronomic advisories...</span>
+          </div>
+        )}
+
+        {/* Syncing Indicator for Subsequent Panchayat Switches */}
+        {loading && data && (
+          <div className="syncing-badge">
+            <div className="syncing-dot"></div>
+            <span>Updating weather intelligence for selected Panchayat...</span>
           </div>
         )}
 
@@ -161,8 +169,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Weather Intelligence Dashboard */}
-        {data && !loading && (
+        {/* Weather Intelligence Dashboard (Persists continuously without unmounting) */}
+        {data && (
           <>
             {/* Current Weather Hero Card */}
             <CurrentWeatherHero

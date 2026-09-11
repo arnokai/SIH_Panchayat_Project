@@ -1,4 +1,4 @@
-import { Component, useEffect, useState } from "react";
+import { Component, useEffect, useRef, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -60,8 +60,9 @@ class MapErrorBoundary extends Component {
 /**
  * Controller to smoothly pan and zoom the Leaflet map when the target changes.
  */
-function MapViewController({ center }) {
+function MapViewController({ center, zoom = 12 }) {
   const map = useMap();
+  const prevCenterRef = useRef(null);
 
   useEffect(() => {
     if (
@@ -72,13 +73,22 @@ function MapViewController({ center }) {
       !isNaN(center[0]) &&
       !isNaN(center[1])
     ) {
-      try {
-        map.flyTo(center, 12, { duration: 1.0 });
-      } catch (err) {
-        console.warn("Leaflet flyTo failed:", err);
+      const prev = prevCenterRef.current;
+      if (
+        !prev ||
+        Math.abs(prev[0] - center[0]) > 0.0001 ||
+        Math.abs(prev[1] - center[1]) > 0.0001 ||
+        prev[2] !== zoom
+      ) {
+        prevCenterRef.current = [center[0], center[1], zoom];
+        try {
+          map.flyTo(center, zoom, { duration: 1.0 });
+        } catch (err) {
+          console.warn("Leaflet flyTo failed:", err);
+        }
       }
     }
-  }, [center, map]);
+  }, [center, zoom, map]);
 
   return null;
 }
@@ -93,6 +103,7 @@ function ComparisonMapInner({
 }) {
   const [boundariesData, setBoundariesData] = useState(null);
   const [loadingBoundaries, setLoadingBoundaries] = useState(false);
+  const [scope, setScope] = useState("block"); // "block" | "district"
 
   // Active coordinates
   const activeLat =
@@ -114,19 +125,24 @@ function ComparisonMapInner({
   const districtName =
     data?.district_name || activePanchayat?.district_name || "North 24 Parganas";
 
-  // Fetch boundaries for the active block or panchayat
+  // Fetch boundaries for the active block or district
   useEffect(() => {
     let active = true;
 
     async function loadBoundaries() {
       setLoadingBoundaries(true);
       try {
-        const geojson = await fetchBoundaries({
-          block: blockName,
-          gpCode: activePanchayat?.gp_code || data?.gp_code,
-          panchayatId: currentPanchayatId,
-          district: districtName,
-        });
+        const queryOptions =
+          scope === "district"
+            ? { district: districtName }
+            : {
+                block: blockName,
+                gpCode: activePanchayat?.gp_code || data?.gp_code,
+                panchayatId: currentPanchayatId,
+                district: districtName,
+              };
+
+        const geojson = await fetchBoundaries(queryOptions);
         if (active && geojson && Array.isArray(geojson.features)) {
           setBoundariesData(geojson);
         }
@@ -142,7 +158,7 @@ function ComparisonMapInner({
     return () => {
       active = false;
     };
-  }, [blockName, districtName, currentPanchayatId, activePanchayat?.gp_code, data?.gp_code]);
+  }, [scope, blockName, districtName, currentPanchayatId, activePanchayat?.gp_code, data?.gp_code]);
 
   // Active selected day forecast values
   const daysList = forecastDays.length > 0 ? forecastDays : data?.forecast || [];
@@ -329,21 +345,41 @@ function ComparisonMapInner({
         {/* Right Side: Interactive Leaflet Map */}
         <div className="map-card">
           <div className="map-title">
-            <span>
-              PANCHAYAT SPATIAL BOUNDARIES ({blockName.toUpperCase()} BLOCK)
-            </span>
-            <span className="map-status">
-              {loadingBoundaries
-                ? "LOADING BOUNDARIES..."
-                : `${boundariesData?.features?.length || 0} BOUNDARIES ACTIVE`}
-            </span>
+            <div className="map-title-left">
+              <span>
+                PANCHAYAT BOUNDARIES ({scope === "district" ? districtName.toUpperCase() : blockName.toUpperCase()})
+              </span>
+              <span className="map-status">
+                {loadingBoundaries
+                  ? "LOADING..."
+                  : `${boundariesData?.features?.length || 0} BOUNDARIES`}
+              </span>
+            </div>
+            <div className="map-scope-toggle">
+              <button
+                type="button"
+                className={`scope-toggle-btn ${scope === "block" ? "active" : ""}`}
+                onClick={() => setScope("block")}
+                title={`Show Panchayats in ${blockName} Block`}
+              >
+                🏢 Block ({blockName})
+              </button>
+              <button
+                type="button"
+                className={`scope-toggle-btn ${scope === "district" ? "active" : ""}`}
+                onClick={() => setScope("district")}
+                title={`Show all Panchayats in ${districtName} District`}
+              >
+                🗺️ District ({districtName})
+              </button>
+            </div>
           </div>
 
           <div className="leaflet-map-wrapper">
             <MapErrorBoundary>
               <MapContainer
                 center={[activeLat, activeLon]}
-                zoom={12}
+                zoom={scope === "district" ? 10 : 12}
                 scrollWheelZoom={false}
                 className="leaflet-map"
               >
@@ -352,12 +388,15 @@ function ComparisonMapInner({
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                <MapViewController center={[activeLat, activeLon]} />
+                <MapViewController
+                  center={[activeLat, activeLon]}
+                  zoom={scope === "district" ? 10 : 12}
+                />
 
                 {/* Panchayat Administrative Boundaries */}
                 {boundariesData && boundariesData.features && (
                   <GeoJSON
-                    key={`${currentPanchayatId}-${boundariesData.features.length}`}
+                    key={`${currentPanchayatId}-${scope}-${boundariesData.features.length}`}
                     data={boundariesData}
                     style={getFeatureStyle}
                     onEachFeature={onEachFeature}
@@ -371,11 +410,11 @@ function ComparisonMapInner({
           <div className="map-legend">
             <span>
               <i className="legend-selected-boundary"></i>
-              Selected Panchayat ({data?.panchayat_name || activePanchayat?.panchayat_name || "Active"})
+              Selected ({data?.panchayat_name || activePanchayat?.panchayat_name || "Active"})
             </span>
             <span>
               <i className="legend-neighbor-boundary"></i>
-              Neighboring Boundaries in {blockName} (Click to Select)
+              {scope === "district" ? `${districtName} Panchayats` : `${blockName} Block Panchayats`} (Click to Select)
             </span>
             <span>
               <i className="legend-block"></i>
