@@ -8,7 +8,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 /**
  * Fetch 1-5 day weather forecast and agronomic advisories for a Gram Panchayat.
  *
- * @param {string} panchayatId - Gram Panchayat ID (e.g., "WB_107001" or pilot "A2")
+ * @param {string} panchayatId - Gram Panchayat ID (e.g., "WB_107001" or "WB_107778")
  * @param {Object} options
  * @param {number} [options.days=5] - Number of forecast days (1-5)
  * @param {string} [options.crop="paddy"] - Crop context ("paddy" | "vegetables")
@@ -112,20 +112,29 @@ export async function fetchStatewideStats() {
 }
 
 /**
- * Fetch pilot Gram Panchayats (A1 - A8).
+ * Fetch list of Gram Panchayats across the state.
  *
- * @returns {Promise<Array>} Pilot GP list
+ * @param {Object} [filters={}] - Optional district or block filters
+ * @returns {Promise<Array>} Gram Panchayat list
  */
-export async function fetchPilotPanchayats() {
-  const response = await fetch(`${API_BASE}/v1/panchayats`);
+export async function fetchPanchayats(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.district) params.append("district", filters.district);
+  if (filters.block) params.append("block", filters.block);
+
+  const url = `${API_BASE}/v1/panchayats${params.toString() ? `?${params.toString()}` : ""}`;
+  const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error("Failed to fetch pilot panchayats");
+    throw new Error("Failed to fetch panchayats");
   }
 
   const data = await response.json();
   return data.panchayats || [];
 }
+
+// Backward-compatible alias
+export const fetchPilotPanchayats = fetchPanchayats;
 
 /**
  * Find the nearest Gram Panchayats based on device GPS coordinates.

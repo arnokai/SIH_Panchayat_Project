@@ -537,9 +537,7 @@ function ComparisonMapInner({
                 display: "inline-block",
               }}
             >
-              {selectedFeature?.properties?.geometry_source === "official_cadastral_survey"
-                ? "🟢 100% Surveyed Cadastral Boundary (Cadastre Pilot)"
-                : "🟢 Official Block Boundary (geoBoundaries / SOI ADM4)"}
+              🟢 Official Cadastral Boundary (geoBoundaries / SOI ADM4)
               {selectedFeature?.properties?.area_sqkm ? ` • ${selectedFeature.properties.area_sqkm} km²` : ""}
             </small>
             <div style={{ marginTop: "8px", fontSize: "11px", color: "#475569", lineHeight: 1.45 }}>

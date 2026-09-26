@@ -60,145 +60,111 @@ def _read_table(file_path: Path, parse_dates=None) -> pd.DataFrame:
 
 
 # ============================================================
-# PANCHAYAT ID MAPPING
+# PANCHAYAT ID MAPPING (EQUAL STATEWIDE SUPPORT)
 # ============================================================
+
+LEGACY_PILOT_MAP = {
+    "A1": "WB_107777",
+    "A2": "WB_107778",
+    "A3": "WB_107779",
+    "A4": "WB_107780",
+    "A5": "WB_107781",
+    "A6": "WB_107782",
+    "A7": "WB_107783",
+    "A8": "WB_107784",
+}
+
+_STATIC_FEATURES_CACHE = None
+
+def _get_static_features_df():
+    global _STATIC_FEATURES_CACHE
+    if _STATIC_FEATURES_CACHE is None:
+        static_feat_file = BASE_DIR / "data_pipeline" / "features" / "statewide_static_features.parquet"
+        if static_feat_file.exists():
+            _STATIC_FEATURES_CACHE = pd.read_parquet(static_feat_file)
+        else:
+            _STATIC_FEATURES_CACHE = pd.DataFrame()
+    return _STATIC_FEATURES_CACHE
+
 
 def get_panchayat_mappings():
     """
-    Build the application's canonical Panchayat IDs.
-
-    Application IDs:
-        A1 ... A8
-
-    Source soil IDs:
-        GPCODE 107777 ... 107784
+    Build canonical Panchayat mappings for all Gram Panchayats statewide.
+    All 3,339 Gram Panchayats are treated equally with their official LGD IDs.
     """
+    reg_path = BASE_DIR / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
+    if reg_path.exists():
+        df = pd.read_parquet(reg_path)
+        df["app_id"] = df["panchayat_id"]
+        df["GPCODE"] = df["gp_code"]
+        df["GPNAME"] = df["panchayat_name"]
+        return df
 
-    coordinates = _read_table(
-        COORDINATE_FILE
-    )
-
-    required = [
-        "GPCODE",
-        "GPNAME",
-    ]
-
-    missing = [
-        column
-        for column in required
-        if column not in coordinates.columns
-    ]
-
-    if missing:
-        raise ValueError(
-            "Missing coordinate columns: "
-            + ", ".join(missing)
-        )
-
-    coordinates = coordinates.reset_index(
-        drop=True
-    )
-
-    coordinates["app_id"] = [
-        f"A{i + 1}"
-        for i in range(len(coordinates))
-    ]
-
+    coordinates = _read_table(COORDINATE_FILE)
+    coordinates = coordinates.reset_index(drop=True)
+    coordinates["app_id"] = [f"WB_{c}" for c in coordinates["GPCODE"]]
     return coordinates
 
 
 # ============================================================
-# SOIL TYPE
+# SOIL TYPE (EQUAL STATEWIDE RESOLUTION)
 # ============================================================
 
 def get_panchayat_soil_type(
     panchayat_id
 ):
     """
-    Return SoilGrids-derived soil type for A1 ... A8.
+    Return SoilGrids-derived soil type for any Gram Panchayat statewide.
+    All 3,339 Gram Panchayats are supported equally without legacy pilot tiers.
     """
+    clean_id = str(panchayat_id).strip().upper()
+    if clean_id in LEGACY_PILOT_MAP:
+        clean_id = LEGACY_PILOT_MAP[clean_id]
 
-    mappings = get_panchayat_mappings()
-
-    soil = _read_table(
-        SOIL_FILE
-    )
-
-    required = [
-        "panchayat_id",
-        "soil_type",
-    ]
-
-    missing = [
-        column
-        for column in required
-        if column not in soil.columns
-    ]
-
-    if missing:
-        raise ValueError(
-            "Missing soil columns: "
-            + ", ".join(missing)
-        )
-
-    mapping = mappings[
-        mappings["app_id"].astype(str)
-        ==
-        str(panchayat_id)
-    ]
-
-    if mapping.empty:
-        static_feat_file = BASE_DIR / "data_pipeline" / "features" / "statewide_static_features.parquet"
-        if static_feat_file.exists():
-            sf = pd.read_parquet(static_feat_file)
-            clean_id = str(panchayat_id).strip().upper()
-            match = sf[(sf["panchayat_id"] == clean_id) | (sf["gp_code"].astype(str) == clean_id.replace("WB_", ""))]
-            if not match.empty:
-                st = match.iloc[0].get("soil_type", "non_sandy")
+    sf = _get_static_features_df()
+    if not sf.empty:
+        raw_code = clean_id.replace("WB_", "")
+        match = sf[
+            (sf["panchayat_id"].astype(str).str.upper() == clean_id)
+            | (sf["gp_code"].astype(str) == raw_code)
+        ]
+        if not match.empty:
+            st = match.iloc[0].get("soil_type", "non_sandy")
+            if pd.notna(st):
                 return str(st).strip().lower()
-        return "non_sandy"
 
-    gpcode = str(
-        mapping.iloc[0]["GPCODE"]
-    )
+    if SOIL_FILE.exists():
+        try:
+            soil = _read_table(SOIL_FILE)
+            gpcode = clean_id.replace("WB_", "")
+            matches = soil[soil["panchayat_id"].astype(str) == gpcode]
+            if not matches.empty:
+                st = matches.iloc[0]["soil_type"]
+                if pd.notna(st):
+                    return str(st).strip().lower()
+        except Exception:
+            pass
 
-    matches = soil[
-        soil["panchayat_id"]
-        .astype(str)
-        ==
-        gpcode
-    ]
-
-    if matches.empty:
-        raise ValueError(
-            f"No soil context found for "
-            f"{panchayat_id} / GPCODE {gpcode}."
-        )
-
-    soil_type = matches.iloc[0][
-        "soil_type"
-    ]
-
-    if pd.isna(soil_type):
-        return None
-
-    return str(
-        soil_type
-    ).strip().lower()
+    return "non_sandy"
 
 
 # ============================================================
-# LATEST OBSERVED DRY STREAK
+# LATEST OBSERVED DRY STREAK (EQUAL STATEWIDE RESOLUTION)
 # ============================================================
 
 def get_latest_dry_days(
     panchayat_id
 ):
     """
-    Return the latest observed consecutive dry-day streak.
-
-    This is historical context only.
+    Return the latest observed consecutive dry-day streak for any Gram Panchayat.
+    All 3,339 Gram Panchayats are supported equally.
     """
+    clean_id = str(panchayat_id).strip().upper()
+    resolved_id = LEGACY_PILOT_MAP.get(clean_id, clean_id)
+    raw_code = resolved_id.replace("WB_", "")
+
+    if not HISTORY_FILE.exists():
+        return 0
 
     history = _read_table(
         HISTORY_FILE,
@@ -206,10 +172,9 @@ def get_latest_dry_days(
     )
 
     p = history[
-        history["panchayat_id"]
-        .astype(str)
-        ==
-        str(panchayat_id)
+        (history["panchayat_id"].astype(str).str.upper() == clean_id)
+        | (history["panchayat_id"].astype(str).str.upper() == resolved_id)
+        | (history["panchayat_id"].astype(str) == raw_code)
     ].copy()
 
     if p.empty:
@@ -224,6 +189,7 @@ def get_latest_dry_days(
     return int(
         latest["dry_days"]
     )
+
 
 
 # ============================================================

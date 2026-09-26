@@ -56,10 +56,10 @@ class TestForecastEngineV2(unittest.TestCase):
             self.assertIn("text_bn", advisory)
 
     def test_02_lgd_code_alias_resolution(self):
-        """Verify LGD code WB_107778 correctly resolves to Amdanga pilot A2."""
+        """Verify LGD code WB_107778 correctly resolves to Amdanga with equal canonical ID."""
         meta = resolve_panchayat_meta("WB_107778")
         self.assertIsNotNone(meta)
-        self.assertEqual(meta["canonical_id"], "A2")
+        self.assertEqual(meta["canonical_id"], "WB_107778")
         self.assertEqual(meta["panchayat_name"], "AMDANGA")
 
         res = forecast_panchayat_v2("WB_107778", days=3, live=False)

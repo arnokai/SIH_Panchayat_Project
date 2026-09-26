@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from zoneinfo import ZoneInfo
+import pandas as pd
 
 BACKEND_DIR = Path(__file__).resolve().parent
 ROOT_DIR = BACKEND_DIR.parent
@@ -138,82 +139,37 @@ IST = ZoneInfo(
 # PANCHAYATS
 # ============================================================
 
-PANCHAYAT_DB = {
+def _load_panchayat_db() -> dict[str, dict]:
+    reg_path = ROOT_DIR / "data_pipeline" / "metadata" / "statewide_panchayats.parquet"
+    db = {}
+    if reg_path.exists():
+        df = pd.read_parquet(reg_path)
+        for _, row in df.iterrows():
+            pid = str(row["panchayat_id"]).strip().upper()
+            db[pid] = {
+                "name": str(row["panchayat_name"]),
+                "block": str(row["block_name"]),
+                "district": str(row["district_name"]),
+                "gp_code": int(row["gp_code"]),
+                "latitude": float(row["latitude"]),
+                "longitude": float(row["longitude"]),
+            }
+    return db
 
-    "A1": {
-        "name": "ADHATA"
-    },
+PANCHAYAT_DB = _load_panchayat_db()
 
-    "A2": {
-        "name": "AMDANGA"
-    },
-
-    "A3": {
-        "name": "BERABERIA"
-    },
-
-    "A4": {
-        "name": "BODAI"
-    },
-
-    "A5": {
-        "name": "CHANDIGARH"
-    },
-
-    "A6": {
-        "name": "MARICHA"
-    },
-
-    "A7": {
-        "name": "SADHANPUR"
-    },
-
-    "A8": {
-        "name": "TARABERIA"
-    },
-
-    # LGD Code Aliases
-    "WB_107777": {
-        "name": "ADHATA",
-        "alias": "A1"
-    },
-
-    "WB_107778": {
-        "name": "AMDANGA",
-        "alias": "A2"
-    },
-
-    "WB_107779": {
-        "name": "BERABERIA",
-        "alias": "A3"
-    },
-
-    "WB_107780": {
-        "name": "BODAI",
-        "alias": "A4"
-    },
-
-    "WB_107781": {
-        "name": "CHANDIGARH",
-        "alias": "A5"
-    },
-
-    "WB_107782": {
-        "name": "MARICHA",
-        "alias": "A6"
-    },
-
-    "WB_107783": {
-        "name": "SADHANPUR",
-        "alias": "A7"
-    },
-
-    "WB_107784": {
-        "name": "TARABERIA",
-        "alias": "A8"
-    },
-
+# Silent backwards-compatibility alias mapping for legacy codes
+LEGACY_PILOT_MAP = {
+    "A1": "WB_107777",
+    "A2": "WB_107778",
+    "A3": "WB_107779",
+    "A4": "WB_107780",
+    "A5": "WB_107781",
+    "A6": "WB_107782",
+    "A7": "WB_107783",
+    "A8": "WB_107784",
 }
+
 
 
 # ============================================================
@@ -427,7 +383,8 @@ def get_forecast(
             detail={
                 "error": "Panchayat not found",
                 "panchayat_id": panchayat_id,
-                "available_panchayats": list(PANCHAYAT_DB.keys()),
+                "message": "Use /v1/panchayats or /v1/statewide/panchayats to search all 3,339 Gram Panchayats statewide.",
+                "total_panchayats": len(PANCHAYAT_DB),
             },
         )
 
@@ -1240,8 +1197,11 @@ def get_panchayat_boundaries(
                 selected_pid = str(target_df.iloc[0]["panchayat_id"])
 
         if target_df is None or target_df.empty:
-            target_df = df[df["block_name"].str.lower() == "amdanga"]
-            selected_pid = "WB_107778"
+            first_row = df.iloc[0]
+            bname = str(first_row["block_name"])
+            target_df = df[df["block_name"].str.lower() == bname.lower()]
+            selected_pid = str(first_row["panchayat_id"])
+
 
         b_name = str(target_df.iloc[0]["block_name"])
         d_name = str(target_df.iloc[0]["district_name"])

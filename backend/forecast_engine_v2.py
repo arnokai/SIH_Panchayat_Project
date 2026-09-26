@@ -334,49 +334,18 @@ def _get_statewide_registry():
 def resolve_panchayat_meta(panchayat_id: str):
     """
     Resolve panchayat metadata (name, block, district, lat, lon, canonical ID).
-    Supports:
-    - Pilot codes A1..A8
-    - LGD codes WB_107777..WB_107784
-    - Statewide codes WB_107001..WB_111115 or raw gp_code
+    All 3,339 Gram Panchayats statewide are treated equally.
     """
     clean_id = str(panchayat_id).strip().upper()
     statewide_reg = _get_statewide_registry()
 
-    # 1. Check pilot PANCHAYAT_DB
-    if clean_id in PANCHAYAT_DB:
-        info = PANCHAYAT_DB[clean_id]
-        canonical_id = info.get("alias", clean_id)
-        statewide_id = PILOT_TO_STATEWIDE.get(clean_id, PILOT_TO_STATEWIDE.get(canonical_id, clean_id))
+    # Silent backwards-compatibility alias mapping for legacy codes
+    resolved_id = PILOT_TO_STATEWIDE.get(clean_id, clean_id)
+    if resolved_id not in statewide_reg and f"WB_{resolved_id}" in statewide_reg:
+        resolved_id = f"WB_{resolved_id}"
 
-        if statewide_id in statewide_reg:
-            sw_info = statewide_reg[statewide_id]
-            return {
-                "panchayat_id": clean_id,
-                "canonical_id": canonical_id,
-                "statewide_id": statewide_id,
-                "gp_code": sw_info.get("gp_code"),
-                "panchayat_name": info["name"],
-                "block_name": sw_info["block_name"],
-                "district_name": sw_info["district_name"],
-                "latitude": sw_info["latitude"],
-                "longitude": sw_info["longitude"],
-            }
-        else:
-            return {
-                "panchayat_id": clean_id,
-                "canonical_id": canonical_id,
-                "statewide_id": statewide_id,
-                "gp_code": 107778,
-                "panchayat_name": info["name"],
-                "block_name": "Amdanga",
-                "district_name": "North 24 Parganas",
-                "latitude": 22.805,
-                "longitude": 88.510,
-            }
-
-    # 2. Check statewide registry
-    if clean_id in statewide_reg:
-        sw_info = statewide_reg[clean_id]
+    if resolved_id in statewide_reg:
+        sw_info = statewide_reg[resolved_id]
         return {
             "panchayat_id": sw_info["panchayat_id"],
             "canonical_id": sw_info["panchayat_id"],
@@ -393,85 +362,11 @@ def resolve_panchayat_meta(panchayat_id: str):
 
 
 # ============================================================
-# PANCHAYATS
+# STATEWIDE PANCHAYAT DATABASE (3,339 GRAM PANCHAYATS EQUAL)
 # ============================================================
 
-PANCHAYAT_DB = {
+PANCHAYAT_DB = _get_statewide_registry()
 
-    "A1": {
-        "name": "ADHATA"
-    },
-
-    "A2": {
-        "name": "AMDANGA"
-    },
-
-    "A3": {
-        "name": "BERABERIA"
-    },
-
-    "A4": {
-        "name": "BODAI"
-    },
-
-    "A5": {
-        "name": "CHANDIGARH"
-    },
-
-    "A6": {
-        "name": "MARICHA"
-    },
-
-    "A7": {
-        "name": "SADHANPUR"
-    },
-
-    "A8": {
-        "name": "TARABERIA"
-    },
-
-    # LGD Code Aliases
-    "WB_107777": {
-        "name": "ADHATA",
-        "alias": "A1"
-    },
-
-    "WB_107778": {
-        "name": "AMDANGA",
-        "alias": "A2"
-    },
-
-    "WB_107779": {
-        "name": "BERABERIA",
-        "alias": "A3"
-    },
-
-    "WB_107780": {
-        "name": "BODAI",
-        "alias": "A4"
-    },
-
-    "WB_107781": {
-        "name": "CHANDIGARH",
-        "alias": "A5"
-    },
-
-    "WB_107782": {
-        "name": "MARICHA",
-        "alias": "A6"
-    },
-
-    "WB_107783": {
-        "name": "SADHANPUR",
-        "alias": "A7"
-    },
-
-    "WB_107784": {
-        "name": "TARABERIA",
-        "alias": "A8"
-    },
-
-}
 
 
 # ============================================================
