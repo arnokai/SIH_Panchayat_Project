@@ -11,7 +11,7 @@ for p in [BACKEND_DIR, ROOT_DIR]:
 
 
 # ============================================================
-# TERRAMIND V2 — FIVE-DAY FORECAST DELIVERY ENGINE
+# TERRAMIND — FIVE-DAY FORECAST DELIVERY ENGINE
 # ============================================================
 #
 # Current role:
@@ -1204,7 +1204,7 @@ if __name__ == "__main__":
     )
 
     print(
-        "TERRAMIND V2 FIVE-DAY TEST"
+        "TERRAMIND FIVE-DAY TEST"
     )
 
     print(

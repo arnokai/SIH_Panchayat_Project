@@ -276,7 +276,7 @@ export default function App() {
           <div className="header-right-tools">
             <LanguageSelector />
             <div className="location">
-              <span>WEST BENGAL</span> • <span>3,339 GRAM PANCHAYATS</span> • <span>HURDLE V2 ML</span>
+              <span>WEST BENGAL</span> • <span>3,339 GRAM PANCHAYATS</span> • <span>HURDLE ML</span>
             </div>
           </div>
         </div>

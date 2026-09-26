@@ -1,5 +1,5 @@
 """
-Unit Test Suite for TerraMind V2 Forecast Engine & Live Ingestion.
+Unit Test Suite for TerraMind Forecast Engine & Live Ingestion.
 ==================================================================
 Tests:
 - Offline coarse forecast downscaling for pilot & statewide GPs

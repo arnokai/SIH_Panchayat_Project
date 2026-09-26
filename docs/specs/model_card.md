@@ -1,4 +1,4 @@
-# Model Card — TerraMind V2 Statewide Hurdle Weather Downscaler
+# Model Card — TerraMind Statewide Hurdle Weather Downscaler
 
 ## 1. Model Details
 * **Developed by:** TerraMind SIH Team (Smart India Hackathon Problem Statement SIH26074 — Ministry of Earth Sciences)

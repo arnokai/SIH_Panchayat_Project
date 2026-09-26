@@ -1,4 +1,4 @@
-# TerraMind V2 — Panchayat-Level Weather Intelligence & Agricultural Advisory
+# TerraMind — Panchayat-Level Weather Intelligence & Agricultural Advisory
 
 [![Frontend](https://img.shields.io/badge/Frontend-Vercel%20Live-black?style=flat&logo=vercel)](https://sih-panchayat-project.vercel.app)
 [![Backend](https://img.shields.io/badge/Backend-Render%20Live-46E3B7?style=flat&logo=render)](https://sih-panchayat-project.onrender.com)
@@ -15,7 +15,7 @@
 > **Repository:** `https://github.com/arnokai/SIH_Panchayat_Project`  
 > **Geographic Scope:** Statewide West Bengal (3,339 Gram Panchayats across all 22 Rural Districts)  
 
-TerraMind V2 extends the earlier V0/V1/V1.3 work into a complete, cloud-deployed **downscaling data lake, forecast engine, and agricultural-advisory decision-support system**.
+TerraMind extends the earlier V0/V1/V1.3 work into a complete, cloud-deployed **downscaling data lake, forecast engine, and agricultural-advisory decision-support system**.
 
 ---
 
@@ -130,7 +130,7 @@ React dashboard (Modular Components: Search, Hero, 5-Day Quantiles, Alerts, Tele
 
 # 2. Statewide V2 AI Hurdle Downscaling Architecture
 
-TerraMind V2 promotes a high-accuracy **Two-Stage Hurdle Downscaling Model** (`ml/models/statewide_hurdle_v2.pkl`) to operational forecasting across all 3,339 Gram Panchayats of West Bengal.
+TerraMind promotes a high-accuracy **Two-Stage Hurdle Downscaling Model** (`ml/models/statewide_hurdle_v2.pkl`) to operational forecasting across all 3,339 Gram Panchayats of West Bengal.
 
 ### Model Architecture & Key Metrics:
 - **Stage 1 (Precipitation Occurrence):** `HistGradientBoostingClassifier` trained on 16 atmospheric, terrain, and soil features, achieving **99.39% accuracy**, **0.9999 ROC-AUC**, and **99.49% Probability of Detection (POD)**.
@@ -724,7 +724,7 @@ SIH_Panchayat_Project/
 
 # 14.1 Cloud Deployment Architecture
 
-TerraMind V2 is deployed to production using a decoupled, zero-cost cloud architecture:
+TerraMind is deployed to production using a decoupled, zero-cost cloud architecture:
 
 ```text
                         ┌─────────────────────────────────────────────────────────┐
@@ -824,7 +824,7 @@ The test suite executes 161 unit tests across 13 test files covering registry bo
 
 # 18. Current V2 Scope & Future Enhancements
 
-TerraMind V2 delivers statewide operational downscaling across all 3,339 Gram Panchayats.
+TerraMind delivers statewide operational downscaling across all 3,339 Gram Panchayats.
 
 Current operational scope:
 - Full 22-district statewide coverage across 3,339 Gram Panchayats using official LGD codes.

@@ -173,7 +173,7 @@ def generate_pmfby_certificate(
     cert_id = f"PMFBY-WB-{panchayat_id}-{datetime.now().strftime('%Y%m%d%H%M')}"
     
     # Generate cryptographic SHA-256 proof hash
-    proof_str = f"{cert_id}|{panchayat_id}|{crop}|{any_triggered}|{now_iso}|TERRAMIND-PMFBY-V2"
+    proof_str = f"{cert_id}|{panchayat_id}|{crop}|{any_triggered}|{now_iso}|TERRAMIND-PMFBY"
     verification_hash = hashlib.sha256(proof_str.encode("utf-8")).hexdigest()
 
     if any_triggered:

@@ -526,7 +526,7 @@ export default function CurrentWeatherHero({
           <div className="hero-condition-title">{conditionText}</div>
           <div className="hero-source-tag">
             <span>Forecast Source: <strong>{data.source || "Open-Meteo Dynamic"}</strong></span>
-            <span> • Panchayat Model: {data.model_version || "TerraMind V2"}</span>
+            <span> • Panchayat Model: {data.model_version || "TerraMind"}</span>
             <span> • Stream: <strong className="live-status-pulse">🟢 Real-Time Auto-Synced</strong></span>
           </div>
         </div>
