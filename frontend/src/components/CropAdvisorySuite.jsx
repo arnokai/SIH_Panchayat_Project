@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+
 const CROP_ICONS = {
   paddy: "🌾",
   potato: "🥔",
@@ -53,7 +55,7 @@ export default function CropAdvisorySuite({
           field_size: fieldSize.toString(),
           unit: fieldUnit,
         });
-        const res = await fetch(`/v1/crops/advisory-dossier?${params.toString()}`);
+        const res = await fetch(`${API_BASE}/v1/crops/advisory-dossier?${params.toString()}`);
         if (!res.ok) {
           throw new Error(`Failed to load crop advisory dossier (${res.status})`);
         }
