@@ -36,8 +36,8 @@ OUTPUT_PARQUET = METADATA_DIR / "statewide_panchayats.parquet"
 OFFICIAL_REF_JSON = METADATA_DIR / "wb_official_panchayats_ref.json"
 
 # Statewide Bounding Envelope (WGS84 EPSG:4326)
-WB_LAT_MIN, WB_LAT_MAX = 21.5, 27.3
-WB_LON_MIN, WB_LON_MAX = 85.8, 89.9
+WB_LAT_MIN, WB_LAT_MAX = 21.45, 27.35
+WB_LON_MIN, WB_LON_MAX = 85.75, 89.95
 
 # 23 Official Administrative Districts of West Bengal
 # Format: (district_name, block_count, target_gp_count, (lat_min, lat_max), (lon_min, lon_max))
@@ -184,6 +184,21 @@ def load_pilot_coordinates() -> Dict[int, Tuple[float, float, str]]:
 
 def generate_statewide_catalog() -> pd.DataFrame:
     """Generate the complete 3,339 GP statewide catalog across 23 districts and 342 blocks."""
+    grounded_parquet = METADATA_DIR / "wb_gp_grounded_coordinates.parquet"
+    if grounded_parquet.is_file():
+        print(f"Loading geographically grounded coordinates from {grounded_parquet}...")
+        gdf = pd.read_parquet(grounded_parquet)
+        if len(gdf) == 3339 and all(col in gdf.columns for col in EXPECTED_COLUMNS):
+            # Enforce physical data types
+            gdf["gp_code"] = gdf["gp_code"].astype(np.int64)
+            gdf["panchayat_id"] = gdf["panchayat_id"].astype(str)
+            gdf["panchayat_name"] = gdf["panchayat_name"].astype(str)
+            gdf["block_name"] = gdf["block_name"].astype(str)
+            gdf["district_name"] = gdf["district_name"].astype(str)
+            gdf["latitude"] = gdf["latitude"].astype(np.float64)
+            gdf["longitude"] = gdf["longitude"].astype(np.float64)
+            return gdf[EXPECTED_COLUMNS]
+
     pilot_coords = load_pilot_coordinates()
     records: List[Dict[str, object]] = []
     current_lgd = 107000

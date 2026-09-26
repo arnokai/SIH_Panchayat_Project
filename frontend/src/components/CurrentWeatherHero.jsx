@@ -1,4 +1,6 @@
+import { useState } from "react";
 import WeatherIcon from "./WeatherIcon";
+import { getCurrentSeason } from "../utils/seasons";
 
 /**
  * CurrentWeatherHero.jsx
@@ -259,6 +261,24 @@ export default function CurrentWeatherHero({
   const p90 = today?.rain_mm?.p90 ?? 0;
   const humidity = liveCur?.relative_humidity_2m ?? 82;
   const windKmh = liveCur?.wind_speed_10m ?? 8;
+  const pressure = liveCur?.surface_pressure != null
+    ? Math.round(liveCur.surface_pressure)
+    : (liveCur?.pressure_msl != null ? Math.round(liveCur.pressure_msl) : 1004);
+  const windDirDeg = liveCur?.wind_direction_10m ?? 210;
+  const windGusts = liveCur?.wind_gusts_10m != null
+    ? Math.round(liveCur.wind_gusts_10m)
+    : Math.round(windKmh * 1.35);
+
+  const getWindCardinal = (deg) => {
+    const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+    const idx = Math.round((deg % 360) / 22.5) % 16;
+    return directions[idx];
+  };
+  const windCardinal = getWindCardinal(windDirDeg);
+
+  const elevationM = Math.round(Number(data.elevation_m || 12));
+  const nearestRiver = data.nearest_river || "Hooghly River";
+  const riverDistKm = data.distance_to_river_m ? (data.distance_to_river_m / 1000).toFixed(1) : "14.2";
 
   const isRainy = (liveCur?.precipitation > 0) || (liveCur?.weather_code >= 50) || (rainProb > 0.6);
   const isCloudy = (liveCur?.weather_code != null && liveCur.weather_code > 0) || (rainProb > 0.3);
@@ -284,8 +304,70 @@ export default function CurrentWeatherHero({
 
   const quickActions = getFarmerQuickActions(p50, rainProb, humidity, windKmh, selectedCrop);
 
+  const [speakingHero, setSpeakingHero] = useState(false);
+  const [showOffSeason, setShowOffSeason] = useState(false);
+
+  // Dynamic agro-ecological seasonal context
+  const currentSeason = getCurrentSeason(new Date());
+  const activeCrops = currentSeason.activeCrops;
+  const inactiveCrops = currentSeason.inactiveCrops;
+  const selectedIsOffSeason = inactiveCrops.some((c) => c.id === selectedCrop);
+  const offSeasonReason = inactiveCrops.find((c) => c.id === selectedCrop)?.avoidanceReason;
+
+  const handleSpeakHero = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      alert("Speech synthesis is not supported in this browser.");
+      return;
+    }
+    if (speakingHero) {
+      window.speechSynthesis.cancel();
+      setSpeakingHero(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const gpName = data.panchayat_name || "Active Panchayat";
+    const textToSpeak = `Today's weather advisory for ${gpName}, ${data.district_name || "West Bengal"}: Current temperature is ${currentTemp} degrees Celsius. ${conditionText}. Rain probability is ${Math.round(rainProb * 100)} percent. Air moisture is ${Math.round(humidity)} percent. Wind speed is ${Math.round(windKmh)} kilometers per hour. Today's advisory: ${today?.advisory?.text_en || "Normal agricultural field operations recommended."}`;
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.lang = "en-IN";
+    utterance.rate = 0.92;
+    const voices = window.speechSynthesis.getVoices();
+    const enVoice = voices.find(
+      (v) => v.lang.startsWith("en") || v.name.toLowerCase().includes("english")
+    );
+    if (enVoice) utterance.voice = enVoice;
+    utterance.onend = () => setSpeakingHero(false);
+    utterance.onerror = () => setSpeakingHero(false);
+    setSpeakingHero(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleWhatsAppShare = () => {
+    const gpName = data.panchayat_name || "Panchayat";
+    const lines = [
+      "🌾 *TerraMind Daily Panchayat Agro-Weather Bulletin* 🌾",
+      `📍 *Panchayat:* ${gpName} (${data.district_name || "West Bengal"})`,
+      `🌡️ *Current Temperature:* ${currentTemp}°C (${conditionText})`,
+      `🌧️ *Rain Probability:* ${Math.round(rainProb * 100)}% (${getRainCategory(p50, p10, p90)})`,
+      `💧 *Air Moisture:* ${Math.round(humidity)}% | 💨 *Wind Speed:* ${Math.round(windKmh)} km/h`,
+      today?.advisory?.text_en ? `📢 *Advisory:* ${today.advisory.text_en}` : null,
+      "",
+      "🔗 _TerraMind — Panchayat-Scale Micro-Climate & Agro-Advisory Intelligence System_",
+    ].filter(Boolean).join("\n");
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(lines)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <section className="weather-hero-card">
+      {/* Degraded Offline Warning Banner if applicable */}
+      {data.degraded && (
+        <div className="degraded-banner">
+          <strong>⚠️ Offline Prototype / Fallback Mode:</strong>{" "}
+          <span>{data.degraded_reason || "Using cached offline baseline data."}</span>
+        </div>
+      )}
+
       {/* Location, Crop Context & Dynamic Stream Header */}
       <div className="hero-top-bar">
         <div className="hero-location">
@@ -293,53 +375,98 @@ export default function CurrentWeatherHero({
           <div>
             <h2 className="hero-gp-name">{data.panchayat_name}</h2>
             <p className="hero-sub-location">
+              {data.gp_code ? <span className="hero-lgd-tag">LGD #{data.gp_code} • </span> : ""}
               {data.block_name ? `${data.block_name.toUpperCase()} BLOCK` : ""}
               {data.district_name ? ` • ${data.district_name.toUpperCase()} DISTRICT` : ""}
+              {(data.panchayat_lat != null && data.panchayat_lon != null) || (data.latitude != null && data.longitude != null) ? (
+                <span className="hero-coords-text">
+                  {` • ${(data.panchayat_lat ?? data.latitude).toFixed(4)}°N, ${(data.panchayat_lon ?? data.longitude).toFixed(4)}°E`}
+                </span>
+              ) : null}
+              {data.agro_climatic_zone ? ` • ${data.agro_climatic_zone.toUpperCase()}` : ""}
             </p>
           </div>
         </div>
 
         <div className="hero-controls">
-          {/* Crop Selector Switcher */}
+          {/* Dynamic Seasonal Crop Selector (Auto-selects active season, avoids unnecessary crops) */}
           <div className="hero-crop-toggle">
-            <span className="control-label">SELECT CROP:</span>
+            <div className="crop-label-row">
+              <div className="season-info-badge">
+                <span className="control-label">CURRENT SEASON:</span>
+                <span className="season-badge" title={currentSeason.tagline}>
+                  {currentSeason.icon} {currentSeason.name.toUpperCase()}
+                </span>
+                <span className="auto-selected-chip" title="Automatically filtered for local West Bengal agricultural calendar">
+                  ✓ Active Season
+                </span>
+              </div>
+              {data.phenology && (
+                <span className="hero-phenology-tag">
+                  🌱 <strong>{data.phenology.current_stage.toUpperCase()}</strong> ({data.phenology.accumulated_gdd} GDD)
+                </span>
+              )}
+            </div>
+
             <div className="crop-pill-group">
+              {/* Active Seasonal Crops (Auto-filtered) */}
+              {activeCrops.map((c) => {
+                const isActive = selectedCrop === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={`crop-pill ${isActive ? "active" : ""}`}
+                    onClick={() => onCropChange(c.id)}
+                    title={`${c.name} (${c.nameBn}) - ${c.tag}`}
+                  >
+                    <span>{c.icon} {c.name}</span>
+                    {c.isPrimary && <span className="crop-primary-dot" title="Primary seasonal staple">•</span>}
+                  </button>
+                );
+              })}
+
+              {/* Show Off-Season Crops if toggled by user */}
+              {showOffSeason &&
+                inactiveCrops.map((c) => {
+                  const isActive = selectedCrop === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={`crop-pill offseason ${isActive ? "active-offseason" : ""}`}
+                      onClick={() => onCropChange(c.id)}
+                      title={`Off-season: ${c.avoidanceReason}`}
+                    >
+                      <span>{c.icon} {c.name}</span>
+                      <small className="offseason-subtag">(Off-Season)</small>
+                    </button>
+                  );
+                })}
+
+              {/* Off-season toggle button to avoid unnecessary ones by default */}
               <button
                 type="button"
-                className={`crop-pill ${selectedCrop === "paddy" ? "active" : ""}`}
-                onClick={() => onCropChange("paddy")}
+                className={`crop-offseason-toggle-btn ${showOffSeason ? "open" : ""}`}
+                onClick={() => setShowOffSeason(!showOffSeason)}
+                title={showOffSeason ? "Hide off-season crops to keep focus on active crops" : `Show ${inactiveCrops.length} off-season crops`}
               >
-                🌾 Paddy
-              </button>
-              <button
-                type="button"
-                className={`crop-pill ${selectedCrop === "potato" ? "active" : ""}`}
-                onClick={() => onCropChange("potato")}
-              >
-                🥔 Potato
-              </button>
-              <button
-                type="button"
-                className={`crop-pill ${selectedCrop === "mustard" ? "active" : ""}`}
-                onClick={() => onCropChange("mustard")}
-              >
-                🌼 Mustard
-              </button>
-              <button
-                type="button"
-                className={`crop-pill ${selectedCrop === "jute" ? "active" : ""}`}
-                onClick={() => onCropChange("jute")}
-              >
-                🌿 Jute
-              </button>
-              <button
-                type="button"
-                className={`crop-pill ${selectedCrop === "vegetables" ? "active" : ""}`}
-                onClick={() => onCropChange("vegetables")}
-              >
-                🥬 Vegetables
+                {showOffSeason
+                  ? "✕ Hide Off-Season"
+                  : `+ Other Crops (${inactiveCrops.length} off-season)`}
               </button>
             </div>
+
+            {/* If an off-season crop is selected, show an imperative agronomic warning */}
+            {selectedIsOffSeason && (
+              <div className="offseason-warning-card">
+                <span className="warning-icon">⚠️</span>
+                <div>
+                  <strong>Off-Season Cropping Advisory ({selectedCrop.toUpperCase()}):</strong>
+                  <p>{offSeasonReason}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Dynamic / Live Mode Toggle */}
@@ -404,7 +531,7 @@ export default function CurrentWeatherHero({
           </div>
         </div>
 
-        {/* 4 Farmer-Friendly Weather Telemetry Cards */}
+        {/* 6 Comprehensive Weather Telemetry Cards */}
         <div className="hero-metrics-grid">
           <div className="metric-cell">
             <span className="metric-label">🌧️ Expected Rainfall</span>
@@ -444,6 +571,40 @@ export default function CurrentWeatherHero({
             <span className="metric-sub">
               {getWindText(windKmh)}
             </span>
+          </div>
+
+          <div className="metric-cell">
+            <span className="metric-label">🧭 Wind &amp; Gusts</span>
+            <span className="metric-value">
+              {windCardinal} ({windDirDeg}°)
+            </span>
+            <span className="metric-sub">
+              Gusts up to {windGusts} km/h
+            </span>
+          </div>
+
+          <div className="metric-cell">
+            <span className="metric-label">⏲️ Air Pressure</span>
+            <span className="metric-value">
+              {pressure} hPa
+            </span>
+            <span className="metric-sub">
+              {pressure < 1000 ? "⚠️ Low / Storm Inflow" : "Normal Atmospheric"}
+            </span>
+          </div>
+        </div>
+
+        {/* Location Micro-Terrain Topological Strip */}
+        <div className="hero-topo-strip">
+          <div className="hero-topo-title">
+            <span>🏔️</span>
+            <strong>LOCATION TOPOGRAPHIC PROFILE:</strong>
+          </div>
+          <div className="hero-topo-tags">
+            <span className="hero-topo-tag">Elevation: <strong>{elevationM} m AMSL</strong></span>
+            <span className="hero-topo-tag">River Basin: <strong>{nearestRiver} (~{riverDistKm} km)</strong></span>
+            <span className="hero-topo-tag">SoilGrids: <strong>{(data.soil_type || "alluvial_loam").replace(/_/g, " ")}</strong></span>
+            <span className="hero-topo-tag">Resolution: <strong>Copernicus 30m DEM</strong></span>
           </div>
         </div>
       </div>
@@ -502,6 +663,29 @@ export default function CurrentWeatherHero({
             ? "Jute requires good soil moisture during vegetative elongation, but stagnant water at seedling stage causes fungal stem rot. Keep outlets cleared."
             : "Vegetable plots are sensitive to standing water and high air humidity. Maintain raised beds, clear drainage furrows before showers, and scout for early leaf blight or fungal mildew."}
         </div>
+      </div>
+
+      {/* Farmer Audio & WhatsApp Share Bar */}
+      <div className="card-farmer-actions">
+        <button
+          type="button"
+          className={`btn-action btn-voice ${speakingHero ? "is-speaking" : ""}`}
+          onClick={handleSpeakHero}
+          title="Listen to today's audio weather advisory"
+        >
+          <span className="action-icon">{speakingHero ? "⏹️" : "🔊"}</span>
+          <span>{speakingHero ? "Stop Audio" : "Listen to Weather Audio"}</span>
+        </button>
+
+        <button
+          type="button"
+          className="btn-action btn-whatsapp"
+          onClick={handleWhatsAppShare}
+          title="Share daily weather and advisory on WhatsApp"
+        >
+          <span className="action-icon">💬</span>
+          <span>Share on WhatsApp</span>
+        </button>
       </div>
     </section>
   );

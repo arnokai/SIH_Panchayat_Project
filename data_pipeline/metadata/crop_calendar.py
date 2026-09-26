@@ -14,10 +14,16 @@ CALENDAR_FILE = (
 )
 
 
-def load_crop_calendar():
+_CALENDAR_CACHE = None
+
+
+def load_crop_calendar(refresh: bool = False):
     """
-    Load the prototype crop calendar from YAML.
+    Load the prototype crop calendar from YAML with in-memory caching.
     """
+    global _CALENDAR_CACHE
+    if not refresh and _CALENDAR_CACHE is not None:
+        return _CALENDAR_CACHE
 
     with open(
         CALENDAR_FILE,
@@ -25,7 +31,10 @@ def load_crop_calendar():
         encoding="utf-8"
     ) as file:
 
-        return yaml.safe_load(file)
+        data = yaml.safe_load(file)
+
+    _CALENDAR_CACHE = data
+    return data
 
 
 def _month_day(value: str):

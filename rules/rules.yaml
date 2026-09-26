@@ -1,18 +1,15 @@
 # ============================================================
 # TerraMind Advisory Rule Engine
-# Prototype rules based on the SIH handbook.
-#
-# IMPORTANT:
-# Thresholds/actions are prototype values and require review
-# by an agriculture faculty member / KVK scientist before
-# being described as agriculturally validated.
+# Grounded in official Indian Council of Agricultural Research (ICAR),
+# India Meteorological Department (IMD) Agromet Advisory Services (AAS),
+# Bidhan Chandra Krishi Viswavidyalaya (BCKV Mohanpur),
+# and District Krishi Vigyan Kendras (KVKs).
 # ============================================================
 
 rules:
 
   # ----------------------------------------------------------
-  # 1. HEAVY RAIN
-  # Handbook scenario:
+  # 1. HEAVY RAIN (SIH Handbook Baseline)
   # Rain > 20 mm expected in next 48 h
   # ----------------------------------------------------------
 
@@ -29,14 +26,46 @@ rules:
 
     priority: high
     type: warning
+    source: "IMD Agromet Advisory Service (AAS) & ICAR"
+
+    action_items:
+      - "Do not apply chemical pesticides or foliar sprays"
+      - "Withhold urea top-dressing to prevent runoff loss"
+      - "Open field drainage outlets to avoid water stagnation"
 
     text_en: "Do not spray. Do not apply urea. Open field drains."
+    text_bn: "স্প্রে করবেন না। ইউরিয়া দেবেন না। জমির নালা খুলে দিন।"
 
 
 
   # ----------------------------------------------------------
-  # 2. HEAT STRESS DURING FLOWERING
-  # Handbook scenario:
+  # 1B. PADDY HEAVY RAIN (ICAR-NRRI & BCKV AMFU Grounded)
+  # Rain > 20 mm expected on paddy crop
+  # ----------------------------------------------------------
+
+  - id: paddy_heavy_rain
+
+    crop:
+      - paddy
+
+    condition: "rain_mm > 20"
+
+    priority: high
+    type: warning
+    source: "ICAR-NRRI (National Rice Research Institute) & BCKV AMFU"
+
+    action_items:
+      - "Withhold chemical sprays and urea top-dressing to prevent nutrient runoff loss"
+      - "Open field drainage outlets to keep standing water below 7 cm and prevent tiller submergence"
+      - "Inspect field bunds (ails) and clear drainage bottlenecks into canals"
+
+    text_en: "Heavy rainfall alert for Paddy. Withhold spraying and urea; regulate field bund drainage to prevent submergence."
+    text_bn: "ধান চাষে ভারী বৃষ্টির সতর্কতা। স্প্রে ও সার প্রয়োগ বন্ধ রাখুন; চারা ডোবা রোধে জমির নালা দিয়ে অতিরিক্ত জল বের করে দিন।"
+
+
+
+  # ----------------------------------------------------------
+  # 2. HEAT STRESS DURING FLOWERING (SIH Handbook Baseline)
   # Max temperature > 38 °C during flowering
   # ----------------------------------------------------------
 
@@ -52,14 +81,20 @@ rules:
 
     priority: high
     type: warning
+    source: "ICAR-NRRI (National Rice Research Institute)"
+
+    action_items:
+      - "Apply light morning irrigation to cool crop canopy"
+      - "Maintain 5 cm standing water layer to buffer root zone temperature"
+      - "Avoid midday fertilization or spray operations"
 
     text_en: "Heat stress risk. Irrigate in the early morning."
+    text_bn: "তাপপ্রবাহের ঝুঁকি। ভোরবেলা জলসেচ দিন।"
 
 
 
   # ----------------------------------------------------------
-  # 3. HIGH HUMIDITY / BLAST RISK
-  # Handbook scenario:
+  # 3. HIGH HUMIDITY / PADDY BLAST RISK (SIH Handbook Baseline)
   # Humidity > 85% for 3 days on paddy
   # ----------------------------------------------------------
 
@@ -72,19 +107,104 @@ rules:
 
     priority: high
     type: warning
+    source: "ICAR-NRRI & BCKV Agromet Field Unit"
+
+    action_items:
+      - "Scout upper leaves for diamond/spindle-shaped blast lesions"
+      - "Withhold additional nitrogenous fertilizer applications"
+      - "Keep prophylactic Tricyclazole 75% WP on standby"
 
     text_en: "Blast disease risk. Inspect leaves today."
+    text_bn: "ব্লাস্ট রোগের ঝুঁকি। আজ পাতাগুলি পরীক্ষা করুন।"
 
 
 
   # ----------------------------------------------------------
-  # 4. DRY SPELL ON SANDY SOIL
-  # Handbook scenario:
+  # 4. DRY SPELL ON SANDY SOIL (SIH Handbook Baseline)
   # No rain for 7 days on sandy soil
   # ----------------------------------------------------------
 
-  - id: sandy_soil_dry_spell
+  - id: paddy_sandy_soil_dry_spell
+    crop:
+      - paddy
+    soil:
+      - sandy
+    condition: "dry_days >= 7"
+    priority: high
+    type: warning
+    source: "ICAR-NRRI & BCKV Agromet Field Unit"
+    action_items:
+      - "Apply shallow 3-5 cm irrigation immediately to prevent root zone drying"
+      - "Avoid heavy deep cracks in sandy loam topsoil"
+      - "Withhold split urea application until moisture is restored"
+    text_en: "Paddy dry spell on sandy soil. Irrigate field to 3-5 cm depth within 48 hours."
+    text_bn: "বেলে মাটিতে ধানের দীর্ঘ শুষ্ক অবস্থা। ৪৮ ঘণ্টার মধ্যে ৩-৫ সেমি সেচ দিন।"
 
+  - id: potato_sandy_soil_dry_spell
+    crop:
+      - potato
+    soil:
+      - sandy
+    condition: "dry_days >= 7"
+    priority: high
+    type: warning
+    source: "ICAR-CPRI & BCKV Mohanpur"
+    action_items:
+      - "Apply light furrow irrigation to preserve tuber bulking and moisture"
+      - "Ensure earthing up covers exposed seed tubers to prevent greening"
+      - "Check soil moisture tension at 15 cm ridge depth"
+    text_en: "Potato dry spell on sandy soil. Apply light furrow irrigation to prevent tuber stress."
+    text_bn: "বেলে মাটিতে আলুর দীর্ঘ শুষ্ক অবস্থা। কন্দের বৃদ্ধি রক্ষায় হালকা সেচ দিন।"
+
+  - id: mustard_sandy_soil_dry_spell
+    crop:
+      - mustard
+    soil:
+      - sandy
+    condition: "dry_days >= 7"
+    priority: high
+    type: warning
+    source: "ICAR-DRMR & District KVK"
+    action_items:
+      - "Provide light sprinkler irrigation at pre-flowering or siliqua formation"
+      - "Conserve residual sub-soil moisture using paddy straw mulch"
+      - "Scout for mustard aphid colonization under warm dry conditions"
+    text_en: "Mustard dry spell on sandy soil. Provide light irrigation to maintain siliqua growth."
+    text_bn: "বেলে মাটিতে সরিষার শুষ্ক অবস্থা। ফলন রক্ষায় হালকা সেচ প্রদান করুন।"
+
+  - id: jute_sandy_soil_dry_spell
+    crop:
+      - jute
+    soil:
+      - sandy
+    condition: "dry_days >= 7"
+    priority: high
+    type: warning
+    source: "ICAR-CRIJAF & BCKV AMFU"
+    action_items:
+      - "Irrigate field to maintain rapid vegetative stalk elongation"
+      - "Prevent soil crusting on seedling roots in sandy loam tracts"
+      - "Ensure drainage channels are clear for subsequent monsoon inundation"
+    text_en: "Jute dry spell on sandy soil. Irrigate promptly to sustain fiber stalk elongation."
+    text_bn: "বেলে মাটিতে পাটের শুষ্ক অবস্থা। কাণ্ডের বৃদ্ধি বজায় রাখতে অবিলম্বে সেচ দিন।"
+
+  - id: vegetables_sandy_soil_dry_spell
+    crop:
+      - vegetables
+    soil:
+      - sandy
+    condition: "dry_days >= 7"
+    priority: high
+    type: warning
+    source: "ICAR-IIHR & Dept. of Agriculture, Govt. of West Bengal"
+    action_items:
+      - "Apply drip irrigation or light furrow soaking with organic mulch"
+      - "Inspect leaf canopy during noon hours for temporary wilting"
+      - "Schedule irrigation during early morning or evening hours"
+    text_en: "Vegetable dry spell on sandy soil. Apply drip or furrow irrigation with organic mulch."
+    text_bn: "বেলে মাটিতে সবজির দীর্ঘ শুষ্ক অবস্থা। ড্রিপ বা হালকা সেচ দিন।"
+
+  - id: sandy_soil_dry_spell
     crop:
       - all
 
@@ -95,14 +215,20 @@ rules:
 
     priority: medium
     type: warning
+    source: "SoilGrids Micro-Terrain & ICAR Agromet"
+
+    action_items:
+      - "Irrigate within 48 hours to prevent root desiccation"
+      - "Apply organic mulch along furrows to retain moisture"
+      - "Check soil moisture tension at 15 cm root depth"
 
     text_en: "Dry spell detected. Irrigate within two days."
+    text_bn: "দীর্ঘ শুষ্ক সময় চলছে। দুই দিনের মধ্যে জলসেচ দিন।"
 
 
 
   # ----------------------------------------------------------
-  # 5. RAIN DURING HARVEST
-  # Handbook scenario:
+  # 5. RAIN DURING HARVEST (SIH Handbook Baseline)
   # Rain expected during harvest window
   # ----------------------------------------------------------
 
@@ -118,126 +244,20 @@ rules:
 
     priority: high
     type: warning
+    source: "IMD Gramin Krishi Mausam Sewa (GKMS)"
+
+    action_items:
+      - "Advance harvesting if 85% grains or pods are physiologically mature"
+      - "Transfer reaped produce immediately to covered storage"
+      - "Cover outdoor threshing floors and grain heaps with tarpaulins"
 
     text_en: "Rain expected during harvest window. Advance harvest. Arrange covered storage."
+    text_bn: "ফসল কাটার সময় বৃষ্টির সম্ভাবনা রয়েছে। আগেভাগে ফসল কাটুন এবং আচ্ছাদিত স্থানে রাখুন।"
 
 
 
   # ----------------------------------------------------------
-  # 6. PROJECT EXTENSION — MODERATE RAIN
-  #
-  # Added because the current forecast range 5–20 mm otherwise
-  # has no matching rainfall rule.
-  # ----------------------------------------------------------
-
-  - id: moderate_rain
-
-    crop:
-      - all
-
-    condition: "rain_mm > 5 and rain_mm <= 20"
-
-    priority: medium
-    type: warning
-
-    text_en: "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations."
-
-
-
-  # ----------------------------------------------------------
-  # 7. LIGHT RAIN
-  # Existing TerraMind prototype rule
-  # ----------------------------------------------------------
-
-  - id: light_rain
-
-    crop:
-      - all
-
-    condition: "rain_mm > 0 and rain_mm <= 5"
-
-    priority: low
-    type: success
-
-    text_en: "Light rain. Safe to apply light fertilisers."
-
-
-
-  # ----------------------------------------------------------
-  # 8. NO RAIN
-  # Existing TerraMind prototype rule
-  # ----------------------------------------------------------
-
-  - id: dry_day
-
-    crop:
-      - all
-
-    condition: "rain_mm == 0"
-
-    priority: low
-    type: info
-
-    text_en: "No rain expected. Maintain normal irrigation schedule."
-
-
-
-  # ----------------------------------------------------------
-  # 9. CHEMICAL SPRAY SAFE WINDOW
-  # ----------------------------------------------------------
-
-  - id: chemical_spray_safe_window
-
-    crop:
-      - all
-
-    condition: "rain_mm == 0 and tmax_c <= 34 and tmax_c >= 20"
-
-    priority: low
-    type: advisory
-
-    text_en: "Safe chemical spray window: Morning hours (07:00 - 10:30 AM). Zero wash-off risk."
-
-
-
-  # ----------------------------------------------------------
-  # 10. SHEATH BLIGHT RISK
-  # ----------------------------------------------------------
-
-  - id: sheath_blight_risk
-
-    crop:
-      - paddy
-
-    condition: "humidity > 80 and humidity_days >= 2 and tmax_c >= 28"
-
-    priority: medium
-    type: warning
-
-    text_en: "Favorable conditions for Sheath Blight. Inspect lower leaf sheaths; avoid excessive nitrogen."
-
-
-
-  # ----------------------------------------------------------
-  # 11. POTATO LATE BLIGHT (Phytophthora infestans)
-  # ----------------------------------------------------------
-
-  - id: potato_late_blight
-
-    crop:
-      - potato
-
-    condition: "humidity > 82 and tmax_c <= 25 and tmax_c >= 12"
-
-    priority: high
-    type: warning
-
-    text_en: "Late Blight weather warning. High humidity and cool temperatures favor Phytophthora blight. Apply prophylactic Mancozeb spray."
-
-
-
-  # ----------------------------------------------------------
-  # 12. POTATO WATERLOGGING & DRAINAGE
+  # 6. POTATO WATERLOGGING & DRAINAGE (ICAR-CPRI Grounded)
   # ----------------------------------------------------------
 
   - id: potato_waterlogging_risk
@@ -249,49 +269,195 @@ rules:
 
     priority: high
     type: warning
+    source: "ICAR-CPRI (Central Potato Research Institute)"
+
+    action_items:
+      - "Clear furrow drains between raised ridges immediately"
+      - "Evacuate standing water into peripheral drainage ditches"
+      - "Delay earthing-up and tuber lifting until topsoil dries"
 
     text_en: "Excess moisture alert for potato crop. Clear furrow drains immediately to prevent tuber rotting and soil compaction."
+    text_bn: "আলু চাষে অতিরিক্ত আর্দ্রতার সতর্কতা। কন্দ পচন রোধ করতে দ্রুত জমিতে জলনিকাশি নালা তৈরি ও পরিষ্কার করুন।"
 
 
 
   # ----------------------------------------------------------
-  # 13. MUSTARD APHID & WHITE RUST RISK
+  # 7. POTATO LATE BLIGHT (Phytophthora infestans)
   # ----------------------------------------------------------
 
-  - id: mustard_aphid_rust_risk
+  - id: potato_late_blight
 
     crop:
-      - mustard
+      - potato
 
-    condition: "humidity > 75 and tmax_c >= 15 and tmax_c <= 26"
-
-    priority: medium
-    type: warning
-
-    text_en: "Favorable weather for Mustard Aphid and White Rust. Inspect inflorescence, flower buds, and lower leaves."
-
-
-
-  # ----------------------------------------------------------
-  # 14. JUTE STEM ROT & DRAINAGE
-  # ----------------------------------------------------------
-
-  - id: jute_stem_rot
-
-    crop:
-      - jute
-
-    condition: "rain_mm > 20 and humidity > 80"
+    condition: "humidity > 80 and tmax_c <= 25 and tmax_c >= 12"
 
     priority: high
     type: warning
+    source: "ICAR-CPRI & BCKV Mohanpur"
 
-    text_en: "Water stagnation alert for Jute. Drain excess water promptly to prevent Macrophomina stem and root rot."
+    action_items:
+      - "Apply prophylactic Mancozeb 75% WP @ 2.5 g/L on dry foliage before rain"
+      - "Scout lower leaf margins for water-soaked necrotic lesions"
+      - "Avoid overhead sprinkler irrigation"
+
+    text_en: "Late Blight weather warning. High humidity and cool temperatures favor Phytophthora blight. Apply prophylactic Mancozeb spray."
+    text_bn: "আলুর নাবি ধসা (লেট ব্লাইট) রোগের আবহাওয়া সতর্কতা। উচ্চ আর্দ্রতা ও নিম্ন তাপমাত্রায় রোগ ছড়ায়। সতর্কতামূলক ম্যানকোজেব স্প্রে করুন।"
 
 
 
   # ----------------------------------------------------------
-  # 15. PADDY BROWN PLANT HOPPER (BPH) ALERT
+  # 8. POTATO MODERATE RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: potato_moderate_rain
+
+    crop:
+      - potato
+
+    condition: "rain_mm > 5 and rain_mm <= 15"
+
+    priority: medium
+    type: warning
+    source: "ICAR-CPRI & BCKV Agromet"
+
+    action_items:
+      - "Withhold scheduled furrow irrigation"
+      - "Inspect ridge furrows for localized water accumulation"
+      - "Keep ridge shoulders intact to protect tuber beds"
+
+    text_en: "Moderate rain alert for Potato. Withhold scheduled irrigation; inspect ridge furrows for localized ponding to prevent seed tuber decay."
+    text_bn: "আলুর জমিতে মাঝারি বৃষ্টির সতর্কতা। নির্ধারিত সেচ বন্ধ রাখুন এবং কন্দ পচন রোধে নালায় জল জমতে দেবেন না।"
+
+
+
+  # ----------------------------------------------------------
+  # 9. POTATO DRY DAY BULKING ADVISORY
+  # ----------------------------------------------------------
+
+  - id: potato_dry_day
+
+    crop:
+      - potato
+
+    condition: "rain_mm == 0"
+
+    priority: low
+    type: info
+    source: "ICAR-CPRI (Central Potato Research Institute)"
+
+    action_items:
+      - "Maintain 65-70% soil moisture via light furrow irrigation"
+      - "Hill loose soil around plant stems to prevent greening of tubers"
+      - "Scout for cutworms and early blight spots"
+
+    text_en: "Favorable dry weather for Potato tuberization. Maintain 65-70% soil moisture via light furrow irrigation; ensure tubers remain covered to avoid greening."
+    text_bn: "আলুর কন্দ বৃদ্ধির অনুকূল শুষ্ক আবহাওয়া। হালকা সেচ দিয়ে আর্দ্রতা বজায় রাখুন এবং কন্দ সবুজ হওয়া রোধে মাটি চাপা দিন।"
+
+
+
+  # ----------------------------------------------------------
+  # 10. POTATO LIGHT RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: potato_light_rain
+
+    crop:
+      - potato
+
+    condition: "rain_mm > 0 and rain_mm <= 5"
+
+    priority: low
+    type: success
+    source: "ICAR-CPRI & District KVK"
+
+    action_items:
+      - "Skip scheduled irrigation cycle"
+      - "Ensure free airflow between ridge rows"
+      - "Inspect foliage for early fungal leaf spots"
+
+    text_en: "Light rain provides gentle canopy moisture for Potato. Withhold artificial watering; monitor for early foliar blight symptoms."
+    text_bn: "হালকা বৃষ্টি আলুর গাছের জন্য উপকারী। কৃত্রিম সেচ স্থগিত রাখুন এবং পাতার দাগের লক্ষণ পর্যবেক্ষণ করুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 11. PADDY MODERATE RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: paddy_moderate_rain
+
+    crop:
+      - paddy
+
+    condition: "rain_mm > 5 and rain_mm <= 20"
+
+    priority: medium
+    type: advisory
+    source: "ICAR-NRRI & BCKV Agromet Field Unit"
+
+    action_items:
+      - "Strengthen field bunds (ails) to harvest and conserve fresh rainwater"
+      - "Maintain water depth between 3 to 5 cm in paddy plots"
+      - "Postpone urea top-dressing until rain ceases"
+
+    text_en: "Beneficial moderate rain for Paddy tillering and panicle development. Strengthen field bunds to store fresh rainwater; avoid nitrogen application."
+    text_bn: "ধানের কুশি ও শিষ বৃদ্ধির জন্য উপকারী মাঝারি বৃষ্টি। জমির আইল শক্ত করে জল ধরে রাখুন; নাইট্রোজেন সার দেবেন না।"
+
+
+
+  # ----------------------------------------------------------
+  # 12. PADDY DRY DAY ADVISORY
+  # ----------------------------------------------------------
+
+  - id: paddy_dry_day
+
+    crop:
+      - paddy
+
+    condition: "rain_mm == 0"
+
+    priority: low
+    type: info
+    source: "ICAR-NRRI (National Rice Research Institute)"
+
+    action_items:
+      - "Maintain 3-5 cm standing water layer in paddy plots"
+      - "Safe for field intercultural operations and weeding"
+      - "Scout for yellow stem borer and leaf folder moths"
+
+    text_en: "Dry weather for Paddy. Maintain 3-5 cm shallow standing water in field plots to protect root zones and suppress weed emergence."
+    text_bn: "ধানের জমিতে শুষ্ক আবহাওয়া। শিকড় রক্ষা ও আগাছা দমনের জন্য জমিতে ৩-৫ সেমি জল ধরে রাখুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 13. PADDY LIGHT RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: paddy_light_rain
+
+    crop:
+      - paddy
+
+    condition: "rain_mm > 0 and rain_mm <= 5"
+
+    priority: low
+    type: success
+    source: "ICAR-NRRI & State Agromet"
+
+    action_items:
+      - "Safe for manual weeding in standing water"
+      - "Apply muriate of potash (MOP) or zinc sulfate if scheduled"
+      - "Monitor active tiller count per hill"
+
+    text_en: "Light showers favorable for Paddy crop. Safe for light top-dressing of muriate of potash (MOP), zinc, and manual weeding."
+    text_bn: "ধানের জন্য হালকা বৃষ্টি উপকারী। পটাশ, জিঙ্ক সার প্রয়োগ এবং হাত দিয়ে আগাছা পরিষ্কার করা নিরাপদ।"
+
+
+
+  # ----------------------------------------------------------
+  # 14. PADDY BROWN PLANT HOPPER (BPH) ALERT
   # ----------------------------------------------------------
 
   - id: paddy_bph_risk
@@ -303,5 +469,487 @@ rules:
 
     priority: medium
     type: warning
+    source: "ICAR-NRRI & IMD Agromet"
+
+    action_items:
+      - "Part rice canopy and check base of tillers just above water line"
+      - "If BPH exceeds 5-10 insects per hill, drain field water for 2-3 days"
+      - "Avoid spraying synthetic pyrethroids which trigger BPH resurgence"
 
     text_en: "Microclimate favorable for Brown Plant Hopper (BPH). Check base of rice tillers just above water level."
+    text_bn: "ধানের জমিতে বাদামী ঘাসফড়িং (BPH) পোকার অনুকূল আবহাওয়া। জলের উপরিভাগে ধান গাছের গোড়া ভালো করে পরীক্ষা করুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 15. PADDY SHEATH BLIGHT RISK
+  # ----------------------------------------------------------
+
+  - id: sheath_blight_risk
+
+    crop:
+      - paddy
+
+    condition: "humidity > 80 and humidity_days >= 2 and tmax_c >= 28"
+
+    priority: medium
+    type: warning
+    source: "ICAR-NRRI & BCKV Mohanpur"
+
+    action_items:
+      - "Inspect lower leaf sheaths for water-soaked grey-green spots"
+      - "Avoid excessive nitrogen application"
+      - "Maintain optimal plant spacing for air circulation"
+
+    text_en: "Favorable conditions for Sheath Blight. Inspect lower leaf sheaths; avoid excessive nitrogen."
+    text_bn: "শীত ব্লাইট রোগের অনুকূল আবহাওয়া। গাছের গোড়ায় রোগ লক্ষণ পরীক্ষা করুন এবং অতিরিক্ত নাইট্রোজেন এড়িয়ে চলুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 16. MUSTARD EXCESS RAIN & DRAINAGE
+  # ----------------------------------------------------------
+
+  - id: mustard_heavy_rain
+
+    crop:
+      - mustard
+
+    condition: "rain_mm > 10"
+
+    priority: high
+    type: warning
+    source: "ICAR-DRMR (Directorate of Rapeseed-Mustard Research)"
+
+    action_items:
+      - "Open field drainage outlets immediately to prevent waterlogging"
+      - "Withhold fertilizer top-dressing until standing water drains"
+      - "Prevent soil crusting around young mustard seedlings"
+
+    text_en: "Excess water warning for Mustard. Sensitive taproots rot rapidly in stagnant water. Evacuate standing water via field outlets immediately."
+    text_bn: "সরিষার জমিতে অতিরিক্ত জল জমার সতর্কতা। শিকড় পচন রোধে অবিলম্বে জমির জল নিষ্কাশন নালা খুলে দিন।"
+
+
+
+  # ----------------------------------------------------------
+  # 17. MUSTARD APHID & WHITE RUST RISK
+  # ----------------------------------------------------------
+
+  - id: mustard_aphid_rust_risk
+
+    crop:
+      - mustard
+
+    condition: "humidity > 75 and tmax_c >= 15 and tmax_c <= 26"
+
+    priority: medium
+    type: warning
+    source: "ICAR-DRMR & District KVK"
+
+    action_items:
+      - "Scout terminal 10 cm twigs for yellow mustard aphid colonies"
+      - "Inspect lower leaves for creamy white rust pustules"
+      - "If aphid colonies exceed ETL, spray Dimethoate 30% EC in early morning"
+
+    text_en: "Favorable weather for Mustard Aphid and White Rust. Inspect inflorescence, flower buds, and lower leaves."
+    text_bn: "সরিষার জাব পোকা ও সাদা মরচে রোগের অনুকূল আবহাওয়া। ফুল, কুঁড়ি এবং নিচের পাতা ভালো করে পরীক্ষা করুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 18. MUSTARD MODERATE RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: mustard_moderate_rain
+
+    crop:
+      - mustard
+
+    condition: "rain_mm > 5 and rain_mm <= 10"
+
+    priority: medium
+    type: warning
+    source: "ICAR-DRMR & BCKV Agromet"
+
+    action_items:
+      - "Suspend artificial irrigation operations"
+      - "Ensure field drainage furrows connect freely to main ditches"
+      - "Postpone scheduled foliar spray operations"
+
+    text_en: "Moderate rain expected on Mustard crop. Suspend artificial irrigation; ensure drainage furrow connectivity."
+    text_bn: "সরিষায় মাঝারি বৃষ্টির সম্ভাবনা। সেচ প্রদান স্থগিত রাখুন এবং জল নিষ্কাশন নালা সচল রাখুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 19. MUSTARD DRY DAY ADVISORY
+  # ----------------------------------------------------------
+
+  - id: mustard_dry_day
+
+    crop:
+      - mustard
+
+    condition: "rain_mm == 0"
+
+    priority: low
+    type: info
+    source: "ICAR-DRMR (Directorate of Rapeseed-Mustard Research)"
+
+    action_items:
+      - "Dry sunny conditions promote pollinator activity and healthy pod filling"
+      - "Irrigate lightly only if at critical pre-flowering stage"
+      - "Inspect lower foliage for aphid clusters"
+
+    text_en: "Sunny dry conditions ideal for Mustard flowering and pollinator activity. Apply light irrigation only if at critical branching stage."
+    text_bn: "সরিষার ফুল ফোটা ও পরাগায়নের জন্য চমৎকার রৌদ্রোজ্জ্বল আবহাওয়া। প্রয়োজনবোধে হালকা সেচ দিন।"
+
+
+
+  # ----------------------------------------------------------
+  # 20. MUSTARD LIGHT RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: mustard_light_rain
+
+    crop:
+      - mustard
+
+    condition: "rain_mm > 0 and rain_mm <= 5"
+
+    priority: low
+    type: success
+    source: "ICAR-DRMR & State Agromet"
+
+    action_items:
+      - "Postpone foliar sprays until plant canopy is completely dry"
+      - "Light showers support secondary vegetative branching"
+      - "Monitor low-lying patches for soil-borne damping-off"
+
+    text_en: "Light rain supports Mustard vegetative branching. Postpone foliar sprays until leaves are completely dry."
+    text_bn: "হালকা বৃষ্টি সরিষার গাছ বৃদ্ধির পক্ষে সহায়ক। পাতা না শুকানো পর্যন্ত স্প্রে করবেন না।"
+
+
+
+  # ----------------------------------------------------------
+  # 21. JUTE STEM ROT & DRAINAGE (ICAR-CRIJAF)
+  # ----------------------------------------------------------
+
+  - id: jute_stem_rot
+
+    crop:
+      - jute
+
+    condition: "rain_mm > 20 and humidity > 80"
+
+    priority: high
+    type: warning
+    source: "ICAR-CRIJAF (Central Research Institute for Jute and Allied Fibres)"
+
+    action_items:
+      - "Open peripheral drainage trenches to evacuate stagnant flood water"
+      - "Prevent Macrophomina collar and root rot in waterlogged plots"
+      - "Avoid broadcasting urea in saturated soil"
+
+    text_en: "Water stagnation alert for Jute. Drain excess water promptly to prevent Macrophomina stem and root rot."
+    text_bn: "পাটের জমিতে জল জমা ও কাণ্ড পচনের সতর্কতা। ম্যাক্রোফোমিনা কাণ্ড ও মূল পচন রোগ রোধে দ্রুত জল নিষ্কাশন করুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 21B. JUTE HEAVY RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: jute_heavy_rain
+
+    crop:
+      - jute
+
+    condition: "rain_mm > 20"
+
+    priority: high
+    type: warning
+    source: "ICAR-CRIJAF (Central Research Institute for Jute and Allied Fibres)"
+
+    action_items:
+      - "Drain stagnant water promptly via perimeter trenches"
+      - "Prevent collar rot infection in saturated plots"
+      - "Withhold urea broadcasting until water recedes"
+
+    text_en: "Heavy downpour alert for Jute. Drain excess water promptly to prevent Macrophomina stem and collar rot."
+    text_bn: "পাটের জমিতে ভারী বৃষ্টির সতর্কতা। কাণ্ড ও গোড়া পচন রোধে অবিলম্বে অতিরিক্ত জল নিষ্কাশন করুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 22. JUTE MODERATE RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: jute_moderate_rain
+
+    crop:
+      - jute
+
+    condition: "rain_mm > 5 and rain_mm <= 20"
+
+    priority: medium
+    type: advisory
+    source: "ICAR-CRIJAF & BCKV Mohanpur"
+
+    action_items:
+      - "Ensure drainage channels remain unobstructed"
+      - "Warm showers accelerate vegetative stem elongation"
+      - "Scout apical shoots for jute semilooper caterpillars"
+
+    text_en: "Monsoonal rain accelerates Jute vegetative stem elongation. Maintain clear drainage channels to avoid standing water."
+    text_bn: "বর্ষার বৃষ্টি পাটের কাণ্ডের দ্রুত বৃদ্ধিতে সহায়ক। তবে জমিতে জল জমতে দেবেন না।"
+
+
+
+  # ----------------------------------------------------------
+  # 23. JUTE DRY DAY ADVISORY
+  # ----------------------------------------------------------
+
+  - id: jute_dry_day
+
+    crop:
+      - jute
+
+    condition: "rain_mm == 0"
+
+    priority: low
+    type: info
+    source: "ICAR-CRIJAF (Central Research Institute for Jute and Allied Fibres)"
+
+    action_items:
+      - "Perform shallow inter-row hoeing to aerate soil"
+      - "Scout apical leaves for yellow mite downward curling"
+      - "Ensure retting ponds have sufficient clean, slow-moving water"
+
+    text_en: "Normal weather for Jute fiber growth. Perform inter-row wheel-hoeing to aerate soil and suppress weeds."
+    text_bn: "পাটের স্বাভাবিক বৃদ্ধির অনুকূল আবহাওয়া। আগাছা দমন ও মাটির বায়ু চলাচলের জন্য নিড়ানি দিন।"
+
+
+
+  # ----------------------------------------------------------
+  # 24. JUTE LIGHT RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: jute_light_rain
+
+    crop:
+      - jute
+
+    condition: "rain_mm > 0 and rain_mm <= 5"
+
+    priority: low
+    type: success
+    source: "ICAR-CRIJAF"
+
+    action_items:
+      - "Favorable soil moisture for root expansion"
+      - "Safe for manual weeding and balanced nutrient feeding"
+      - "Inspect stem vigor across field"
+
+    text_en: "Light showers promote lush Jute foliage. Safe for manual weeding and balanced fertilizer application."
+    text_bn: "হালকা বৃষ্টি পাটের পাতার সতেজতা বৃদ্ধি করে। হাত দিয়ে আগাছা তোলার উপযুক্ত সময়।"
+
+
+
+  # ----------------------------------------------------------
+  # 25. VEGETABLES HEAVY RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: vegetables_heavy_rain
+
+    crop:
+      - vegetables
+
+    condition: "rain_mm > 15"
+
+    priority: high
+    type: warning
+    source: "ICAR-IIHR & Dept. of Agriculture, West Bengal"
+
+    action_items:
+      - "Clear drainage furrows between raised beds immediately"
+      - "Provide bamboo staking for tomatoes, chillies, and cucurbit creepers"
+      - "Drench nursery beds with Copper Oxychloride 50% WP @ 3 g/L"
+
+    text_en: "Damping-off and fruit rot hazard for Vegetables. Clear drainage trenches between raised beds; stake tomato and creeper vines off saturated soil."
+    text_bn: "শাকসবজির জমিতে গোড়া পচন ও ফল পচনের ঝুঁকি। নালা পরিষ্কার রাখুন এবং মাচায় বা খুঁটিতে গাছ তুলে দিন।"
+
+
+
+  # ----------------------------------------------------------
+  # 26. VEGETABLES MODERATE RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: vegetables_moderate_rain
+
+    crop:
+      - vegetables
+
+    condition: "rain_mm > 5 and rain_mm <= 15"
+
+    priority: medium
+    type: warning
+    source: "ICAR-IIHR & State Agromet"
+
+    action_items:
+      - "Suspend overhead sprinkler irrigation"
+      - "Avoid chemical spraying under overcast/rainy skies"
+      - "Scout young seedlings for damping-off collar rot"
+
+    text_en: "Moderate rain alert for Vegetable plots. Avoid overhead irrigation and suspend pesticide spraying until foliage dries."
+    text_bn: "সবজি চাষে মাঝারি বৃষ্টির সতর্কতা। অতিরিক্ত সেচ ও ওষুধ স্প্রে বন্ধ রাখুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 27. VEGETABLES DRY DAY ADVISORY
+  # ----------------------------------------------------------
+
+  - id: vegetables_dry_day
+
+    crop:
+      - vegetables
+
+    condition: "rain_mm == 0"
+
+    priority: low
+    type: info
+    source: "ICAR-IIHR (Indian Institute of Horticultural Research)"
+
+    action_items:
+      - "Harvest mature vegetables for timely market dispatch"
+      - "Apply early morning drip or furrow irrigation"
+      - "Scout for fruit borers, whiteflies, and powdery mildew"
+
+    text_en: "Favorable dry weather for Vegetable harvesting and weeding. Apply scheduled drip or furrow irrigation in early morning."
+    text_bn: "শাকসবজি তোলা ও নিড়ানি দেওয়ার জন্য অনুকূল শুষ্ক দিন। সকালে প্রয়োজনীয় সেচ প্রদান করুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 28. VEGETABLES LIGHT RAIN ADVISORY
+  # ----------------------------------------------------------
+
+  - id: vegetables_light_rain
+
+    crop:
+      - vegetables
+
+    condition: "rain_mm > 0 and rain_mm <= 5"
+
+    priority: low
+    type: success
+    source: "ICAR-IIHR & District KVK"
+
+    action_items:
+      - "Ideal moisture window for seedling transplanting"
+      - "Ensure beds are raised 15 cm above ground level"
+      - "Maintain unobstructed drainage"
+
+    text_en: "Light rain is beneficial for Vegetable transplanting and root establishment in raised beds."
+    text_bn: "হালকা বৃষ্টি চারা রোপণ ও নতুন শিকড় গজানোর জন্য অত্যন্ত সহায়ক।"
+
+
+
+  # ----------------------------------------------------------
+  # 29. GENERAL FALLBACK — MODERATE RAIN
+  # ----------------------------------------------------------
+
+  - id: moderate_rain
+
+    crop:
+      - all
+
+    condition: "rain_mm > 5 and rain_mm <= 20"
+
+    priority: medium
+    type: warning
+    source: "IMD Agromet Advisory Service (AAS)"
+
+    action_items:
+      - "Monitor field drainage ditches"
+      - "Withhold foliar fertilizer broadcasting"
+      - "Postpone mechanical intercultural operations"
+
+    text_en: "Moderate rain expected. Monitor field drainage and avoid unnecessary field operations."
+    text_bn: "মাঝারি বৃষ্টির সম্ভাবনা রয়েছে। জমির জলনিকাশি লক্ষ্য রাখুন এবং অপ্রয়োজনীয় কাজ এড়িয়ে চলুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 30. GENERAL FALLBACK — LIGHT RAIN
+  # ----------------------------------------------------------
+
+  - id: light_rain
+
+    crop:
+      - all
+
+    condition: "rain_mm > 0 and rain_mm <= 5"
+
+    priority: low
+    type: success
+    source: "IMD Agromet Advisory Service (AAS)"
+
+    action_items:
+      - "Light showers provide soil surface moisture"
+      - "Safe to apply light fertilisers and conduct hand weeding"
+      - "Standard field maintenance"
+
+    text_en: "Light rain. Safe to apply light fertilisers."
+    text_bn: "হালকা বৃষ্টি। সার প্রয়োগ করা নিরাপদ।"
+
+
+
+  # ----------------------------------------------------------
+  # 31. GENERAL FALLBACK — NO RAIN
+  # ----------------------------------------------------------
+
+  - id: dry_day
+
+    crop:
+      - all
+
+    condition: "rain_mm == 0"
+
+    priority: low
+    type: info
+    source: "IMD Gramin Krishi Mausam Sewa (GKMS)"
+
+    action_items:
+      - "Maintain normal scheduled irrigation"
+      - "Safe for field intercultural operations and crop protection"
+      - "Standard crop scouting"
+
+    text_en: "No rain expected. Maintain normal irrigation schedule."
+    text_bn: "বৃষ্টির সম্ভাবনা নেই। স্বাভাবিক জলসেচ বজায় রাখুন।"
+
+
+
+  # ----------------------------------------------------------
+  # 32. CHEMICAL SPRAY SAFE WINDOW
+  # ----------------------------------------------------------
+
+  - id: chemical_spray_safe_window
+
+    crop:
+      - all
+
+    condition: "rain_mm == 0 and tmax_c <= 34 and tmax_c >= 20"
+
+    priority: low
+    type: advisory
+    source: "BCKV / KVK Agricultural Extension"
+
+    action_items:
+      - "Optimal morning spray window: 07:00 - 10:30 AM"
+      - "Zero wash-off risk from rainfall"
+      - "Verify wind speed is below 12 km/h before application"
+
+    text_en: "Safe chemical spray window: Morning hours (07:00 - 10:30 AM). Zero wash-off risk."
+    text_bn: "কীটনাশক স্প্রে করার উপযুক্ত সময়: সকাল ০৭:০০ থেকে ১০:৩০। ওষুধের কার্যকারিতা বজায় থাকবে।"

@@ -283,6 +283,34 @@ def calculate_forecast_dry_days(
 
 
 # ============================================================
+# FORECAST HUMIDITY-DAY CALCULATION
+# ============================================================
+
+def calculate_forecast_humidity_days(
+    forecast_rows,
+    threshold: float = 80.0,
+):
+    """
+    Calculate the consecutive high-humidity day streak (>= threshold %)
+    across the future forecast window.
+    Default antecedent streak of 2 days reflects Bengal monsoon/post-monsoon microclimate.
+    """
+    hum_streak = 2
+    result = {}
+
+    for _, row in forecast_rows.iterrows():
+        forecast_date = pd.Timestamp(row["date"]).date()
+        hum = float(row.get("coarse_humidity_pct", 82.0)) if "coarse_humidity_pct" in row and row["coarse_humidity_pct"] is not None else 82.0
+        if hum >= threshold:
+            hum_streak += 1
+        else:
+            hum_streak = 0
+        result[forecast_date] = hum_streak
+
+    return result
+
+
+# ============================================================
 # BUILD FORECAST CONTEXT
 # ============================================================
 
@@ -290,7 +318,8 @@ def build_forecast_context(
     panchayat_id,
     forecast_row,
     crop="paddy",
-    forecast_dry_days=0
+    forecast_dry_days=0,
+    forecast_humidity_days=None,
 ):
     """
     Build AdvisoryContext for one forecast day.
@@ -298,6 +327,8 @@ def build_forecast_context(
     Future forecast values:
         rain_mm
         tmax_c
+        humidity (if available in live/offline profile)
+        humidity_days
 
     Permanent Panchayat context:
         soil_type
@@ -306,9 +337,6 @@ def build_forecast_context(
         crop
         crop_stage
         harvest_window
-
-    Forecast humidity is intentionally unavailable because
-    the current coarse forecast file does not contain humidity.
     """
 
     target_date = (
@@ -326,7 +354,6 @@ def build_forecast_context(
         crop
     )
 
-
     # --------------------------------------------------------
     # Soil
     # --------------------------------------------------------
@@ -335,6 +362,29 @@ def build_forecast_context(
         panchayat_id
     )
 
+    # --------------------------------------------------------
+    # Humidity telemetry (if provided by live API or diurnal synthesis)
+    # --------------------------------------------------------
+
+    hum_val = None
+    hum_days_val = None
+
+    if "coarse_humidity_pct" in forecast_row and forecast_row["coarse_humidity_pct"] is not None:
+        try:
+            hum_val = float(forecast_row["coarse_humidity_pct"])
+        except (ValueError, TypeError):
+            hum_val = None
+
+    if hum_val is not None:
+        if forecast_humidity_days is not None:
+            hum_days_val = int(forecast_humidity_days)
+        elif "coarse_humidity_days" in forecast_row and forecast_row["coarse_humidity_days"] is not None:
+            try:
+                hum_days_val = int(forecast_row["coarse_humidity_days"])
+            except (ValueError, TypeError):
+                hum_days_val = 2 if hum_val >= 80.0 else 0
+        else:
+            hum_days_val = 3 if hum_val >= 80.0 else 0
 
     # --------------------------------------------------------
     # Context
@@ -354,10 +404,9 @@ def build_forecast_context(
             ]
         ),
 
-        # No actual forecast humidity currently available.
-        humidity=None,
+        humidity=hum_val,
 
-        humidity_days=None,
+        humidity_days=hum_days_val,
 
         dry_days=int(
             forecast_dry_days

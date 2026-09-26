@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "terramind"
+version = "2.1.0"
+description = "TerraMind: Panchayat-Scale Micro-Climate & Agro-Advisory Intelligence System"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "TerraMind Engineering Team", email = "arnokai.work@protonmail.com" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+dependencies = [
+    "xgboost>=2.0.3",
+    "scikit-learn>=1.4.1",
+    "pandas>=2.2.1",
+    "numpy>=1.26.4",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.1",
+    "pyyaml>=6.0.1",
+    "joblib>=1.3.2",
+    "requests",
+    "pyarrow>=15.0.0",
+]
+
+[project.scripts]
+terramind-engine = "terramind.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["terramind*", "backend*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"

@@ -188,3 +188,115 @@ export async function fetchBoundaries(options = {}) {
 
   return { type: "FeatureCollection", features: [] };
 }
+
+/**
+ * Fetch 160-character action SMS in Bengali and English (Machine 3).
+ */
+export async function fetchSMSDelivery(panchayatId, crop = "paddy") {
+  const params = new URLSearchParams({ panchayat_id: panchayatId, crop });
+  const response = await fetch(`${API_BASE}/v1/delivery/sms?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Failed to generate action SMS");
+  }
+  return response.json();
+}
+
+/**
+ * Fetch simulated IVR toll-free voice broadcast script and dialpad menu (Machine 3).
+ */
+export async function fetchIVRDelivery(panchayatId, crop = "paddy") {
+  const params = new URLSearchParams({ panchayat_id: panchayatId, crop });
+  const response = await fetch(`${API_BASE}/v1/delivery/ivr?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Failed to generate IVR voice script");
+  }
+  return response.json();
+}
+
+/**
+ * Fetch Yesterday We Said vs Actual Happened trust metrics (Machine 3).
+ */
+export async function fetchYesterdayTrust(panchayatId) {
+  const params = new URLSearchParams({ panchayat_id: panchayatId });
+  const response = await fetch(`${API_BASE}/v1/trust/yesterday?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch yesterday trust verification");
+  }
+  return response.json();
+}
+
+/**
+ * Fetch PMFBY Weather-Based Crop Insurance loss evaluation & certificate (Machine 2).
+ */
+export async function fetchInsuranceCertificate(panchayatId, crop = "paddy") {
+  const params = new URLSearchParams({ panchayat_id: panchayatId, crop });
+  const response = await fetch(`${API_BASE}/v1/insurance/certificate?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Failed to generate PMFBY insurance certificate");
+  }
+  return response.json();
+}
+
+/**
+ * Fetch real-time Bay of Bengal tropical cyclone & severe storm intelligence.
+ */
+export async function fetchCycloneTracker(panchayatId, lat, lon) {
+  const params = new URLSearchParams();
+  if (panchayatId) params.append("panchayat_id", panchayatId);
+  if (lat != null && lon != null) {
+    params.append("lat", lat);
+    params.append("lon", lon);
+  }
+  const response = await fetch(`${API_BASE}/v1/weather/cyclone-tracker?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch live cyclone tracker data");
+  }
+  return response.json();
+}
+
+/**
+ * Fetch real-time RainViewer radar and satellite cloud timestamps for map overlay.
+ */
+export async function fetchRadarTimestamps() {
+  const response = await fetch(`${API_BASE}/v1/weather/radar-timestamps`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch radar timestamps");
+  }
+  return response.json();
+}
+
+/**
+ * Send natural language inquiry to TerraMind AI Agro-Climatic Chatbot.
+ *
+ * @param {string} message - User query
+ * @param {Array} [history=[]] - Conversation history
+ * @param {Object} [context={}] - Real-time Gram Panchayat and weather context
+ * @returns {Promise<Object>} { reply, sources, action_items, suggested_questions, engine }
+ */
+export async function sendAIChatMessage(message, history = [], context = {}) {
+  const response = await fetch(`${API_BASE}/v1/ai/chat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message,
+      conversation_history: history,
+      context,
+    }),
+  });
+
+  if (!response.ok) {
+    let errorDetail = "Failed to communicate with TerraMind AI";
+    try {
+      const errJson = await response.json();
+      errorDetail = errJson.detail?.error || errJson.detail || errorDetail;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorDetail);
+  }
+
+  return response.json();
+}
+

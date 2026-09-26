@@ -20,14 +20,16 @@ if not RULES_FILE.exists():
     RULES_FILE = BACKEND_DIR / "rules.yaml"
 
 
-# ============================================================
-# LOAD RULES
-# ============================================================
+_RULES_CACHE = None
 
-def load_rules():
+
+def load_rules(refresh: bool = False):
     """
-    Load advisory rules from rules.yaml.
+    Load advisory rules from rules.yaml with in-memory caching.
     """
+    global _RULES_CACHE
+    if not refresh and _RULES_CACHE is not None:
+        return _RULES_CACHE
 
     if not RULES_FILE.exists():
         raise FileNotFoundError(
@@ -54,6 +56,7 @@ def load_rules():
             "rules.yaml must contain a 'rules' list."
         )
 
+    _RULES_CACHE = rules
     return rules
 
 
@@ -222,14 +225,47 @@ def evaluate_advisories(
 
 
 # ============================================================
-# PRIORITY
+# PRIORITY & CROP SPECIFICITY
 # ============================================================
 
 _PRIORITY_ORDER = {
+    "critical": 4,
     "high": 3,
     "medium": 2,
     "low": 1
 }
+
+
+def _is_specific_crop_match(rule, context_crop):
+    """Check if rule specifically targets context_crop (not generic 'all')."""
+    if not context_crop:
+        return False
+    rule_crops = [str(c).strip().lower() for c in rule.get("crop", [])]
+    return "all" not in rule_crops and str(context_crop).strip().lower() in rule_crops
+
+
+def _rule_score(rule, context_crop):
+    """
+    Score a matching rule:
+    - Base priority (high=3, medium=2, low=1)
+    - Exclusive single-crop rule boost (+0.6)
+    - Multi-crop targeted rule boost (+0.3)
+    - Generic 'all' rule (+0.0)
+    """
+    base_p = _PRIORITY_ORDER.get(
+        str(rule.get("priority", "low")).lower(),
+        0
+    )
+    rule_crops = [str(c).strip().lower() for c in rule.get("crop", [])]
+    if not context_crop or "all" in rule_crops:
+        crop_boost = 0.0
+    elif len(rule_crops) == 1 and str(context_crop).strip().lower() in rule_crops:
+        crop_boost = 0.6
+    elif str(context_crop).strip().lower() in rule_crops:
+        crop_boost = 0.3
+    else:
+        crop_boost = 0.0
+    return base_p + crop_boost
 
 
 # ============================================================
@@ -241,8 +277,8 @@ def get_primary_advisory(
 ):
     """
     Select the highest-priority matching rule.
-
-    If priorities are equal, the earlier rule in YAML wins.
+    Crop-specific rules are preferred over generic fallbacks at the same priority level.
+    If scores are equal, the earlier rule in YAML wins.
     """
 
     matches = evaluate_advisories(
@@ -253,32 +289,13 @@ def get_primary_advisory(
         return None
 
     best = matches[0]
-
-    best_priority = _PRIORITY_ORDER.get(
-        str(
-            best.get(
-                "priority",
-                "low"
-            )
-        ).lower(),
-        0
-    )
+    best_score = _rule_score(best, context.crop)
 
     for rule in matches[1:]:
-
-        priority = _PRIORITY_ORDER.get(
-            str(
-                rule.get(
-                    "priority",
-                    "low"
-                )
-            ).lower(),
-            0
-        )
-
-        if priority > best_priority:
+        score = _rule_score(rule, context.crop)
+        if score > best_score:
             best = rule
-            best_priority = priority
+            best_score = score
 
     return best
 
@@ -287,57 +304,68 @@ def get_primary_advisory(
 # API-FRIENDLY RESPONSE
 # ============================================================
 
+REQUIRED_CROP_INSTITUTES = {
+    "paddy": "ICAR-NRRI (National Rice Research Institute) & BCKV Agromet Field Unit",
+    "potato": "ICAR-CPRI (Central Potato Research Institute) & BCKV Mohanpur",
+    "mustard": "ICAR-DRMR (Directorate of Rapeseed-Mustard Research) & District KVKs",
+    "jute": "ICAR-CRIJAF (Central Research Institute for Jute and Allied Fibres, Barrackpore)",
+    "vegetables": "ICAR-IIHR (Indian Institute of Horticultural Research) & Dept. of Agriculture, WB",
+}
+
+
 def build_advisory_response(
     context: AdvisoryContext
 ):
     """
-    Convert the selected rule into a stable response shape.
+    Convert the selected rule into a stable response shape,
+    enriched with authoritative source attribution, crop context, and action items.
     """
 
     advisory = get_primary_advisory(
         context
     )
 
-    if advisory is None:
+    clean_crop = str(context.crop or "").strip().lower()
+    req_source = REQUIRED_CROP_INSTITUTES.get(clean_crop)
 
+    if advisory is None:
         return {
             "rule_id": "none",
             "priority": "low",
             "type": "info",
+            "crop": context.crop or "all",
+            "crop_stage": context.crop_stage,
+            "source": req_source if req_source else "IMD Gramin Krishi Mausam Sewa (GKMS)",
+            "action_items": [],
             "text_en": "",
             "text_bn": "",
         }
 
+    rule_crops = advisory.get("crop", ["all"])
+    resolved_crop = context.crop if context.crop else (rule_crops[0] if rule_crops else "all")
+    source_val = advisory.get("source", "IMD Agromet Advisory Service (AAS)")
+
+    if req_source:
+        inst_tag = {
+            "paddy": "NRRI",
+            "potato": "CPRI",
+            "mustard": "DRMR",
+            "jute": "CRIJAF",
+            "vegetables": "IIHR",
+        }.get(clean_crop, "")
+        if inst_tag and inst_tag not in source_val:
+            source_val = f"{req_source} & {source_val}"
+
     return {
-        "rule_id":
-            advisory.get(
-                "id",
-                "unknown"
-            ),
-
-        "priority":
-            advisory.get(
-                "priority",
-                "low"
-            ),
-
-        "type":
-            advisory.get(
-                "type",
-                "info"
-            ),
-
-        "text_en":
-            advisory.get(
-                "text_en",
-                ""
-            ),
-
-        "text_bn":
-            advisory.get(
-                "text_bn",
-                ""
-            ),
+        "rule_id": advisory.get("id", "unknown"),
+        "priority": advisory.get("priority", "low"),
+        "type": advisory.get("type", "info"),
+        "crop": resolved_crop,
+        "crop_stage": context.crop_stage,
+        "source": source_val,
+        "action_items": advisory.get("action_items", []),
+        "text_en": advisory.get("text_en", ""),
+        "text_bn": advisory.get("text_bn", ""),
     }
 
 

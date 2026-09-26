@@ -11,6 +11,32 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isLocating, setIsLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState(null);
+  const [permissionState, setPermissionState] = useState(null);
+  const [userCoords, setUserCoords] = useState(null);
+
+  // Monitor Geolocation permission state via Permissions API
+  useEffect(() => {
+    let permObj = null;
+    if (typeof navigator !== "undefined" && navigator?.permissions?.query) {
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then((p) => {
+          permObj = p;
+          setPermissionState(p.state);
+          p.onchange = () => {
+            setPermissionState(p.state);
+          };
+        })
+        .catch(() => {
+          // Geolocation permission query not supported in some browsers
+        });
+    }
+    return () => {
+      if (permObj) {
+        permObj.onchange = null;
+      }
+    };
+  }, []);
 
   const containerRef = useRef(null);
   const debounceTimerRef = useRef(null);
@@ -131,58 +157,121 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
       return;
     }
 
+    if (permissionState === "denied") {
+      setLocationStatus({
+        type: "error",
+        message:
+          "Location access is currently blocked in your browser. Click the lock/settings icon in your browser URL bar, allow Location access, and click 'Use My Location' again.",
+      });
+      return;
+    }
+
     setIsLocating(true);
     setLocationStatus(null);
+
+    const geoOptions = {
+      enableHighAccuracy: true, // Forces true GPS/GNSS / Wi-Fi positioning
+      timeout: 15000,          // 15 seconds to acquire a high-accuracy fix
+      maximumAge: 0,           // Force fresh reading without stale cached coordinates
+    };
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
-          const { latitude, longitude } = pos.coords;
-          const { nearest_panchayat } = await fetchNearestPanchayat(latitude, longitude, 1);
+          const { latitude, longitude, accuracy, altitude } = pos.coords;
+          const userGpsData = {
+            latitude,
+            longitude,
+            accuracy: Math.round(accuracy),
+            altitude: altitude != null ? Math.round(altitude) : null,
+            timestamp: pos.timestamp,
+          };
+          setUserCoords(userGpsData);
+
+          // Find the nearest Gram Panchayat among all 3,339 GPs
+          const { nearest_panchayat } = await fetchNearestPanchayat(latitude, longitude, 3);
 
           if (nearest_panchayat && nearest_panchayat.panchayat_name) {
-            handleSelect(nearest_panchayat);
-            setLocationStatus({
-              type: "success",
-              message: `GPS located nearest GP: ${nearest_panchayat.panchayat_name} (${nearest_panchayat.district_name}) ~${nearest_panchayat.distance_km} km away`,
-            });
+            const enrichedPanchayat = {
+              ...nearest_panchayat,
+              user_gps: userGpsData,
+              distance_km: nearest_panchayat.distance_km,
+            };
+
+            // Select the Gram Panchayat and trigger downscaled forecast sync
+            handleSelect(enrichedPanchayat);
+
+            try {
+              localStorage.setItem("terramind_last_gps_auto", "true");
+              localStorage.setItem("terramind_user_gps", JSON.stringify(userGpsData));
+            } catch (e) {
+              // ignore
+            }
+
+            const dist = nearest_panchayat.distance_km ?? 0;
+            const accStr = accuracy ? `±${Math.round(accuracy)}m` : "High Precision";
+
+            if (dist <= 50) {
+              setLocationStatus({
+                type: "success",
+                message: `GPS located your device (Accuracy: ${accStr}). Nearest Gram Panchayat: ${nearest_panchayat.panchayat_name} (${nearest_panchayat.block_name}, ${nearest_panchayat.district_name}) at ${dist} km. Downscaled forecast auto-selected!`,
+                coords: userGpsData,
+              });
+            } else {
+              setLocationStatus({
+                type: "success",
+                message: `GPS detected (${latitude.toFixed(4)}°N, ${longitude.toFixed(4)}°E, Accuracy: ${accStr}). Nearest West Bengal Gram Panchayat is ${nearest_panchayat.panchayat_name} (${nearest_panchayat.district_name}, ~${dist} km away). Auto-selected for agro-climatic simulation.`,
+                coords: userGpsData,
+              });
+            }
           } else {
             setLocationStatus({
               type: "error",
-              message: "No Gram Panchayat found near your coordinates.",
+              message: `No Gram Panchayat found near coordinates (${latitude.toFixed(4)}, ${longitude.toFixed(4)}). Please search manually.`,
             });
           }
         } catch (err) {
           console.error("GPS nearest GP lookup error:", err);
           setLocationStatus({
             type: "error",
-            message: "Could not find nearest Gram Panchayat for your location.",
+            message: "Unable to query nearest Gram Panchayat from backend server. Please verify connection or select manually.",
           });
         } finally {
           setIsLocating(false);
         }
       },
       (err) => {
-        console.warn("Geolocation error:", err);
+        console.warn("Geolocation acquisition error:", err);
         setIsLocating(false);
         if (err.code === 1) {
+          // PERMISSION_DENIED
           setLocationStatus({
             type: "error",
-            message: "Location permission denied. Please enable GPS permissions or search manually.",
+            message:
+              "Location permission denied. Click the site settings icon in your browser address bar to allow location access, or search your Gram Panchayat manually.",
           });
         } else if (err.code === 2) {
+          // POSITION_UNAVAILABLE
           setLocationStatus({
             type: "error",
-            message: "Location position unavailable. Please search manually.",
+            message:
+              "GPS position unavailable. Please check your device location services / Wi-Fi and try again, or search manually.",
+          });
+        } else if (err.code === 3) {
+          // TIMEOUT
+          setLocationStatus({
+            type: "error",
+            message:
+              "GPS request timed out while acquiring satellite lock. Please click 'Use My Location' again or search manually.",
           });
         } else {
           setLocationStatus({
             type: "error",
-            message: "Location request timed out. Please try again or search manually.",
+            message: `Location error (${err.message || "Unknown error"}). Please search for your Gram Panchayat manually.`,
           });
         }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      geoOptions
     );
   };
 
@@ -288,14 +377,20 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
           <label className="search-label">GPS AUTO-DETECT</label>
           <button
             type="button"
-            className={`gps-location-btn ${isLocating ? "locating" : ""}`}
+            className={`gps-location-btn ${isLocating ? "locating" : ""} ${permissionState === "denied" ? "permission-denied" : ""}`}
             onClick={handleUseLocation}
             disabled={isLocating}
-            title="Auto-detect nearest Gram Panchayat using device GPS"
+            title={
+              permissionState === "denied"
+                ? "Location access is blocked in browser settings. Click to view instructions."
+                : "Auto-detect nearest Gram Panchayat using high-precision device GPS"
+            }
           >
-            <span className="gps-btn-icon">{isLocating ? "⏳" : "📍"}</span>
+            <span className="gps-btn-icon">
+              {isLocating ? <span className="gps-radar-spinner"></span> : "📍"}
+            </span>
             <span className="gps-btn-text">
-              {isLocating ? "Detecting..." : "Use My Location"}
+              {isLocating ? "Acquiring GPS Fix..." : "Use My Location"}
             </span>
           </button>
         </div>
@@ -304,9 +399,12 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
       {/* GPS Location Status Banner */}
       {locationStatus && (
         <div className={`gps-status-banner ${locationStatus.type}`}>
-          <span className="gps-status-text">
-            {locationStatus.type === "error" ? "⚠️" : "✓"} {locationStatus.message}
-          </span>
+          <div className="gps-status-text">
+            <span className="gps-status-symbol">
+              {locationStatus.type === "error" ? "⚠️" : "🎯"}
+            </span>
+            <span>{locationStatus.message}</span>
+          </div>
           <button
             type="button"
             className="gps-status-close"
@@ -326,6 +424,11 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
             <div className="gp-badge-title">
               <strong>{activePanchayat.panchayat_name} Gram Panchayat</strong>
               <span className="gp-lgd-tag">LGD {activePanchayat.gp_code}</span>
+              {activePanchayat.user_gps?.accuracy && (
+                <span className="gps-accuracy-chip" title="Device GPS fix accuracy">
+                  🛰️ GPS ±{activePanchayat.user_gps.accuracy}m
+                </span>
+              )}
             </div>
             <div className="gp-badge-sub">
               <span>District: <strong>{activePanchayat.district_name}</strong></span>
@@ -338,7 +441,7 @@ export default function SearchBar({ onSelectPanchayat, activePanchayat, onClear 
               )}
               {activePanchayat.distance_km !== undefined && activePanchayat.distance_km !== null && (
                 <span className="gp-distance-tag">
-                  GPS Distance: <strong>{activePanchayat.distance_km} km away</strong>
+                  GPS Offset: <strong>{activePanchayat.distance_km} km away</strong>
                 </span>
               )}
             </div>

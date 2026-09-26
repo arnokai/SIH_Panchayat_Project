@@ -1,0 +1,7 @@
+# Cursor AI Rules
+# Project uses unified ai-brain memory system.
+# See AGENTS.md and .context/ for architecture, decisions, and instructions.
+
+Always follow instructions in AGENTS.md.
+Always consult .context/memory/active_context.md and .context/tasks/ before suggesting changes.
+Always consult ~/ai-brain/global/RULES.md (linked as .global-rules.md).

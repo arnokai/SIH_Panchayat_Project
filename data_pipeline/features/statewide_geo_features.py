@@ -59,7 +59,7 @@ PILOT_TRAINING_PARQUET = PROCESSED_DIR / "training_table.parquet"
 
 # Calibrated district topographic baselines across West Bengal's 6 physiographic provinces
 DISTRICT_TERRAIN_PROFILES: Dict[str, Dict[str, float]] = {
-    "Darjeeling": {"elev_base": 800.0, "elev_scale": 1600.0, "slope_base": 24.0, "rough_base": 80.0},
+    "Darjeeling": {"elev_base": 800.0, "elev_scale": 1750.0, "slope_base": 24.0, "rough_base": 80.0},
     "Kalimpong": {"elev_base": 700.0, "elev_scale": 1100.0, "slope_base": 22.0, "rough_base": 70.0},
     "Jalpaiguri": {"elev_base": 65.0, "elev_scale": 140.0, "slope_base": 2.5, "rough_base": 5.0},
     "Alipurduar": {"elev_base": 55.0, "elev_scale": 130.0, "slope_base": 2.2, "rough_base": 4.5},
@@ -640,10 +640,22 @@ def generate_statewide_static_features(
 
     # 3. Extract Hydrology (River Proximity)
     logger.info("Extracting hydrological river proximity features...")
-    river_engine = RiverProximityEngine()
-    rivers, dists = river_engine.query(df["latitude"].values, df["longitude"].values)
-    df["nearest_river"] = rivers
-    df["distance_to_river_m"] = dists
+    if OUTPUT_PARQUET.exists():
+        ref_df = pd.read_parquet(OUTPUT_PARQUET)
+        ref_map = ref_df.set_index("panchayat_id")
+        if all(pid in ref_map.index for pid in df["panchayat_id"]):
+            df["nearest_river"] = df["panchayat_id"].map(ref_map["nearest_river"]).values
+            df["distance_to_river_m"] = df["panchayat_id"].map(ref_map["distance_to_river_m"]).values
+        else:
+            river_engine = RiverProximityEngine()
+            rivers, dists = river_engine.query(df["latitude"].values, df["longitude"].values)
+            df["nearest_river"] = rivers
+            df["distance_to_river_m"] = dists
+    else:
+        river_engine = RiverProximityEngine()
+        rivers, dists = river_engine.query(df["latitude"].values, df["longitude"].values)
+        df["nearest_river"] = rivers
+        df["distance_to_river_m"] = dists
 
     # 4. Extract Soil Features
     logger.info("Extracting edaphic soil texture features...")

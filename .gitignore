@@ -108,4 +108,11 @@ api_test_output.txt
 
 # Agent logs & temporary artifacts
 .agents/
+graphify-out
 graphify-out/
+.context
+.ai
+.ai-mind
+ai-mind
+.global-rules.md
+*.egg-info/
