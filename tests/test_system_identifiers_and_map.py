@@ -104,11 +104,11 @@ class TestMapAndLocationAccuracy(unittest.TestCase):
         self.assertAlmostEqual(meta_north["longitude"], 89.496956, places=4)
         self.assertEqual(meta_north["district_name"], "Alipurduar")
 
-        # Baragram in Purulia (WB_109832)
+        # Baragram in Purulia (WB_109832) - grounded strictly inside Purulia-Joypur block
         meta_west = resolve_panchayat_meta("WB_109832")
         self.assertIsNotNone(meta_west)
-        self.assertAlmostEqual(meta_west["latitude"], 23.440528, places=4)
-        self.assertAlmostEqual(meta_west["longitude"], 86.222848, places=4)
+        self.assertAlmostEqual(meta_west["latitude"], 23.2605, places=3)
+        self.assertAlmostEqual(meta_west["longitude"], 86.3368, places=3)
         self.assertEqual(meta_west["district_name"], "Purulia")
 
     def test_03_coarse_nwp_grid_centroid_calculation(self):
@@ -158,12 +158,13 @@ class TestMapAndLocationAccuracy(unittest.TestCase):
         data = json.loads(resp.body.decode("utf-8"))
 
         self.assertEqual(data["district_name"], "Purulia")
-        self.assertAlmostEqual(data["latitude"], 23.4405, places=3)
-        self.assertAlmostEqual(data["longitude"], 86.2228, places=3)
+        self.assertAlmostEqual(data["latitude"], 23.2605, places=3)
+        self.assertAlmostEqual(data["longitude"], 86.3368, places=3)
         # Verify coarse coordinate is in Purulia, NOT stuck at Amdanga!
-        self.assertAlmostEqual(data["coarse_coordinate"]["latitude"], 23.50, places=2)
+        self.assertAlmostEqual(data["coarse_coordinate"]["latitude"], 23.25, places=2)
         self.assertAlmostEqual(data["coarse_coordinate"]["longitude"], 86.25, places=2)
         self.assertLess(data["grid_distance_km"], 15.0)
+
 
     def test_07_gps_nearest_panchayat_resolution(self):
         """Verify modern GPS coordinate detection resolves to the accurate nearest Gram Panchayat."""

@@ -182,17 +182,7 @@ export async function fetchBoundaries(options = {}) {
       return await response.json();
     }
   } catch (err) {
-    console.warn("Could not fetch remote boundaries, attempting fallback:", err);
-  }
-
-  // Fallback to static bundled GeoJSON
-  try {
-    const localRes = await fetch("/data/amdanga_boundaries.json");
-    if (localRes.ok) {
-      return await localRes.json();
-    }
-  } catch {
-    // fallback
+    console.warn("Could not fetch remote boundaries:", err);
   }
 
   return { type: "FeatureCollection", features: [] };

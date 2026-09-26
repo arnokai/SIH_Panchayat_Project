@@ -2001,8 +2001,8 @@ footer span {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2.5px solid #06372b;
-  background: rgba(45, 138, 87, 0.42);
+  border: 2.5px solid #059669;
+  background: rgba(16, 185, 129, 0.28);
   border-radius: 3px;
 }
 
@@ -2010,8 +2010,17 @@ footer span {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 1.5px dashed #2d8a57;
-  background: rgba(72, 187, 120, 0.12);
+  border: 1.5px dashed #64748b;
+  background: rgba(148, 163, 184, 0.12);
+  border-radius: 3px;
+}
+
+.legend-block-boundary {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px dashed #0f172a;
+  background: transparent;
   border-radius: 3px;
 }
 

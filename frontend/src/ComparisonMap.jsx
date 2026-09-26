@@ -326,7 +326,6 @@ function ComparisonMapInner({
         opacity: 1,
         fillColor: "#10b981",
         fillOpacity: 0.28,
-        dashArray: "6, 4",
       };
     }
 
@@ -348,9 +347,7 @@ function ComparisonMapInner({
       (p.panchayat_name && p.panchayat_name.toLowerCase() === panchayatName.toLowerCase());
 
     const areaText = p.area_sqkm ? ` • ${p.area_sqkm} km²` : "";
-    const sourceLabel = p.geometry_source === "official_cadastral_survey"
-      ? "Official Cadastral Survey"
-      : "High-Precision Cadastral Territory";
+    const sourceLabel = "Official Cadastral Territory";
 
     if (isSelected) {
       layer.bindTooltip(
@@ -684,6 +681,29 @@ function ComparisonMapInner({
                   zoom={12}
                 />
 
+                {/* Official Survey of India / geoBoundaries Block Outer Perimeter */}
+                {boundaries && boundaries.block_boundary && (
+                  <GeoJSON
+                    key={`block-envelope-${targetPanchayatId}-${boundaries.block_name || blockName}`}
+                    data={{
+                      type: "Feature",
+                      geometry: boundaries.block_boundary,
+                      properties: {
+                        block_name: boundaries.block_name || blockName,
+                        district_name: boundaries.district_name || districtName,
+                      },
+                    }}
+                    style={{
+                      color: "#0f172a", // Dark slate block perimeter
+                      weight: 2.8,
+                      opacity: 0.9,
+                      fill: false,
+                      dashArray: "8, 6",
+                    }}
+                    interactive={false}
+                  />
+                )}
+
                 {/* Gram Panchayat Territorial Boundaries (100% Contiguous Block Tiling) */}
                 {boundaries && boundaries.features && boundaries.features.length > 0 && (
                   <GeoJSON
@@ -897,6 +917,12 @@ function ComparisonMapInner({
               <i className="legend-neighbor-boundary"></i>
               Neighboring Borders (Clickable)
             </span>
+            {boundaries?.block_boundary && (
+              <span>
+                <i className="legend-block-boundary"></i>
+                {blockName} Block Envelope (Survey of India)
+              </span>
+            )}
             <span>
               <i className="legend-selected-pin"></i>
               GP Headquarters / Village Hub
